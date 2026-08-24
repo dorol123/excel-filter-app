@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="contenedor" id="contenedor">
   <main class="card">
     <div class="encabezado">
       <span class="icono" aria-hidden="true">
@@ -78,6 +79,10 @@
     <div class="tabs" id="tabs" role="tablist"></div>
 
     <div class="tabla-toolbar">
+      <label class="filtro-asesor">
+        Asesor
+        <select id="filtro-asesor"></select>
+      </label>
       <button type="button" id="btn-seleccionar-todo" class="btn-secundario">
         Seleccionar todas las celdas
       </button>
@@ -85,6 +90,7 @@
 
     <div class="tabla-wrap" id="tabla-wrap"></div>
   </section>
+  </div>
 
   <script src="app.js"></script>
 </body>

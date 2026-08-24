@@ -13,6 +13,7 @@ const seccionVistaPrevia = document.getElementById('vista-previa');
 const tabsContenedor = document.getElementById('tabs');
 const tablaWrap = document.getElementById('tabla-wrap');
 const btnSeleccionarTodo = document.getElementById('btn-seleccionar-todo');
+const selectAsesor = document.getElementById('filtro-asesor');
 
 let vistaPreviaActual = null;
 let hojaActiva = null;
@@ -80,15 +81,17 @@ function formatImporte(importe) {
 }
 
 function construirTabla(encabezados, filas, colImporte, colAsesor) {
+  const colFecha = encabezados.indexOf('Fecha Acreditación');
   const tabla = document.createElement('table');
   tabla.className = 'tabla-excel';
   tabla.id = 'tabla-activa';
 
   const thead = document.createElement('thead');
   const trEncabezado = document.createElement('tr');
-  encabezados.forEach((encabezado) => {
+  encabezados.forEach((encabezado, i) => {
     const th = document.createElement('th');
     th.textContent = encabezado;
+    if (i === colFecha) th.classList.add('columna-fecha');
     trEncabezado.appendChild(th);
   });
   thead.appendChild(trEncabezado);
@@ -114,6 +117,7 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
         } else {
           td.textContent = valor === null || valor === undefined ? '' : String(valor);
         }
+        if (i === colFecha) td.classList.add('columna-fecha');
         if (fila.destacado && (i === colImporte || i === colAsesor)) {
           td.classList.add('destacado');
         }
@@ -124,6 +128,20 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
   }
   tabla.appendChild(tbody);
   return tabla;
+}
+
+function actualizarTabla() {
+  if (!vistaPreviaActual) return;
+  const filasHoja = vistaPreviaActual.hojas[hojaActiva];
+  const asesorSeleccionado = selectAsesor.value;
+  const filas = asesorSeleccionado
+    ? filasHoja.filter((fila) => fila.valores[vistaPreviaActual.colAsesor] === asesorSeleccionado)
+    : filasHoja;
+
+  tablaWrap.innerHTML = '';
+  tablaWrap.appendChild(
+    construirTabla(vistaPreviaActual.encabezados, filas, vistaPreviaActual.colImporte, vistaPreviaActual.colAsesor)
+  );
 }
 
 function renderVistaPrevia() {
@@ -146,18 +164,29 @@ function renderVistaPrevia() {
     tabsContenedor.appendChild(boton);
   });
 
-  tablaWrap.innerHTML = '';
-  tablaWrap.appendChild(
-    construirTabla(
-      vistaPreviaActual.encabezados,
-      vistaPreviaActual.hojas[hojaActiva],
-      vistaPreviaActual.colImporte,
-      vistaPreviaActual.colAsesor
-    )
-  );
+  const asesores = [
+    ...new Set(
+      vistaPreviaActual.hojas[hojaActiva].map((fila) => fila.valores[vistaPreviaActual.colAsesor])
+    ),
+  ].sort((a, b) => String(a).localeCompare(String(b), 'es'));
 
+  selectAsesor.innerHTML = '';
+  const opcionTodos = document.createElement('option');
+  opcionTodos.value = '';
+  opcionTodos.textContent = 'Todos los asesores';
+  selectAsesor.appendChild(opcionTodos);
+  asesores.forEach((asesor) => {
+    const opcion = document.createElement('option');
+    opcion.value = asesor;
+    opcion.textContent = asesor;
+    selectAsesor.appendChild(opcion);
+  });
+
+  actualizarTabla();
   seccionVistaPrevia.classList.remove('oculto');
 }
+
+selectAsesor.addEventListener('change', actualizarTabla);
 
 btnSeleccionarTodo.addEventListener('click', () => {
   const tabla = document.getElementById('tabla-activa');
