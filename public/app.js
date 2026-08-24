@@ -230,7 +230,7 @@ async function procesar({ descargar }) {
   procesando = true;
   const textoOriginal = btnProcesar.textContent;
   btnProcesar.disabled = true;
-  btnProcesar.textContent = descargar ? 'Procesando...' : 'Generando vista previa...';
+  btnProcesar.textContent = descargar ? 'Descargando...' : 'Generando vista previa...';
   mostrarMensaje('', null);
 
   try {
