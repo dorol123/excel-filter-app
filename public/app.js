@@ -202,6 +202,64 @@ btnSeleccionarTodo.addEventListener('click', () => {
   seleccion.addRange(rango);
 });
 
+const btnCopiarImagen = document.getElementById('btn-copiar-imagen');
+
+function descargarBlob(blob, nombreArchivo) {
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombreArchivo;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function generarImagenDeTabla(tabla) {
+  const envoltorio = document.createElement('div');
+  envoltorio.style.cssText = 'position:fixed; left:-10000px; top:0; display:inline-block; padding:16px; background:#ffffff;';
+  envoltorio.appendChild(tabla.cloneNode(true));
+  document.body.appendChild(envoltorio);
+
+  try {
+    const canvas = await html2canvas(envoltorio, { backgroundColor: '#ffffff', scale: 2 });
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('No se pudo generar la imagen.'));
+      }, 'image/png');
+    });
+  } finally {
+    envoltorio.remove();
+  }
+}
+
+btnCopiarImagen.addEventListener('click', async () => {
+  const tabla = document.getElementById('tabla-activa');
+  if (!tabla) return;
+
+  const textoOriginal = btnCopiarImagen.textContent;
+  btnCopiarImagen.disabled = true;
+  btnCopiarImagen.textContent = 'Generando imagen...';
+
+  try {
+    const blob = await generarImagenDeTabla(tabla);
+
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      mostrarMensaje('Imagen copiada. Pegala en WhatsApp con Ctrl+V (o Cmd+V).', 'exito');
+    } else {
+      descargarBlob(blob, 'tabla-acreditaciones.png');
+      mostrarMensaje('Tu navegador no permite copiar imágenes; se descargó como archivo.', 'exito');
+    }
+  } catch (err) {
+    mostrarMensaje('No se pudo copiar la imagen: ' + err.message, 'error');
+  } finally {
+    btnCopiarImagen.disabled = false;
+    btnCopiarImagen.textContent = textoOriginal;
+  }
+});
+
 let ultimoArchivoBase64 = null;
 let ultimoNombreArchivo = null;
 let procesando = false;
@@ -213,14 +271,7 @@ function descargarUltimoArchivo() {
     ultimoArchivoBase64,
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   );
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement('a');
-  enlace.href = url;
-  enlace.download = ultimoNombreArchivo || 'acreditaciones_procesado.xlsx';
-  document.body.appendChild(enlace);
-  enlace.click();
-  enlace.remove();
-  URL.revokeObjectURL(url);
+  descargarBlob(blob, ultimoNombreArchivo || 'acreditaciones_procesado.xlsx');
 }
 
 async function procesar({ descargar }) {

@@ -72,7 +72,8 @@
         Seleccioná celdas haciendo click y arrastrando, después copiá con
         <kbd>Ctrl</kbd>+<kbd>C</kbd> (o <kbd>Cmd</kbd>+<kbd>C</kbd>). Pegado en Excel, Word o
         Gmail mantiene los colores y negrita; en WhatsApp se pega como texto plano, sin formato
-        (es una limitación de WhatsApp, no se puede evitar).
+        (es una limitación de WhatsApp). Para mandarlo por WhatsApp con los colores y todo, usá
+        <strong>"Copiar imagen"</strong> y pegalo ahí con <kbd>Ctrl</kbd>+<kbd>V</kbd>.
       </p>
     </div>
 
@@ -83,15 +84,21 @@
         Asesor
         <select id="filtro-asesor"></select>
       </label>
-      <button type="button" id="btn-seleccionar-todo" class="btn-secundario">
-        Seleccionar todas las celdas
-      </button>
+      <div class="toolbar-botones">
+        <button type="button" id="btn-copiar-imagen" class="btn-secundario">
+          Copiar imagen
+        </button>
+        <button type="button" id="btn-seleccionar-todo" class="btn-secundario">
+          Seleccionar todas las celdas
+        </button>
+      </div>
     </div>
 
     <div class="tabla-wrap" id="tabla-wrap"></div>
   </section>
   </div>
 
+  <script src="vendor/html2canvas.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

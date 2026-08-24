@@ -356,6 +356,12 @@ button:disabled {
   box-shadow: 0 0 0 3px rgba(23, 27, 107, 0.12);
 }
 
+.toolbar-botones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .btn-secundario {
   width: auto;
   margin-top: 0;
