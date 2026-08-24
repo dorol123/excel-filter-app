@@ -334,6 +334,32 @@ function reprocesarConDemora() {
   campo.addEventListener('change', reprocesarConDemora);
 });
 
+function sumarDias(fechaISO, dias) {
+  const [anio, mes, dia] = fechaISO.split('-').map(Number);
+  const fecha = new Date(anio, mes - 1, dia);
+  fecha.setDate(fecha.getDate() + dias);
+  return fechaLocalISO(fecha);
+}
+
+const ATAJOS_HORARIO = {
+  '10-13': { horaDesde: '10:00', horaHasta: '13:00', diasHasta: 0 },
+  '13-16': { horaDesde: '13:00', horaHasta: '16:00', diasHasta: 0 },
+  '16-10': { horaDesde: '16:00', horaHasta: '10:00', diasHasta: 1 },
+};
+
+document.querySelectorAll('.btn-atajo').forEach((boton) => {
+  boton.addEventListener('click', () => {
+    const atajo = ATAJOS_HORARIO[boton.dataset.atajo];
+    if (!atajo) return;
+    const base = fechaDesde.value || fechaLocalISO(new Date());
+    fechaDesde.value = base;
+    fechaHasta.value = atajo.diasHasta ? sumarDias(base, atajo.diasHasta) : base;
+    horaDesde.value = atajo.horaDesde;
+    horaHasta.value = atajo.horaHasta;
+    procesar({ descargar: false });
+  });
+});
+
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   procesar({ descargar: true });

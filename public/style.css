@@ -203,6 +203,32 @@ h1 {
   box-shadow: 0 0 0 3px rgba(23, 27, 107, 0.12);
 }
 
+.rango-atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-atajo {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 12px;
+  background: #ffffff;
+  color: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.btn-atajo:hover:not(:disabled) {
+  background: var(--navy-tint);
+  border-color: #a7aee0;
+  box-shadow: none;
+}
+
 button {
   width: 100%;
   margin-top: 18px;
@@ -263,26 +289,9 @@ button:disabled {
 }
 
 .preview-header h2 {
-  margin: 0 0 6px;
+  margin: 0 0 14px;
   font-size: 1.05rem;
   color: var(--navy-dark);
-}
-
-.preview-hint {
-  margin: 0 0 16px;
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.preview-hint kbd {
-  font-family: inherit;
-  font-size: 0.78rem;
-  background: var(--navy-tint);
-  border: 1px solid var(--border);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  padding: 1px 5px;
 }
 
 .tabs {

@@ -57,6 +57,12 @@
             <input type="time" id="hora-hasta" name="horaHasta" required />
           </label>
         </div>
+
+        <div class="rango-atajos">
+          <button type="button" class="btn-atajo" data-atajo="10-13">10 a 13</button>
+          <button type="button" class="btn-atajo" data-atajo="13-16">13 a 16</button>
+          <button type="button" class="btn-atajo" data-atajo="16-10">16 a 10 (día sig.)</button>
+        </div>
       </fieldset>
 
       <button type="submit" id="btn-procesar" disabled>Descargar</button>
@@ -68,13 +74,6 @@
   <section id="vista-previa" class="preview-card oculto">
     <div class="preview-header">
       <h2>Vista previa</h2>
-      <p class="preview-hint">
-        Seleccioná celdas haciendo click y arrastrando, después copiá con
-        <kbd>Ctrl</kbd>+<kbd>C</kbd> (o <kbd>Cmd</kbd>+<kbd>C</kbd>). Pegado en Excel, Word o
-        Gmail mantiene los colores y negrita; en WhatsApp se pega como texto plano, sin formato
-        (es una limitación de WhatsApp). Para mandarlo por WhatsApp con los colores y todo, usá
-        <strong>"Copiar imagen"</strong> y pegalo ahí con <kbd>Ctrl</kbd>+<kbd>V</kbd>.
-      </p>
     </div>
 
     <div class="tabs" id="tabs" role="tablist"></div>
