@@ -88,11 +88,15 @@ form.addEventListener('submit', async (e) => {
       throw new Error(detalle.error || 'No se pudo procesar el archivo.');
     }
 
+    const contentDisposition = respuesta.headers.get('Content-Disposition') || '';
+    const matchNombre = contentDisposition.match(/filename="([^"]+)"/);
+    const nombreArchivo = matchNombre ? matchNombre[1] : 'acreditaciones_procesado.xlsx';
+
     const blob = await respuesta.blob();
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement('a');
     enlace.href = url;
-    enlace.download = 'acreditaciones_procesado.xlsx';
+    enlace.download = nombreArchivo;
     document.body.appendChild(enlace);
     enlace.click();
     enlace.remove();

@@ -1,7 +1,7 @@
 const path = require('path');
 const express = require('express');
 const multer = require('multer');
-const { procesarExcel } = require('./lib/procesarExcel');
+const { procesarExcel, construirNombreArchivo } = require('./lib/procesarExcel');
 
 const app = express();
 const upload = multer({
@@ -24,11 +24,12 @@ app.post('/api/procesar', upload.single('archivo'), async (req, res) => {
       horaHasta: req.body.horaHasta,
     };
     const bufferSalida = await procesarExcel(req.file.buffer, filtros);
+    const nombreArchivo = construirNombreArchivo(filtros);
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
-    res.setHeader('Content-Disposition', 'attachment; filename="acreditaciones_procesado.xlsx"');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
     res.send(Buffer.from(bufferSalida));
   } catch (err) {
     console.error(err);
