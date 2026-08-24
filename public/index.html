@@ -21,6 +21,32 @@
       </label>
       <input type="file" id="archivo" name="archivo" accept=".xlsx" hidden required />
 
+      <fieldset class="rango">
+        <legend>Rango a procesar (por defecto: hoy)</legend>
+
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Desde</span>
+            <input type="date" id="fecha-desde" name="fechaDesde" required />
+          </label>
+          <label class="rango-campo">
+            <span>Hora</span>
+            <input type="time" id="hora-desde" name="horaDesde" required />
+          </label>
+        </div>
+
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Hasta</span>
+            <input type="date" id="fecha-hasta" name="fechaHasta" required />
+          </label>
+          <label class="rango-campo">
+            <span>Hora</span>
+            <input type="time" id="hora-hasta" name="horaHasta" required />
+          </label>
+        </div>
+      </fieldset>
+
       <button type="submit" id="btn-procesar" disabled>Procesar y descargar</button>
     </form>
 

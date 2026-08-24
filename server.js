@@ -17,7 +17,13 @@ app.post('/api/procesar', upload.single('archivo'), async (req, res) => {
   }
 
   try {
-    const bufferSalida = await procesarExcel(req.file.buffer);
+    const filtros = {
+      fechaDesde: req.body.fechaDesde,
+      fechaHasta: req.body.fechaHasta,
+      horaDesde: req.body.horaDesde,
+      horaHasta: req.body.horaHasta,
+    };
+    const bufferSalida = await procesarExcel(req.file.buffer, filtros);
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
