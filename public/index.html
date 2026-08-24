@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Procesador de Acreditaciones</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>Procesador de Acreditaciones</h1>
+    <p class="subtitulo">
+      Subí el Excel de acreditaciones y descargá el archivo procesado: separado en
+      Pesos y Dólares, filtrado, ordenado por asesor y con los importes altos
+      resaltados.
+    </p>
+
+    <form id="form-procesar">
+      <label class="dropzone" id="dropzone" for="archivo">
+        <span id="texto-dropzone">Arrastrá el .xlsx acá o hacé click para elegirlo</span>
+      </label>
+      <input type="file" id="archivo" name="archivo" accept=".xlsx" hidden required />
+
+      <button type="submit" id="btn-procesar" disabled>Procesar y descargar</button>
+    </form>
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

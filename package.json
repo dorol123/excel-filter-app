@@ -1,0 +1,23 @@
+{
+  "name": "excel-filter-app",
+  "version": "1.0.0",
+  "description": "Web app para procesar el Excel de Acreditaciones: separa Pesos/Dolares, filtra, resalta y ordena.",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "jszip": "^3.10.1",
+    "multer": "^2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
