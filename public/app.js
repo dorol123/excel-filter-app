@@ -42,6 +42,7 @@ function setArchivo(archivo) {
   dropzone.classList.add('con-archivo');
   btnProcesar.disabled = false;
   mostrarMensaje('', null);
+  procesar({ descargar: false });
 }
 
 dropzone.addEventListener('dragover', (e) => {
@@ -82,6 +83,7 @@ function formatImporte(importe) {
 
 function construirTabla(encabezados, filas, colImporte, colAsesor) {
   const colFecha = encabezados.indexOf('Fecha Acreditación');
+  const colCuenta = encabezados.indexOf('Cuenta');
   const tabla = document.createElement('table');
   tabla.className = 'tabla-excel';
   tabla.id = 'tabla-activa';
@@ -92,6 +94,7 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
     const th = document.createElement('th');
     th.textContent = encabezado;
     if (i === colFecha) th.classList.add('columna-fecha');
+    if (i === colCuenta) th.classList.add('columna-cuenta');
     trEncabezado.appendChild(th);
   });
   thead.appendChild(trEncabezado);
@@ -118,6 +121,7 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
           td.textContent = valor === null || valor === undefined ? '' : String(valor);
         }
         if (i === colFecha) td.classList.add('columna-fecha');
+        if (i === colCuenta) td.classList.add('columna-cuenta');
         if (fila.destacado && (i === colImporte || i === colAsesor)) {
           td.classList.add('destacado');
         }
@@ -198,14 +202,35 @@ btnSeleccionarTodo.addEventListener('click', () => {
   seleccion.addRange(rango);
 });
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const archivo = inputArchivo.files[0];
-  if (!archivo) return;
+let ultimoArchivoBase64 = null;
+let ultimoNombreArchivo = null;
+let procesando = false;
+let timerReprocesar = null;
 
-  btnProcesar.disabled = true;
+function descargarUltimoArchivo() {
+  if (!ultimoArchivoBase64) return;
+  const blob = base64ABlob(
+    ultimoArchivoBase64,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  );
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = ultimoNombreArchivo || 'acreditaciones_procesado.xlsx';
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function procesar({ descargar }) {
+  const archivo = inputArchivo.files[0];
+  if (!archivo || procesando) return;
+
+  procesando = true;
   const textoOriginal = btnProcesar.textContent;
-  btnProcesar.textContent = 'Procesando...';
+  btnProcesar.disabled = true;
+  btnProcesar.textContent = descargar ? 'Procesando...' : 'Generando vista previa...';
   mostrarMensaje('', null);
 
   try {
@@ -226,28 +251,39 @@ form.addEventListener('submit', async (e) => {
       throw new Error(datos.error || 'No se pudo procesar el archivo.');
     }
 
-    const blob = base64ABlob(
-      datos.archivoBase64,
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    const url = URL.createObjectURL(blob);
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = datos.nombreArchivo || 'acreditaciones_procesado.xlsx';
-    document.body.appendChild(enlace);
-    enlace.click();
-    enlace.remove();
-    URL.revokeObjectURL(url);
+    ultimoArchivoBase64 = datos.archivoBase64;
+    ultimoNombreArchivo = datos.nombreArchivo;
 
     vistaPreviaActual = datos.vistaPrevia;
     hojaActiva = null;
     renderVistaPrevia();
 
-    mostrarMensaje('Listo, se descargó el archivo procesado.', 'exito');
+    if (descargar) {
+      descargarUltimoArchivo();
+      mostrarMensaje('Listo, se descargó el archivo procesado.', 'exito');
+    } else {
+      mostrarMensaje('Vista previa actualizada.', 'exito');
+    }
   } catch (err) {
     mostrarMensaje(err.message, 'error');
   } finally {
+    procesando = false;
     btnProcesar.disabled = false;
     btnProcesar.textContent = textoOriginal;
   }
+}
+
+function reprocesarConDemora() {
+  if (!inputArchivo.files[0]) return;
+  clearTimeout(timerReprocesar);
+  timerReprocesar = setTimeout(() => procesar({ descargar: false }), 300);
+}
+
+[fechaDesde, fechaHasta, horaDesde, horaHasta].forEach((campo) => {
+  campo.addEventListener('change', reprocesarConDemora);
+});
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  procesar({ descargar: true });
 });

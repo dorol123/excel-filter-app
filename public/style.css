@@ -426,6 +426,13 @@ button:disabled {
   width: 90px;
 }
 
+.tabla-excel th.columna-cuenta,
+.tabla-excel td.columna-cuenta {
+  width: 300px;
+  white-space: normal;
+  word-break: break-word;
+}
+
 .tabla-excel td.destacado {
   color: var(--error);
   font-weight: 700;
