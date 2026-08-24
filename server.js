@@ -1,7 +1,7 @@
 const path = require('path');
 const express = require('express');
 const multer = require('multer');
-const { procesarExcel, construirNombreArchivo } = require('./lib/procesarExcel');
+const { procesar } = require('./lib/procesarExcel');
 
 const app = express();
 const upload = multer({
@@ -23,14 +23,12 @@ app.post('/api/procesar', upload.single('archivo'), async (req, res) => {
       horaDesde: req.body.horaDesde,
       horaHasta: req.body.horaHasta,
     };
-    const bufferSalida = await procesarExcel(req.file.buffer, filtros);
-    const nombreArchivo = construirNombreArchivo(filtros);
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
-    res.send(Buffer.from(bufferSalida));
+    const { xlsxBuffer, nombreArchivo, vistaPrevia } = await procesar(req.file.buffer, filtros);
+    res.json({
+      nombreArchivo,
+      archivoBase64: Buffer.from(xlsxBuffer).toString('base64'),
+      vistaPrevia,
+    });
   } catch (err) {
     console.error(err);
     res.status(400).json({ error: err.message || 'Error al procesar el archivo.' });

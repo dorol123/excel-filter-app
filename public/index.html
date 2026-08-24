@@ -64,6 +64,28 @@
     <p id="mensaje" class="mensaje" role="status"></p>
   </main>
 
+  <section id="vista-previa" class="preview-card oculto">
+    <div class="preview-header">
+      <h2>Vista previa</h2>
+      <p class="preview-hint">
+        Seleccioná celdas haciendo click y arrastrando, después copiá con
+        <kbd>Ctrl</kbd>+<kbd>C</kbd> (o <kbd>Cmd</kbd>+<kbd>C</kbd>). Pegado en Excel, Word o
+        Gmail mantiene los colores y negrita; en WhatsApp se pega como texto plano, sin formato
+        (es una limitación de WhatsApp, no se puede evitar).
+      </p>
+    </div>
+
+    <div class="tabs" id="tabs" role="tablist"></div>
+
+    <div class="tabla-toolbar">
+      <button type="button" id="btn-seleccionar-todo" class="btn-secundario">
+        Seleccionar todas las celdas
+      </button>
+    </div>
+
+    <div class="tabla-wrap" id="tabla-wrap"></div>
+  </section>
+
   <script src="app.js"></script>
 </body>
 </html>
