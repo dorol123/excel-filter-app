@@ -210,6 +210,13 @@ h1 {
   margin-top: 12px;
 }
 
+.nota-atajo {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
 .btn-atajo {
   width: auto;
   margin-top: 0;

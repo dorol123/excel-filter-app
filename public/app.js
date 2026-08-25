@@ -341,21 +341,32 @@ function sumarDias(fechaISO, dias) {
   return fechaLocalISO(fecha);
 }
 
-const ATAJOS_HORARIO = {
-  '10-13': { horaDesde: '10:00', horaHasta: '13:00', diasHasta: 0 },
-  '13-16': { horaDesde: '13:00', horaHasta: '16:00', diasHasta: 0 },
-  '16-10': { horaDesde: '16:00', horaHasta: '10:00', diasHasta: 1 },
-};
+function esLunes(fechaISO) {
+  const [anio, mes, dia] = fechaISO.split('-').map(Number);
+  return new Date(anio, mes - 1, dia).getDay() === 1;
+}
 
 document.querySelectorAll('.btn-atajo').forEach((boton) => {
   boton.addEventListener('click', () => {
-    const atajo = ATAJOS_HORARIO[boton.dataset.atajo];
-    if (!atajo) return;
-    const base = fechaDesde.value || fechaLocalISO(new Date());
-    fechaDesde.value = base;
-    fechaHasta.value = atajo.diasHasta ? sumarDias(base, atajo.diasHasta) : base;
-    horaDesde.value = atajo.horaDesde;
-    horaHasta.value = atajo.horaHasta;
+    const tipo = boton.dataset.atajo;
+    const base = fechaHasta.value || fechaLocalISO(new Date());
+
+    if (tipo === '10-13' || tipo === '13-16') {
+      fechaDesde.value = base;
+      fechaHasta.value = base;
+      horaDesde.value = tipo === '10-13' ? '10:00' : '13:00';
+      horaHasta.value = tipo === '10-13' ? '13:00' : '16:00';
+    } else if (tipo === '16-10') {
+      // Desde las 16 del día hábil anterior hasta las 10 del día actual.
+      // Si el día actual es lunes, el día hábil anterior es el viernes
+      // (salvo feriados u otras excepciones, que hay que revisar a mano).
+      const diasAtras = esLunes(base) ? 3 : 1;
+      fechaDesde.value = sumarDias(base, -diasAtras);
+      fechaHasta.value = base;
+      horaDesde.value = '16:00';
+      horaHasta.value = '10:00';
+    }
+
     procesar({ descargar: false });
   });
 });
