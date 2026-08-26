@@ -96,6 +96,12 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
     if (i === colFecha) th.classList.add('columna-fecha');
     if (i === colCuenta) th.classList.add('columna-cuenta');
     trEncabezado.appendChild(th);
+    if (i === colFecha) {
+      const thHora = document.createElement('th');
+      thHora.textContent = 'Hora';
+      thHora.classList.add('columna-hora');
+      trEncabezado.appendChild(thHora);
+    }
   });
   thead.appendChild(trEncabezado);
   tabla.appendChild(thead);
@@ -104,7 +110,7 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
   if (filas.length === 0) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = encabezados.length;
+    td.colSpan = encabezados.length + 1;
     td.className = 'tabla-vacia';
     td.textContent = 'No hay operaciones en este rango.';
     tr.appendChild(td);
@@ -126,6 +132,12 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
           td.classList.add('destacado');
         }
         tr.appendChild(td);
+        if (i === colFecha) {
+          const tdHora = document.createElement('td');
+          tdHora.textContent = fila.hora || '';
+          tdHora.classList.add('columna-hora');
+          tr.appendChild(tdHora);
+        }
       });
       tbody.appendChild(tr);
     });
@@ -218,7 +230,9 @@ function descargarBlob(blob, nombreArchivo) {
 async function generarImagenDeTabla(tabla) {
   const envoltorio = document.createElement('div');
   envoltorio.style.cssText = 'position:fixed; left:-10000px; top:0; display:inline-block; padding:16px; background:#ffffff;';
-  envoltorio.appendChild(tabla.cloneNode(true));
+  const tablaClon = tabla.cloneNode(true);
+  tablaClon.querySelectorAll('.columna-hora').forEach((celda) => celda.remove());
+  envoltorio.appendChild(tablaClon);
   document.body.appendChild(envoltorio);
 
   try {

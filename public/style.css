@@ -35,6 +35,27 @@ body {
   padding: 24px;
 }
 
+.pagina-herramienta {
+  width: 100%;
+  max-width: 1400px;
+}
+
+.link-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 20px 0 0;
+  color: #dfe1fb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link-volver:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
 .contenedor {
   display: flex;
   flex-wrap: wrap;
@@ -43,7 +64,7 @@ body {
   gap: 20px;
   width: 100%;
   max-width: 1400px;
-  margin: 20px 0;
+  margin: 16px 0 20px;
 }
 
 .contenedor .card {
@@ -455,6 +476,12 @@ button:disabled {
   word-break: break-word;
 }
 
+.tabla-excel th.columna-hora,
+.tabla-excel td.columna-hora {
+  width: 64px;
+  white-space: nowrap;
+}
+
 .tabla-excel td.destacado {
   color: var(--error);
   font-weight: 700;
@@ -480,4 +507,79 @@ button:disabled {
     flex-basis: 100%;
     max-width: 560px;
   }
+}
+
+.menu-card {
+  margin-top: 48px;
+}
+
+.lista-herramientas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.tarjeta-herramienta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.tarjeta-herramienta:hover {
+  border-color: var(--navy);
+  background: var(--navy-tint);
+}
+
+.tarjeta-herramienta:active {
+  transform: translateY(1px);
+}
+
+.tarjeta-icono {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--navy);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tarjeta-icono svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tarjeta-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tarjeta-titulo {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--navy-dark);
+}
+
+.tarjeta-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.tarjeta-flecha {
+  flex-shrink: 0;
+  color: var(--navy);
+  font-size: 1.1rem;
 }

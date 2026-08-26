@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Procesador de Acreditaciones</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="pagina-herramienta">
+  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="contenedor" id="contenedor">
+  <main class="card">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor" fill-opacity="0.14" />
+          <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M12 3v18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35" />
+        </svg>
+      </span>
+      <div>
+        <h1>Procesador de Acreditaciones</h1>
+        <p class="subtitulo">
+          Subí el Excel de acreditaciones y descargá el archivo procesado: separado en
+          Pesos y Dólares, filtrado, ordenado por asesor y con los importes altos
+          resaltados.
+        </p>
+      </div>
+    </div>
+
+    <form id="form-procesar">
+      <label class="dropzone" id="dropzone" for="archivo">
+        <span id="texto-dropzone">Arrastrá el .xlsx acá o hacé click para elegirlo</span>
+      </label>
+      <input type="file" id="archivo" name="archivo" accept=".xlsx" hidden required />
+
+      <fieldset class="rango">
+        <legend>Rango a procesar (por defecto: hoy)</legend>
+
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Desde</span>
+            <input type="date" id="fecha-desde" name="fechaDesde" required />
+          </label>
+          <label class="rango-campo">
+            <span>Hora</span>
+            <input type="time" id="hora-desde" name="horaDesde" required />
+          </label>
+        </div>
+
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Hasta</span>
+            <input type="date" id="fecha-hasta" name="fechaHasta" required />
+          </label>
+          <label class="rango-campo">
+            <span>Hora</span>
+            <input type="time" id="hora-hasta" name="horaHasta" required />
+          </label>
+        </div>
+
+        <div class="rango-atajos">
+          <button type="button" class="btn-atajo" data-atajo="10-13">10 a 13</button>
+          <button type="button" class="btn-atajo" data-atajo="13-16">13 a 16</button>
+          <button type="button" class="btn-atajo" data-atajo="16-10">16 (día ant.) a 10</button>
+        </div>
+        <p class="nota-atajo">
+          El atajo "16 (día ant.) a 10" toma desde las 16 hs del día hábil anterior. Si hoy es
+          lunes, salta al viernes — verificá manualmente que esa fecha sea la correcta (por
+          feriados, etc.) antes de descargar.
+        </p>
+      </fieldset>
+
+      <button type="submit" id="btn-procesar" disabled>Descargar</button>
+    </form>
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+  </main>
+
+  <section id="vista-previa" class="preview-card oculto">
+    <div class="preview-header">
+      <h2>Vista previa</h2>
+    </div>
+
+    <div class="tabs" id="tabs" role="tablist"></div>
+
+    <div class="tabla-toolbar">
+      <label class="filtro-asesor">
+        Asesor
+        <select id="filtro-asesor"></select>
+      </label>
+      <div class="toolbar-botones">
+        <button type="button" id="btn-copiar-imagen" class="btn-secundario">
+          Copiar imagen
+        </button>
+        <button type="button" id="btn-seleccionar-todo" class="btn-secundario">
+          Seleccionar todas las celdas
+        </button>
+      </div>
+    </div>
+
+    <div class="tabla-wrap" id="tabla-wrap"></div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
