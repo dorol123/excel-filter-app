@@ -7,9 +7,9 @@ const visor = document.getElementById('cartera-visor');
 const btnVaciar = document.getElementById('btn-vaciar-cartera');
 const btnDescargar = document.getElementById('btn-descargar-presentacion');
 
-const ETIQUETA_MONEDA = { Pesos: 'Pesos', Dolares: 'Dólares' };
-const PREFIJO_MONEDA = { Pesos: '$', Dolares: 'US$' };
-const ORDEN_MONEDAS = ['Pesos', 'Dolares'];
+const ETIQUETA_MONEDA = { Pesos: 'Pesos', DolarMEP: 'Dólar MEP', DolarCable: 'Dólar Cable' };
+const PREFIJO_MONEDA = { Pesos: '$', DolarMEP: 'US$', DolarCable: 'US$' };
+const ORDEN_MONEDAS = ['Pesos', 'DolarMEP', 'DolarCable'];
 
 // Paleta categórica validada (dataviz): identidad de instrumento, no magnitud.
 const PALETA_INSTRUMENTOS = [
