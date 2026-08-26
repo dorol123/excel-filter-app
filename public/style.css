@@ -892,3 +892,119 @@ button:disabled {
   color: var(--navy-dark);
   font-variant-numeric: tabular-nums;
 }
+
+/* Gate de acceso para funciones en beta */
+
+body.beta-bloqueado {
+  overflow: hidden;
+}
+
+.beta-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(1100px 650px at 12% -15%, #4750c9 0%, transparent 55%),
+    radial-gradient(900px 700px at 105% 115%, #2a2f96 0%, transparent 60%),
+    linear-gradient(160deg, #0d0f45 0%, #171b6b 45%, #262c93 100%);
+}
+
+.beta-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 20px 45px -20px rgba(23, 27, 107, 0.4);
+}
+
+.beta-etiqueta {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--navy-tint);
+  color: var(--navy);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.beta-card h2 {
+  margin: 14px 0 8px;
+  font-size: 1.15rem;
+  color: var(--navy-dark);
+}
+
+.beta-card p {
+  margin: 0 0 20px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.beta-card form {
+  display: flex;
+  gap: 8px;
+}
+
+.beta-card input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.beta-card input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(23, 27, 107, 0.12);
+}
+
+.beta-card button {
+  width: auto;
+  margin-top: 0;
+  padding: 10px 16px;
+  background: var(--navy);
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.beta-card button:hover {
+  background: var(--accent-hover);
+}
+
+.beta-error {
+  margin: 12px 0 0 !important;
+  min-height: 1.2em;
+  font-size: 0.82rem !important;
+  color: var(--error) !important;
+}
+
+.badge-beta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--navy-tint);
+  color: var(--navy);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
