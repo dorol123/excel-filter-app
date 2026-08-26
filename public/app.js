@@ -70,13 +70,6 @@ function mostrarMensaje(texto, tipo) {
   mensaje.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
 
-function base64ABlob(base64, mime) {
-  const binario = atob(base64);
-  const bytes = new Uint8Array(binario.length);
-  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-}
-
 function formatImporte(importe) {
   return '$ ' + Math.round(importe).toLocaleString('es-AR');
 }
@@ -274,17 +267,16 @@ btnCopiarImagen.addEventListener('click', async () => {
   }
 });
 
-let ultimoArchivoBase64 = null;
+let ultimoArchivoBuffer = null;
 let ultimoNombreArchivo = null;
 let procesando = false;
 let timerReprocesar = null;
 
 function descargarUltimoArchivo() {
-  if (!ultimoArchivoBase64) return;
-  const blob = base64ABlob(
-    ultimoArchivoBase64,
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  );
+  if (!ultimoArchivoBuffer) return;
+  const blob = new Blob([ultimoArchivoBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   descargarBlob(blob, ultimoNombreArchivo || 'acreditaciones_procesado.xlsx');
 }
 
@@ -299,27 +291,22 @@ async function procesar({ descargar }) {
   mostrarMensaje('', null);
 
   try {
-    const formData = new FormData();
-    formData.append('archivo', archivo);
-    formData.append('fechaDesde', fechaDesde.value);
-    formData.append('fechaHasta', fechaHasta.value);
-    formData.append('horaDesde', horaDesde.value);
-    formData.append('horaHasta', horaHasta.value);
+    const filtros = {
+      fechaDesde: fechaDesde.value,
+      fechaHasta: fechaHasta.value,
+      horaDesde: horaDesde.value,
+      horaHasta: horaHasta.value,
+    };
 
-    const respuesta = await fetch('/api/procesar', {
-      method: 'POST',
-      body: formData,
-    });
+    // Todo el procesamiento corre acá mismo, en el navegador: el archivo
+    // nunca se sube a ningún servidor.
+    const arrayBuffer = await archivo.arrayBuffer();
+    const resultado = await procesarAcreditaciones(arrayBuffer, filtros);
 
-    const datos = await respuesta.json().catch(() => ({}));
-    if (!respuesta.ok) {
-      throw new Error(datos.error || 'No se pudo procesar el archivo.');
-    }
+    ultimoArchivoBuffer = resultado.xlsxBuffer;
+    ultimoNombreArchivo = resultado.nombreArchivo;
 
-    ultimoArchivoBase64 = datos.archivoBase64;
-    ultimoNombreArchivo = datos.nombreArchivo;
-
-    vistaPreviaActual = datos.vistaPrevia;
+    vistaPreviaActual = resultado.vistaPrevia;
     hojaActiva = null;
     renderVistaPrevia();
 

@@ -240,6 +240,14 @@ h1 {
   color: var(--muted);
 }
 
+.nota-privacidad {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--success);
+  font-weight: 600;
+}
+
 .btn-atajo {
   width: auto;
   margin-top: 0;

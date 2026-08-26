@@ -1,7 +1,83 @@
-const ExcelJS = require('exceljs');
-const { repararBuffer } = require('./repararXlsx');
+/*
+ * Motor de procesamiento del Excel de Acreditaciones.
+ * Corre 100% en el navegador (usa los ExcelJS y JSZip vendorizados en
+ * vendor/): el archivo nunca se sube a ningún servidor.
+ */
 
-// Columnas que se descartan del archivo original.
+// ---------- Reparación del XML (filas/celdas sin atributo r="...") ----------
+// Algunos exportadores (como el que genera este reporte) escriben las filas y
+// celdas del XML sin los atributos r="..." (referencia de fila/columna).
+// Eso es válido según el estándar OOXML (la posición se infiere por orden),
+// pero el parser de exceljs no lo soporta y falla con "Invalid row number in
+// model". Esta función reconstruye esos atributos antes de pasarle el
+// archivo a exceljs. Solo contempla filas "normales" (<row>...</row>), que
+// es el único caso que genera este reporte.
+
+function indiceAColumna(indice) {
+  let letra = '';
+  let n = indice;
+  while (n > 0) {
+    const resto = (n - 1) % 26;
+    letra = String.fromCharCode(65 + resto) + letra;
+    n = Math.floor((n - 1) / 26);
+  }
+  return letra;
+}
+
+function columnaAIndice(letra) {
+  let n = 0;
+  for (const ch of letra) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
+}
+
+function repararCeldasDeFila(contenido, rowIndex) {
+  let colIndex = 0;
+  return contenido.replace(/<c(?=[\s/>])([^>]*?)(\/?)>/g, (match, atributos, autocierre) => {
+    if (/\br="/.test(atributos)) {
+      const m = atributos.match(/r="([A-Z]+)\d+"/);
+      if (m) colIndex = columnaAIndice(m[1]);
+      return match;
+    }
+    colIndex += 1;
+    const letra = indiceAColumna(colIndex);
+    return `<c r="${letra}${rowIndex}"${atributos}${autocierre}>`;
+  });
+}
+
+function repararSheetXml(xml) {
+  let rowIndex = 0;
+  return xml.replace(/<row([^>]*)>([\s\S]*?)<\/row>/g, (match, atributos, contenido) => {
+    rowIndex += 1;
+    let nuevosAtributos = atributos;
+    const m = atributos.match(/\br="(\d+)"/);
+    if (m) {
+      rowIndex = parseInt(m[1], 10);
+    } else {
+      nuevosAtributos = ` r="${rowIndex}"${atributos}`;
+    }
+    const contenidoReparado = repararCeldasDeFila(contenido, rowIndex);
+    return `<row${nuevosAtributos}>${contenidoReparado}</row>`;
+  });
+}
+
+async function repararBuffer(arrayBuffer) {
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const rutasHojas = Object.keys(zip.files).filter((ruta) =>
+    /^xl\/worksheets\/sheet\d+\.xml$/.test(ruta)
+  );
+
+  for (const ruta of rutasHojas) {
+    const xml = await zip.file(ruta).async('string');
+    if (/<row>|<row\s+(?!r=")/.test(xml)) {
+      zip.file(ruta, repararSheetXml(xml));
+    }
+  }
+
+  return zip.generateAsync({ type: 'arraybuffer' });
+}
+
+// ---------- Procesamiento (filtrado, orden, formato) ----------
+
 const COLUMNAS_A_QUITAR = [
   'Fecha Carga',
   'Hora Carga',
@@ -34,11 +110,6 @@ function fechaISOLocalDeHoy() {
   return `${anio}-${mes}-${dia}`;
 }
 
-/**
- * Calcula el rango de fecha/hora a partir de los filtros recibidos del
- * formulario (fechaDesde/fechaHasta en formato YYYY-MM-DD, horaDesde/horaHasta
- * en formato HH:MM). Si no se especifica algo, por defecto es "hoy" completo.
- */
 function obtenerRangoFiltro({ fechaDesde, fechaHasta, horaDesde, horaHasta } = {}) {
   const hoyISO = fechaISOLocalDeHoy();
   const fDesde = fechaDesde || hoyISO;
@@ -184,9 +255,9 @@ function serializarFilas(filas, umbralDestacar) {
   }));
 }
 
-async function procesarDatos(buffer, filtros = {}) {
+async function procesarDatos(arrayBuffer, filtros = {}) {
   const { inicio, fin } = obtenerRangoFiltro(filtros);
-  const bufferReparado = await repararBuffer(buffer);
+  const bufferReparado = await repararBuffer(arrayBuffer);
   const workbookOrigen = new ExcelJS.Workbook();
   await workbookOrigen.xlsx.load(bufferReparado);
   const hojaOrigen = workbookOrigen.worksheets[0];
@@ -265,12 +336,12 @@ async function procesarDatos(buffer, filtros = {}) {
 }
 
 /**
- * Procesa el archivo y devuelve tanto el .xlsx final (listo para descargar)
- * como los mismos datos en JSON, para poder mostrar una vista previa
- * editable/copiable en la página sin tener que volver a leer el archivo.
+ * Procesa el archivo (100% en el navegador) y devuelve tanto el .xlsx final
+ * (como ArrayBuffer, listo para descargar) como los mismos datos en JSON,
+ * para mostrar la vista previa sin tener que volver a leer el archivo.
  */
-async function procesar(buffer, filtros = {}) {
-  const datos = await procesarDatos(buffer, filtros);
+async function procesarAcreditaciones(arrayBuffer, filtros = {}) {
+  const datos = await procesarDatos(arrayBuffer, filtros);
   const {
     encabezadosSalida,
     colImporteSalida,
@@ -299,5 +370,3 @@ async function procesar(buffer, filtros = {}) {
     },
   };
 }
-
-module.exports = { procesar };
