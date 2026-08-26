@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Presentador de Carteras</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="pagina-herramienta">
+  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="contenedor contenedor-carteras" id="contenedor">
+  <main class="card">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 17l5-6 4 4 5-7 4 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M3 20h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Presentador de Carteras</h1>
+        <p class="subtitulo">
+          Cargá los instrumentos de la cartera; se van a ir mostrando en el visor de la derecha
+          a medida que los agregues.
+        </p>
+      </div>
+    </div>
+
+    <form id="form-instrumento">
+      <label class="rango-campo">
+        <span>Nombre del instrumento</span>
+        <input type="text" id="nombre-instrumento" placeholder="Ej: Bono AL30" required />
+      </label>
+
+      <label class="rango-campo">
+        <span>Valor</span>
+        <input type="number" id="valor-instrumento" min="0" step="any" placeholder="0" required />
+      </label>
+
+      <label class="rango-campo">
+        <span>Moneda</span>
+        <select id="moneda-instrumento">
+          <option value="Pesos">Pesos</option>
+          <option value="Dolares">Dólares</option>
+        </select>
+      </label>
+
+      <button type="submit">Agregar instrumento</button>
+    </form>
+
+    <p id="mensaje-cartera" class="mensaje" role="status"></p>
+  </main>
+
+  <section class="preview-card">
+    <div class="preview-header">
+      <h2>Vista de la cartera</h2>
+    </div>
+
+    <div class="toolbar-derecha">
+      <button type="button" id="btn-vaciar-cartera" class="btn-secundario">Vaciar todo</button>
+      <button type="button" id="btn-descargar-presentacion" class="btn-primario">
+        Descargar presentación
+      </button>
+    </div>
+
+    <div class="cartera-visor" id="cartera-visor"></div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="carteras.js"></script>
+</body>
+</html>
