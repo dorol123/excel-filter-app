@@ -153,17 +153,54 @@ async function procesarCarteraPdf(arrayBuffer) {
   };
 }
 
+// Mismos colores que usa el visor en pantalla (ver .tabla-excel en style.css).
+const COLOR_NAVY = 'FF171B6B';
+const COLOR_BORDE = 'FFDFE2F0';
+const COLOR_FILA_PAR = 'FFF7F8FD';
+const COLOR_TEXTO = 'FF1B1F2B';
+
 /**
- * Arma el .xlsx (100% en el navegador) con el mismo detalle que se ve en
- * pantalla. `categoriasSeleccionadas` (si se pasa) filtra qué categorías se
- * incluyen; el % Cartera se sigue calculando sobre el total de la cartera
- * completa, no sólo sobre lo exportado.
+ * Qué tan "caliente" (oscuro) se ve un activo según qué porción de la
+ * cartera representa, relativo a la posición más grande de la tabla (0 a
+ * 1). La usan tanto la tabla en pantalla como el Excel exportado, para que
+ * el degradé de Valor Actual se vea igual en los dos lados.
+ */
+function calcularIntensidadCalor(porcentaje, porcentajeMaximo) {
+  return porcentajeMaximo > 0 ? Math.sqrt(porcentaje / porcentajeMaximo) : 0;
+}
+
+function bordeFinoExcel() {
+  const estilo = { style: 'thin', color: { argb: COLOR_BORDE } };
+  return { top: estilo, left: estilo, bottom: estilo, right: estilo };
+}
+
+/** Mezcla el navy de la app con blanco según la intensidad, como si tuviera transparencia sobre fondo blanco. */
+function colorCalorExcel(porcentaje, porcentajeMaximo) {
+  const intensidad = calcularIntensidadCalor(porcentaje, porcentajeMaximo);
+  const alpha = 0.06 + intensidad * 0.74;
+  const mezclar = (canalNavy) =>
+    Math.round(canalNavy * alpha + 255 * (1 - alpha))
+      .toString(16)
+      .padStart(2, '0');
+  const argb = `FF${mezclar(23)}${mezclar(27)}${mezclar(107)}`.toUpperCase();
+  return { argb, textoBlanco: intensidad > 0.55 };
+}
+
+/**
+ * Arma el .xlsx (100% en el navegador) con un formato parecido al visor en
+ * pantalla: encabezado azul marino, filas alternadas y el mismo degradé de
+ * calor en Valor Actual. `categoriasSeleccionadas` (si se pasa) filtra qué
+ * categorías se incluyen; el % Cartera y el degradé se siguen calculando
+ * sobre el total y el máximo de la cartera completa, no sólo de lo
+ * exportado, para que el color de cada especie sea el mismo que en
+ * pantalla.
  */
 async function exportarCarteraExcel(datos, categoriasSeleccionadas) {
   const workbook = new ExcelJS.Workbook();
   const hoja = workbook.addWorksheet('Cartera');
   const simbolo = datos.moneda === 'USD' ? 'US$' : '$';
 
+  const porcentajeMaximo = Math.max(...datos.activos.map((a) => a.valorActual / datos.totalCartera), 0);
   const activos = categoriasSeleccionadas
     ? datos.activos.filter((a) => categoriasSeleccionadas.includes(a.categoria))
     : datos.activos;
@@ -172,12 +209,16 @@ async function exportarCarteraExcel(datos, categoriasSeleccionadas) {
   }
 
   const encabezados = ['Categoría', 'Especie', 'Descripción', 'Cantidad', 'Precio', 'Valor Actual', '% Cartera'];
-  hoja.addRow(encabezados);
-  hoja.getRow(1).font = { bold: true };
+  const filaEncabezado = hoja.addRow(encabezados);
+  filaEncabezado.eachCell((celda) => {
+    celda.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_NAVY } };
+    celda.border = bordeFinoExcel();
+  });
   hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: encabezados.length } };
   hoja.views = [{ state: 'frozen', ySplit: 1 }];
 
-  for (const activo of activos) {
+  activos.forEach((activo, indiceFila) => {
     const porcentaje = datos.totalCartera > 0 ? activo.valorActual / datos.totalCartera : 0;
     const fila = hoja.addRow([
       activo.categoria,
@@ -191,7 +232,20 @@ async function exportarCarteraExcel(datos, categoriasSeleccionadas) {
     fila.getCell(5).numFmt = `"${simbolo}" #,##0.00`;
     fila.getCell(6).numFmt = `"${simbolo}" #,##0`;
     fila.getCell(7).numFmt = '0.00%';
-  }
+
+    const esFilaPar = indiceFila % 2 === 1;
+    const { argb: colorCalorArgb, textoBlanco } = colorCalorExcel(porcentaje, porcentajeMaximo);
+    fila.eachCell((celda, numeroColumna) => {
+      celda.border = bordeFinoExcel();
+      celda.font = { color: { argb: COLOR_TEXTO } };
+      if (numeroColumna === 6) {
+        celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorCalorArgb } };
+        celda.font = { bold: true, color: { argb: textoBlanco ? 'FFFFFFFF' : COLOR_TEXTO } };
+      } else if (esFilaPar) {
+        celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_FILA_PAR } };
+      }
+    });
+  });
 
   encabezados.forEach((encabezado, i) => {
     hoja.getColumn(i + 1).width = Math.max(14, String(encabezado).length + 4);

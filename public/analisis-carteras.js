@@ -46,9 +46,9 @@ function colorCategoria(indice) {
   return PALETA_CATEGORIAS[indice % PALETA_CATEGORIAS.length];
 }
 
-/** Fondo cada vez más oscuro cuanto mayor es la porción de la cartera. */
+/** Fondo cada vez más oscuro cuanto mayor es la porción de la cartera (misma fórmula que en el Excel exportado). */
 function colorCalor(porcentaje, porcentajeMaximo) {
-  const intensidad = porcentajeMaximo > 0 ? Math.sqrt(porcentaje / porcentajeMaximo) : 0;
+  const intensidad = calcularIntensidadCalor(porcentaje, porcentajeMaximo);
   const alpha = 0.06 + intensidad * 0.74;
   return { fondo: `rgba(23, 27, 107, ${alpha.toFixed(3)})`, textoClaro: intensidad > 0.55 };
 }
@@ -303,12 +303,15 @@ function renderTablas(datos) {
       celdaValor.style.color = textoClaro ? '#ffffff' : 'inherit';
       celdaValor.style.fontWeight = '600';
 
-      fila.addEventListener('click', () => {
-        const seleccionada = !seleccionEspecies.has(indice);
-        if (seleccionada) seleccionEspecies.add(indice);
-        else seleccionEspecies.delete(indice);
-        fila.classList.toggle('fila-seleccionada', seleccionada);
-        actualizarPopupSeleccion();
+      fila.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // no arrastrar texto mientras se seleccionan filas
+        arrastrandoSeleccion = true;
+        modoArrastreSeleccion = seleccionEspecies.has(indice) ? 'quitar' : 'poner';
+        aplicarSeleccionFila(fila, indice, modoArrastreSeleccion === 'poner');
+      });
+      fila.addEventListener('mouseenter', () => {
+        if (!arrastrandoSeleccion) return;
+        aplicarSeleccionFila(fila, indice, modoArrastreSeleccion === 'poner');
       });
 
       tbody.appendChild(fila);
@@ -323,6 +326,21 @@ function renderTablas(datos) {
 // ---------- Selección de especies y suma ----------
 
 let seleccionEspecies = new Set();
+let arrastrandoSeleccion = false;
+let modoArrastreSeleccion = null; // 'poner' | 'quitar'
+
+/** Aplica (o saca) la selección de una fila, sin importar si viene de un click o de arrastrar el mouse por encima. */
+function aplicarSeleccionFila(fila, indice, seleccionar) {
+  if (seleccionar) seleccionEspecies.add(indice);
+  else seleccionEspecies.delete(indice);
+  fila.classList.toggle('fila-seleccionada', seleccionar);
+  actualizarPopupSeleccion();
+}
+
+document.addEventListener('mouseup', () => {
+  arrastrandoSeleccion = false;
+  modoArrastreSeleccion = null;
+});
 
 const popupSeleccion = document.getElementById('popup-seleccion');
 const popupSeleccionTitulo = document.getElementById('popup-seleccion-titulo');
