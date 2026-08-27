@@ -1099,3 +1099,76 @@ body.beta-bloqueado {
   font-size: 0.92rem;
   color: var(--navy-dark);
 }
+
+/* Análisis de Carteras */
+
+.contenedor .preview-card-ancho {
+  flex: 1 1 900px;
+  max-width: 1320px;
+}
+
+.analisis-cuerpo {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.analisis-columna-tablas {
+  flex: 3 1 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.analisis-columna-torta {
+  flex: 1 1 260px;
+  min-width: 240px;
+  max-width: 320px;
+}
+
+.analisis-torta-tarjeta {
+  position: sticky;
+  top: 16px;
+  background: var(--navy-tint);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.analisis-leyenda {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analisis-leyenda-fila {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+}
+
+.analisis-leyenda-nombre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--navy-dark);
+}
+
+.analisis-leyenda-valor {
+  color: var(--muted);
+  padding-left: 16px;
+}
+
+@media (max-width: 900px) {
+  .contenedor .preview-card-ancho {
+    max-width: 560px;
+  }
+}
