@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparador de ONs</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script src="beta-gate.js" data-clave="000" data-id="ons"></script>
+  <div class="pagina-herramienta">
+  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="contenedor" id="contenedor">
+  <main class="card">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 19V9M10 19V5M16 19v-7M22 19V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Comparador de ONs<span class="badge-beta">Beta</span></h1>
+        <p class="subtitulo">
+          Subí el Monitor de ONs y compará por TIR, duration y calificación, o pedí
+          alternativas a partir de una ON puntual.
+        </p>
+        <p class="nota-privacidad">
+          Todo el procesamiento ocurre en tu navegador: el archivo nunca se sube a ningún
+          servidor.
+        </p>
+      </div>
+    </div>
+
+    <label class="dropzone" id="dropzone" for="archivo">
+      <span id="texto-dropzone">Arrastrá el Monitor de ONs (.xlsm) acá o hacé click para elegirlo</span>
+    </label>
+    <input type="file" id="archivo" name="archivo" accept=".xlsm,.xlsx" hidden />
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+  </main>
+
+  <section id="resultado" class="preview-card oculto">
+    <div class="preview-header">
+      <h2>ONs cargadas</h2>
+      <p class="nota-atajo" id="nota-actualizacion"></p>
+    </div>
+
+    <div class="tabs" id="tabs-principal" role="tablist">
+      <button type="button" class="tab activa" data-tab="ranking">Ranking por características</button>
+      <button type="button" class="tab" data-tab="sugerencias">Sugerencias por ticker</button>
+    </div>
+
+    <div id="panel-ranking" class="panel-ons">
+      <fieldset class="rango">
+        <legend>Filtros</legend>
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Moneda</span>
+            <select id="ranking-moneda">
+              <option value="">Cualquiera</option>
+              <option value="MEP">Dólar MEP</option>
+              <option value="Cable">Dólar Cable</option>
+            </select>
+          </label>
+          <label class="rango-campo">
+            <span>Calificación mínima</span>
+            <select id="ranking-calificacion">
+              <option value="">Cualquiera</option>
+            </select>
+          </label>
+        </div>
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Duration mínima (años)</span>
+            <input type="number" id="ranking-duration-min" min="0" step="0.1" placeholder="Sin mínimo" />
+          </label>
+          <label class="rango-campo">
+            <span>Duration máxima (años)</span>
+            <input type="number" id="ranking-duration-max" min="0" step="0.1" placeholder="Sin máximo" />
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="tabla-wrap" id="tabla-ranking"></div>
+
+      <details id="detalle-excluidos-ranking" class="detalle-excluidos oculto">
+        <summary id="resumen-excluidos-ranking"></summary>
+        <p class="nota-atajo">
+          Estos bonos no tienen ofertas activas en el feed de mercado: su TIR puede no ser
+          confiable, así que se dejan afuera del ranking.
+        </p>
+        <div class="tabla-wrap" id="tabla-excluidos-ranking"></div>
+      </details>
+    </div>
+
+    <div id="panel-sugerencias" class="panel-ons oculto">
+      <fieldset class="rango">
+        <legend>ON de referencia</legend>
+        <div class="rango-fila">
+          <label class="rango-campo campo-ticker">
+            <span>Ticker</span>
+            <input type="text" id="sugerencias-ticker" list="lista-tickers" placeholder="Ej: RUCDO" autocomplete="off" />
+            <datalist id="lista-tickers"></datalist>
+          </label>
+        </div>
+      </fieldset>
+
+      <div id="referencia-info" class="referencia-info oculto"></div>
+      <p id="referencia-mensaje" class="mensaje"></p>
+
+      <div id="controles-sugerencia" class="oculto">
+        <div class="tabs modo-sugerencia" id="modo-sugerencia" role="tablist">
+          <button type="button" class="tab activa" data-modo="subirTir">Aumentar TIR</button>
+          <button type="button" class="tab" data-modo="bajarDuration">Reducir duration</button>
+        </div>
+
+        <fieldset class="rango">
+          <legend>Tolerancia</legend>
+          <div class="rango-fila">
+            <label class="rango-campo" id="campo-tolerancia-duration">
+              <span>Duration adicional permitida (años)</span>
+              <input type="number" id="tolerancia-duration" min="0" step="0.1" value="1" />
+            </label>
+            <label class="rango-campo oculto" id="campo-tolerancia-tir">
+              <span>TIR a resignar permitida (p.p.)</span>
+              <input type="number" id="tolerancia-tir" min="0" step="0.1" value="1" />
+            </label>
+            <label class="rango-campo">
+              <span>Calificación</span>
+              <select id="calificacion-similar">
+                <option value="no">Igual</option>
+                <option value="si">Igual o similar (±1 nivel)</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="tabla-wrap" id="tabla-sugerencias"></div>
+      </div>
+    </div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="ons-motor.js"></script>
+  <script src="ons.js"></script>
+</body>
+</html>

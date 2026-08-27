@@ -1008,3 +1008,33 @@ body.beta-bloqueado {
   letter-spacing: 0.05em;
   vertical-align: middle;
 }
+
+.panel-ons {
+  margin-top: 14px;
+}
+
+.referencia-info {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--navy-tint);
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.detalle-excluidos {
+  margin-top: 14px;
+}
+
+.detalle-excluidos summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.detalle-excluidos .tabla-wrap {
+  margin-top: 8px;
+}
