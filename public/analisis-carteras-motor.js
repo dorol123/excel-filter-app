@@ -153,11 +153,23 @@ async function procesarCarteraPdf(arrayBuffer) {
   };
 }
 
-/** Arma el .xlsx (100% en el navegador) con el mismo detalle que se ve en pantalla. */
-async function exportarCarteraExcel(datos) {
+/**
+ * Arma el .xlsx (100% en el navegador) con el mismo detalle que se ve en
+ * pantalla. `categoriasSeleccionadas` (si se pasa) filtra qué categorías se
+ * incluyen; el % Cartera se sigue calculando sobre el total de la cartera
+ * completa, no sólo sobre lo exportado.
+ */
+async function exportarCarteraExcel(datos, categoriasSeleccionadas) {
   const workbook = new ExcelJS.Workbook();
   const hoja = workbook.addWorksheet('Cartera');
   const simbolo = datos.moneda === 'USD' ? 'US$' : '$';
+
+  const activos = categoriasSeleccionadas
+    ? datos.activos.filter((a) => categoriasSeleccionadas.includes(a.categoria))
+    : datos.activos;
+  if (activos.length === 0) {
+    throw new Error('Elegí al menos una categoría para exportar.');
+  }
 
   const encabezados = ['Categoría', 'Especie', 'Descripción', 'Cantidad', 'Precio', 'Valor Actual', '% Cartera'];
   hoja.addRow(encabezados);
@@ -165,7 +177,7 @@ async function exportarCarteraExcel(datos) {
   hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: encabezados.length } };
   hoja.views = [{ state: 'frozen', ySplit: 1 }];
 
-  for (const activo of datos.activos) {
+  for (const activo of activos) {
     const porcentaje = datos.totalCartera > 0 ? activo.valorActual / datos.totalCartera : 0;
     const fila = hoja.addRow([
       activo.categoria,

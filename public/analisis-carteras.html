@@ -47,8 +47,16 @@
     </div>
 
     <div class="toolbar-derecha">
-      <button type="button" id="btn-exportar" class="btn-primario">Exportar a Excel</button>
+      <div class="exportar-menu" id="exportar-menu">
+        <button type="button" id="btn-exportar" class="btn-primario">Exportar a Excel ▾</button>
+        <div class="exportar-panel oculto" id="exportar-panel">
+          <p class="exportar-panel-titulo">Categorías a incluir</p>
+          <div class="exportar-panel-checks" id="exportar-checks"></div>
+          <button type="button" id="btn-exportar-confirmar" class="btn-primario">Descargar</button>
+        </div>
+      </div>
     </div>
+    <p id="exportar-mensaje" class="mensaje"></p>
 
     <div class="analisis-cuerpo" id="cuerpo-analisis">
       <div class="analisis-columna-tablas" id="columna-tablas"></div>

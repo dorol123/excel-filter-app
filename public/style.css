@@ -797,6 +797,7 @@ button:disabled {
   color: var(--navy-dark);
   line-height: 1.25;
   padding: 0 8px;
+  pointer-events: none;
 }
 
 .seccion-moneda {
@@ -1165,6 +1166,93 @@ body.beta-bloqueado {
 .analisis-leyenda-valor {
   color: var(--muted);
   padding-left: 16px;
+}
+
+.analisis-leyenda-fila {
+  cursor: pointer;
+  padding: 4px 6px;
+  margin: 0 -6px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.analisis-leyenda-fila.resaltado {
+  background: #ffffff;
+  box-shadow: 0 4px 10px -4px rgba(23, 27, 107, 0.35);
+}
+
+.analisis-torta-tarjeta .dona-envoltorio {
+  width: 160px;
+  height: 160px;
+}
+
+.analisis-torta-tarjeta .dona-centro {
+  font-size: 0.8rem;
+}
+
+.analisis-torta-sector {
+  transform: translate(0, 0);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  cursor: pointer;
+}
+
+.analisis-torta-sector:hover,
+.analisis-torta-sector.resaltado {
+  transform: translate(var(--dx), var(--dy));
+}
+
+.analisis-torta-sector.atenuado {
+  opacity: 0.45;
+}
+
+.exportar-menu {
+  position: relative;
+}
+
+.exportar-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 20px 45px -20px rgba(23, 27, 107, 0.35), 0 2px 6px rgba(23, 27, 107, 0.1);
+  z-index: 20;
+}
+
+.exportar-panel-titulo {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.exportar-panel-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.exportar-panel-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.exportar-panel-check input {
+  accent-color: var(--navy);
+}
+
+.exportar-panel .btn-primario {
+  width: 100%;
 }
 
 @media (max-width: 900px) {

@@ -94,44 +94,89 @@ inputArchivo.addEventListener('change', () => manejarArchivo(inputArchivo.files[
 
 // ---------- Donut de clasificación ----------
 
+const DONA_VIEWBOX = 160;
+const DONA_CENTRO = DONA_VIEWBOX / 2;
+const DONA_RADIO_EXTERNO = 68;
+const DONA_RADIO_INTERNO = 42;
+const DONA_DISTANCIA_DESPRENDIDO = 9;
+
+function puntoEnCirculo(radio, anguloRad) {
+  return [DONA_CENTRO + radio * Math.sin(anguloRad), DONA_CENTRO - radio * Math.cos(anguloRad)];
+}
+
+/** Path de un sector de dona (anillo) entre dos ángulos, en radianes desde arriba, sentido horario. */
+function pathSectorDona(anguloInicio, anguloFin) {
+  const [x1, y1] = puntoEnCirculo(DONA_RADIO_EXTERNO, anguloInicio);
+  const [x2, y2] = puntoEnCirculo(DONA_RADIO_EXTERNO, anguloFin);
+  const [x3, y3] = puntoEnCirculo(DONA_RADIO_INTERNO, anguloFin);
+  const [x4, y4] = puntoEnCirculo(DONA_RADIO_INTERNO, anguloInicio);
+  const arcoGrande = anguloFin - anguloInicio > Math.PI ? 1 : 0;
+  return [
+    `M ${x1} ${y1}`,
+    `A ${DONA_RADIO_EXTERNO} ${DONA_RADIO_EXTERNO} 0 ${arcoGrande} 1 ${x2} ${y2}`,
+    `L ${x3} ${y3}`,
+    `A ${DONA_RADIO_INTERNO} ${DONA_RADIO_INTERNO} 0 ${arcoGrande} 0 ${x4} ${y4}`,
+    'Z',
+  ].join(' ');
+}
+
+/**
+ * Arma la dona como un sector <path> por categoría (no círculos apilados),
+ * cada uno con su propio desplazamiento (--dx/--dy) hacia afuera para poder
+ * "desprenderlo" un poco con CSS al pasar el mouse. Cada sector y su fila
+ * en la leyenda comparten data-categoria para poder resaltarlos juntos.
+ */
 function construirDona(items, total) {
-  const RADIO = 49;
-  const CIRC = 2 * Math.PI * RADIO;
   const svgNS = 'http://www.w3.org/2000/svg';
 
   const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', '150');
-  svg.setAttribute('height', '150');
-  svg.setAttribute('viewBox', '0 0 120 120');
+  svg.setAttribute('width', String(DONA_VIEWBOX));
+  svg.setAttribute('height', String(DONA_VIEWBOX));
+  svg.setAttribute('viewBox', `0 0 ${DONA_VIEWBOX} ${DONA_VIEWBOX}`);
 
   const fondo = document.createElementNS(svgNS, 'circle');
-  fondo.setAttribute('cx', '60');
-  fondo.setAttribute('cy', '60');
-  fondo.setAttribute('r', String(RADIO));
+  fondo.setAttribute('cx', String(DONA_CENTRO));
+  fondo.setAttribute('cy', String(DONA_CENTRO));
+  fondo.setAttribute('r', String((DONA_RADIO_EXTERNO + DONA_RADIO_INTERNO) / 2));
   fondo.setAttribute('fill', 'none');
   fondo.setAttribute('stroke', '#e4e7f7');
-  fondo.setAttribute('stroke-width', '14');
+  fondo.setAttribute('stroke-width', String(DONA_RADIO_EXTERNO - DONA_RADIO_INTERNO));
   svg.appendChild(fondo);
 
-  let acumulado = 0;
+  let anguloAcumulado = 0;
   items.forEach((item) => {
     const fraccion = total > 0 ? item.total / total : 0;
-    const largo = fraccion * CIRC;
-    const arco = document.createElementNS(svgNS, 'circle');
-    arco.setAttribute('cx', '60');
-    arco.setAttribute('cy', '60');
-    arco.setAttribute('r', String(RADIO));
-    arco.setAttribute('fill', 'none');
-    arco.setAttribute('stroke', item.color);
-    arco.setAttribute('stroke-width', '14');
-    arco.setAttribute('stroke-dasharray', `${largo} ${CIRC}`);
-    arco.setAttribute('stroke-dashoffset', String(-acumulado));
-    arco.setAttribute('transform', 'rotate(-90 60 60)');
-    svg.appendChild(arco);
-    acumulado += largo;
+    const anguloInicio = anguloAcumulado;
+    const anguloFin = anguloAcumulado + fraccion * 2 * Math.PI;
+    anguloAcumulado = anguloFin;
+    if (fraccion <= 0) return;
+
+    const anguloMedio = (anguloInicio + anguloFin) / 2;
+    const dx = Math.sin(anguloMedio) * DONA_DISTANCIA_DESPRENDIDO;
+    const dy = -Math.cos(anguloMedio) * DONA_DISTANCIA_DESPRENDIDO;
+
+    const sector = document.createElementNS(svgNS, 'path');
+    sector.setAttribute('d', pathSectorDona(anguloInicio, anguloFin));
+    sector.setAttribute('fill', item.color);
+    sector.setAttribute('class', 'analisis-torta-sector');
+    sector.dataset.categoria = item.nombre;
+    sector.style.setProperty('--dx', `${dx}px`);
+    sector.style.setProperty('--dy', `${dy}px`);
+    svg.appendChild(sector);
   });
 
   return svg;
+}
+
+function resaltarCategoria(nombreCategoria) {
+  columnaTorta.querySelectorAll('.analisis-torta-sector').forEach((sector) => {
+    const activo = sector.dataset.categoria === nombreCategoria;
+    sector.classList.toggle('resaltado', activo);
+    sector.classList.toggle('atenuado', !activo && Boolean(nombreCategoria));
+  });
+  columnaTorta.querySelectorAll('.analisis-leyenda-fila').forEach((fila) => {
+    fila.classList.toggle('resaltado', fila.dataset.categoria === nombreCategoria);
+  });
 }
 
 function renderTorta(datos) {
@@ -156,6 +201,11 @@ function renderTorta(datos) {
   centro.textContent = formatMonto(datos.totalCartera, datos.moneda, 0);
   envoltorio.appendChild(centro);
 
+  envoltorio.querySelectorAll('.analisis-torta-sector').forEach((sector) => {
+    sector.addEventListener('mouseenter', () => resaltarCategoria(sector.dataset.categoria));
+    sector.addEventListener('mouseleave', () => resaltarCategoria(null));
+  });
+
   tarjeta.appendChild(envoltorio);
 
   const leyenda = document.createElement('div');
@@ -163,6 +213,9 @@ function renderTorta(datos) {
   categoriasConColor.forEach((c) => {
     const fila = document.createElement('div');
     fila.className = 'analisis-leyenda-fila';
+    fila.dataset.categoria = c.nombre;
+    fila.addEventListener('mouseenter', () => resaltarCategoria(c.nombre));
+    fila.addEventListener('mouseleave', () => resaltarCategoria(null));
 
     const nombre = document.createElement('span');
     nombre.className = 'analisis-leyenda-nombre';
@@ -255,9 +308,16 @@ function renderCartera(datos) {
 
   renderTablas(datos);
   renderTorta(datos);
+  poblarChecksExportar(datos);
 }
 
 // ---------- Exportar a Excel ----------
+
+const exportarMenu = document.getElementById('exportar-menu');
+const exportarPanel = document.getElementById('exportar-panel');
+const exportarChecks = document.getElementById('exportar-checks');
+const btnExportarConfirmar = document.getElementById('btn-exportar-confirmar');
+const exportarMensaje = document.getElementById('exportar-mensaje');
 
 function nombreArchivoSlug(texto) {
   return texto
@@ -268,15 +328,45 @@ function nombreArchivoSlug(texto) {
     .toLowerCase();
 }
 
-btnExportar.addEventListener('click', async () => {
+function poblarChecksExportar(datos) {
+  exportarChecks.innerHTML = '';
+  const categoriasEnOrden = [...new Set(datos.activos.map((a) => a.categoria))];
+  categoriasEnOrden.forEach((categoria) => {
+    const label = document.createElement('label');
+    label.className = 'exportar-panel-check';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = categoria;
+    input.checked = true;
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(categoria));
+    exportarChecks.appendChild(label);
+  });
+}
+
+function categoriasSeleccionadas() {
+  return [...exportarChecks.querySelectorAll('input[type=checkbox]:checked')].map((i) => i.value);
+}
+
+btnExportar.addEventListener('click', (e) => {
+  e.stopPropagation();
+  exportarPanel.classList.toggle('oculto');
+});
+
+document.addEventListener('click', (e) => {
+  if (!exportarMenu.contains(e.target)) exportarPanel.classList.add('oculto');
+});
+
+btnExportarConfirmar.addEventListener('click', async () => {
   if (!datosCartera) return;
 
-  const textoOriginal = btnExportar.textContent;
-  btnExportar.disabled = true;
-  btnExportar.textContent = 'Generando…';
+  const textoOriginal = btnExportarConfirmar.textContent;
+  btnExportarConfirmar.disabled = true;
+  btnExportarConfirmar.textContent = 'Generando\u2026';
+  mostrarMensaje(exportarMensaje, '', '');
 
   try {
-    const buffer = await exportarCarteraExcel(datosCartera);
+    const buffer = await exportarCarteraExcel(datosCartera, categoriasSeleccionadas());
     const nombreArchivo = datosCartera.nombre
       ? `cartera-${nombreArchivoSlug(datosCartera.nombre)}.xlsx`
       : 'cartera.xlsx';
@@ -290,11 +380,12 @@ btnExportar.addEventListener('click', async () => {
     enlace.click();
     enlace.remove();
     URL.revokeObjectURL(url);
+    exportarPanel.classList.add('oculto');
   } catch (error) {
     console.error(error);
-    mostrarMensaje('No se pudo exportar a Excel: ' + error.message, 'error');
+    mostrarMensaje(exportarMensaje, error.message || 'No se pudo exportar a Excel.', 'error');
   } finally {
-    btnExportar.disabled = false;
-    btnExportar.textContent = textoOriginal;
+    btnExportarConfirmar.disabled = false;
+    btnExportarConfirmar.textContent = textoOriginal;
   }
 });
