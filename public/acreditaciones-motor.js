@@ -161,19 +161,13 @@ function parseFechaHoraCarga(fechaCarga, horaCarga) {
 }
 
 /**
- * Ordena por asesor: primero los asesores con mayor importe total en su
- * conjunto, y dentro de cada asesor sus filas de mayor a menor importe.
+ * Ordena por asesor: los asesores van alfabéticamente, y dentro de cada
+ * asesor sus filas de mayor a menor importe.
  */
 function ordenarPorAsesor(filas) {
-  const totalesPorAsesor = new Map();
-  for (const fila of filas) {
-    const acumulado = totalesPorAsesor.get(fila.asesor) || 0;
-    totalesPorAsesor.set(fila.asesor, acumulado + fila.importe);
-  }
   return [...filas].sort((a, b) => {
-    const totalA = totalesPorAsesor.get(a.asesor);
-    const totalB = totalesPorAsesor.get(b.asesor);
-    if (totalB !== totalA) return totalB - totalA;
+    const comparacionAsesor = String(a.asesor).localeCompare(String(b.asesor), 'es');
+    if (comparacionAsesor !== 0) return comparacionAsesor;
     return b.importe - a.importe;
   });
 }
