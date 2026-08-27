@@ -317,15 +317,27 @@ function rankearBonos(bonos, filtros = {}) {
 
 // ---------- Sugerencias a partir de un ticker ----------
 
+/** TIR por año de duration: una medida simple de "rendimiento por riesgo". */
+function tirPorDuration(bono) {
+  return Number.isFinite(bono.duration) && bono.duration > 0 ? bono.tir / bono.duration : null;
+}
+
 /**
- * A partir de una ON de referencia, busca alternativas de la misma moneda y
- * calificación (igual, o similar si se permite), confiables (ver
- * calcularMotivoExclusion), en dos modos:
- *  - "subirTir": TIR mayor a la de referencia, permitiendo algo más de
- *    duration (hasta toleranciaDuration años de más).
- *  - "bajarDuration": duration menor a la de referencia, resignando como
- *    máximo toleranciaTir puntos de TIR.
- * Ordena por TIR descendente en ambos casos (la mejor opción primero).
+ * A partir de una ON de referencia, busca alternativas de la misma moneda,
+ * confiables (ver calcularMotivoExclusion), en cuatro modos:
+ *  - "subirTir": misma calificación (o similar), TIR mayor a la de
+ *    referencia, permitiendo algo más de duration (hasta toleranciaDuration
+ *    años de más). Ordena por TIR descendente.
+ *  - "bajarDuration": misma calificación (o similar), duration menor a la
+ *    de referencia, resignando como máximo toleranciaTir puntos de TIR.
+ *    Ordena por duration ascendente.
+ *  - "subirCalificacion": calificación mejor a la de referencia (sin
+ *    importar si "similar" está tildado), duration parecida (dentro de
+ *    toleranciaDuration en cualquier sentido) y resignando como máximo
+ *    toleranciaTir puntos de TIR. Ordena por TIR descendente.
+ *  - "mejorRelacion": misma calificación (o similar), con mejor relación
+ *    TIR/duration que la de referencia (más rendimiento por cada año de
+ *    riesgo). Ordena por esa relación, descendente.
  */
 function sugerirAlternativas(bonos, tickerReferencia, modo, opciones = {}) {
   const {
@@ -350,25 +362,43 @@ function sugerirAlternativas(bonos, tickerReferencia, modo, opciones = {}) {
     return calificacionSimilar ? Math.abs(indice - indiceRef) <= 1 : indice === indiceRef;
   };
 
-  let candidatos = bonos
-    .filter(
-      (b) =>
-        b.ticker !== referencia.ticker &&
-        b.moneda === referencia.moneda &&
-        mismaFamiliaDeRiesgo(b)
-    )
+  const base = bonos
+    .filter((b) => b.ticker !== referencia.ticker && b.moneda === referencia.moneda)
     .filter((b) => !calcularMotivoExclusion(b, umbralBrecha));
 
+  let candidatos;
+
   if (modo === 'subirTir') {
-    candidatos = candidatos.filter(
-      (b) => b.tir > referencia.tir && b.duration <= referencia.duration + toleranciaDuration
+    candidatos = base.filter(
+      (b) =>
+        mismaFamiliaDeRiesgo(b) &&
+        b.tir > referencia.tir &&
+        b.duration <= referencia.duration + toleranciaDuration
     );
     candidatos.sort((a, b) => b.tir - a.tir);
   } else if (modo === 'bajarDuration') {
-    candidatos = candidatos.filter(
-      (b) => b.duration < referencia.duration && b.tir >= referencia.tir - toleranciaTir
+    candidatos = base.filter(
+      (b) => mismaFamiliaDeRiesgo(b) && b.duration < referencia.duration && b.tir >= referencia.tir - toleranciaTir
     );
     candidatos.sort((a, b) => a.duration - b.duration);
+  } else if (modo === 'subirCalificacion') {
+    candidatos = base.filter(
+      (b) =>
+        indiceCalificacion(b.calificacion) < indiceRef &&
+        Math.abs(b.duration - referencia.duration) <= toleranciaDuration &&
+        b.tir >= referencia.tir - toleranciaTir
+    );
+    candidatos.sort((a, b) => b.tir - a.tir);
+  } else if (modo === 'mejorRelacion') {
+    const ratioRef = tirPorDuration(referencia);
+    if (ratioRef === null) {
+      throw new Error(`No se puede calcular TIR/duration para "${referencia.ticker}" (duration inválida).`);
+    }
+    candidatos = base
+      .filter((b) => mismaFamiliaDeRiesgo(b))
+      .map((b) => ({ ...b, tirPorDuration: tirPorDuration(b) }))
+      .filter((b) => b.tirPorDuration !== null && b.tirPorDuration > ratioRef);
+    candidatos.sort((a, b) => b.tirPorDuration - a.tirPorDuration);
   } else {
     throw new Error(`Modo desconocido: ${modo}`);
   }

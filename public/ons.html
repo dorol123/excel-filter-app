@@ -128,20 +128,22 @@
         <div class="tabs modo-sugerencia" id="modo-sugerencia" role="tablist">
           <button type="button" class="tab activa" data-modo="subirTir">Aumentar TIR</button>
           <button type="button" class="tab" data-modo="bajarDuration">Reducir duration</button>
+          <button type="button" class="tab" data-modo="subirCalificacion">Mejorar calificación</button>
+          <button type="button" class="tab" data-modo="mejorRelacion">Mejor TIR/duration</button>
         </div>
 
         <fieldset class="rango">
           <legend>Tolerancia</legend>
           <div class="rango-fila">
             <label class="rango-campo" id="campo-tolerancia-duration">
-              <span>Duration adicional permitida (años)</span>
+              <span id="etiqueta-tolerancia-duration">Duration adicional permitida (años)</span>
               <input type="number" id="tolerancia-duration" min="0" step="0.1" value="1" />
             </label>
             <label class="rango-campo oculto" id="campo-tolerancia-tir">
               <span>TIR a resignar permitida (p.p.)</span>
               <input type="number" id="tolerancia-tir" min="0" step="0.1" value="1" />
             </label>
-            <label class="rango-campo">
+            <label class="rango-campo" id="campo-calificacion-similar">
               <span>Calificación</span>
               <select id="calificacion-similar">
                 <option value="no">Igual</option>
@@ -149,6 +151,7 @@
               </select>
             </label>
           </div>
+          <p class="nota-atajo" id="nota-modo-sugerencia"></p>
           <div class="rango-fila">
             <label class="rango-campo">
               <span>Brecha Bid/Último máxima admitida (%)</span>

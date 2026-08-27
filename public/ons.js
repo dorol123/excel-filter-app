@@ -290,11 +290,56 @@ const campoToleranciaDuration = document.getElementById('campo-tolerancia-durati
 const campoToleranciaTir = document.getElementById('campo-tolerancia-tir');
 const inputToleranciaDuration = document.getElementById('tolerancia-duration');
 const inputToleranciaTir = document.getElementById('tolerancia-tir');
+const campoCalificacionSimilar = document.getElementById('campo-calificacion-similar');
 const selectCalificacionSimilar = document.getElementById('calificacion-similar');
 const inputUmbralBrechaSugerencias = document.getElementById('sugerencias-umbral-brecha');
 const tablaSugerencias = document.getElementById('tabla-sugerencias');
+const etiquetaToleranciaDuration = document.getElementById('etiqueta-tolerancia-duration');
+const notaModoSugerencia = document.getElementById('nota-modo-sugerencia');
+
+const CONFIG_MODOS = {
+  subirTir: {
+    mostrarToleranciaDuration: true,
+    mostrarToleranciaTir: false,
+    mostrarCalificacion: true,
+    etiquetaToleranciaDuration: 'Duration adicional permitida (años)',
+    nota: 'Misma calificación (o similar), buscando más TIR a cambio de algo más de duration.',
+  },
+  bajarDuration: {
+    mostrarToleranciaDuration: false,
+    mostrarToleranciaTir: true,
+    mostrarCalificacion: true,
+    etiquetaToleranciaDuration: '',
+    nota: 'Misma calificación (o similar), buscando menos duration resignando algo de TIR.',
+  },
+  subirCalificacion: {
+    mostrarToleranciaDuration: true,
+    mostrarToleranciaTir: true,
+    mostrarCalificacion: false,
+    etiquetaToleranciaDuration: 'Diferencia de duration admitida (años)',
+    nota: 'Calificación mejor a la de esta ON, con duration parecida, resignando como máximo la TIR indicada.',
+  },
+  mejorRelacion: {
+    mostrarToleranciaDuration: false,
+    mostrarToleranciaTir: false,
+    mostrarCalificacion: true,
+    etiquetaToleranciaDuration: '',
+    nota: 'Misma calificación (o similar), con mejor TIR por cada año de duration que esta ON (más rendimiento por riesgo).',
+  },
+};
 
 let modoActual = 'subirTir';
+
+function aplicarConfigModo(modo) {
+  const config = CONFIG_MODOS[modo];
+  campoToleranciaDuration.classList.toggle('oculto', !config.mostrarToleranciaDuration);
+  campoToleranciaTir.classList.toggle('oculto', !config.mostrarToleranciaTir);
+  campoCalificacionSimilar.classList.toggle('oculto', !config.mostrarCalificacion);
+  if (config.etiquetaToleranciaDuration) {
+    etiquetaToleranciaDuration.textContent = config.etiquetaToleranciaDuration;
+  }
+  notaModoSugerencia.textContent = config.nota;
+}
 
 function umbralBrechaSugerencias() {
   const valor = parseFloat(inputUmbralBrechaSugerencias.value);
@@ -408,10 +453,11 @@ modoSugerencia.addEventListener('click', (e) => {
   modoSugerencia.querySelectorAll('.tab').forEach((t) => t.classList.remove('activa'));
   boton.classList.add('activa');
   modoActual = boton.dataset.modo;
-  campoToleranciaDuration.classList.toggle('oculto', modoActual !== 'subirTir');
-  campoToleranciaTir.classList.toggle('oculto', modoActual !== 'bajarDuration');
+  aplicarConfigModo(modoActual);
   renderSugerencias();
 });
+
+aplicarConfigModo(modoActual);
 
 [
   inputTicker,
