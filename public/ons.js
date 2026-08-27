@@ -1,18 +1,36 @@
 /*
  * UI del Comparador de ONs. Toda la lectura del archivo pasa por
  * ons-motor.js (100% en el navegador); acá sólo se muestran los datos.
+ *
+ * Los datos cargados se guardan en localStorage (STORAGE_KEY) para no tener
+ * que volver a subir el archivo en cada visita — nunca salen del navegador,
+ * es el mismo mecanismo que sessionStorage en beta-gate.js, sólo que
+ * persiste entre sesiones.
  */
 
+const STORAGE_KEY = 'ons-datos-v1';
+const DOS_HORAS_MS = 2 * 60 * 60 * 1000;
+
 let bonosCargados = [];
+let actualizadoAActual = null;
+let guardadoEn = null;
 
 const ETIQUETA_MONEDA = { MEP: 'Dólar MEP', Cable: 'Dólar Cable' };
+const ETIQUETA_MOTIVO = {
+  sin_liquidez: 'Sin ofertas activas',
+  brecha_alta: 'Brecha Bid/Último alta',
+};
 
 const dropzone = document.getElementById('dropzone');
 const textoDropzone = document.getElementById('texto-dropzone');
 const inputArchivo = document.getElementById('archivo');
+const inputArchivoActualizar = document.getElementById('archivo-actualizar');
 const mensaje = document.getElementById('mensaje');
 const resultado = document.getElementById('resultado');
 const notaActualizacion = document.getElementById('nota-actualizacion');
+const tarjetaCarga = document.getElementById('tarjeta-carga');
+const barraActualizacion = document.getElementById('barra-actualizacion');
+const badgeActualizado = document.getElementById('badge-actualizado');
 
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
@@ -34,12 +52,70 @@ function formatPrecio(valor) {
   return valor.toFixed(3);
 }
 
+// ---------- Persistencia local (localStorage) ----------
+
+function guardarEnStorage() {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bonos: bonosCargados, actualizadoA: actualizadoAActual, guardadoEn })
+    );
+  } catch (error) {
+    console.error('No se pudo guardar en localStorage:', error);
+  }
+}
+
+function leerDeStorage() {
+  try {
+    const crudo = localStorage.getItem(STORAGE_KEY);
+    if (!crudo) return null;
+    const datos = JSON.parse(crudo);
+    if (!Array.isArray(datos.bonos) || datos.bonos.length === 0) return null;
+    return datos;
+  } catch (error) {
+    console.error('No se pudo leer localStorage:', error);
+    return null;
+  }
+}
+
+function formatHaceTiempo(timestampMs) {
+  const segundos = Math.floor((Date.now() - timestampMs) / 1000);
+  if (segundos < 60) return 'hace instantes';
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `hace ${minutos} minuto${minutos === 1 ? '' : 's'}`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} hora${horas === 1 ? '' : 's'}`;
+  const dias = Math.floor(horas / 24);
+  return `hace ${dias} día${dias === 1 ? '' : 's'}`;
+}
+
+function actualizarBadgeFrescura() {
+  if (!guardadoEn) {
+    barraActualizacion.classList.add('oculto');
+    return;
+  }
+  barraActualizacion.classList.remove('oculto');
+  const vencido = Date.now() - guardadoEn > DOS_HORAS_MS;
+  badgeActualizado.textContent = `Actualizado ${formatHaceTiempo(guardadoEn)}`;
+  badgeActualizado.classList.toggle('vencido', vencido);
+  badgeActualizado.title = new Date(guardadoEn).toLocaleString('es-AR');
+}
+
+setInterval(actualizarBadgeFrescura, 30000);
+
+// ---------- Carga y procesamiento del archivo ----------
+
+function mostrarVistaCargada() {
+  tarjetaCarga.classList.add('oculto');
+  resultado.classList.remove('oculto');
+  actualizarBadgeFrescura();
+}
+
 async function manejarArchivo(archivo) {
   if (!archivo) return;
   textoDropzone.textContent = archivo.name;
   dropzone.classList.add('con-archivo');
   mostrarMensaje('Procesando…');
-  resultado.classList.add('oculto');
 
   try {
     const arrayBuffer = await archivo.arrayBuffer();
@@ -49,18 +125,20 @@ async function manejarArchivo(archivo) {
       return;
     }
     bonosCargados = bonos;
-    notaActualizacion.textContent = actualizadoA
-      ? `Precios: ${actualizadoA}`
-      : '';
+    actualizadoAActual = actualizadoA;
+    guardadoEn = Date.now();
+    guardarEnStorage();
+
+    notaActualizacion.textContent = actualizadoA ? `Datos de mercado: ${actualizadoA}` : '';
 
     poblarCalificaciones();
     poblarTickers();
     renderRanking();
-    resultado.classList.remove('oculto');
+    mostrarVistaCargada();
 
-    const iliquidos = bonos.filter((b) => !b.liquido).length;
+    const excluidos = bonos.filter((b) => calcularMotivoExclusion(b, umbralBrechaRanking())).length;
     mostrarMensaje(
-      `${bonos.length} ONs cargadas (${iliquidos} sin ofertas activas en el feed de mercado).`,
+      `${bonos.length} ONs cargadas (${excluidos} sin TIR confiable: sin ofertas o con brecha Bid/Último alta).`,
       'exito'
     );
   } catch (error) {
@@ -85,6 +163,10 @@ dropzone.addEventListener('drop', (e) => {
   }
 });
 inputArchivo.addEventListener('change', () => manejarArchivo(inputArchivo.files[0]));
+inputArchivoActualizar.addEventListener('change', () => {
+  manejarArchivo(inputArchivoActualizar.files[0]);
+  inputArchivoActualizar.value = '';
+});
 
 // ---------- Tabs principales ----------
 
@@ -108,10 +190,16 @@ const selectMoneda = document.getElementById('ranking-moneda');
 const selectCalificacion = document.getElementById('ranking-calificacion');
 const inputDurationMin = document.getElementById('ranking-duration-min');
 const inputDurationMax = document.getElementById('ranking-duration-max');
+const inputUmbralBrechaRanking = document.getElementById('ranking-umbral-brecha');
 const tablaRanking = document.getElementById('tabla-ranking');
 const detalleExcluidos = document.getElementById('detalle-excluidos-ranking');
 const resumenExcluidos = document.getElementById('resumen-excluidos-ranking');
 const tablaExcluidos = document.getElementById('tabla-excluidos-ranking');
+
+function umbralBrechaRanking() {
+  const valor = parseFloat(inputUmbralBrechaRanking.value);
+  return Number.isFinite(valor) ? valor / 100 : UMBRAL_BRECHA_BID_DEFECTO;
+}
 
 function poblarCalificaciones() {
   const presentes = new Set(bonosCargados.map((b) => b.calificacion).filter(Boolean));
@@ -125,7 +213,7 @@ function poblarCalificaciones() {
   }
 }
 
-function filasTablaBonos(bonos) {
+function filasTablaBonos(bonos, { mostrarMotivo = false } = {}) {
   if (bonos.length === 0) {
     return '<p class="tabla-vacia">No hay ONs que cumplan estos filtros.</p>';
   }
@@ -141,6 +229,7 @@ function filasTablaBonos(bonos) {
         <td class="columna-importe">${formatPorcentaje(b.tir)}</td>
         <td class="columna-importe">${formatDuration(b.duration)}</td>
         <td class="columna-importe">${formatPrecio(b.paridad)}</td>
+        ${mostrarMotivo ? `<td>${motivoTexto(b)}</td>` : ''}
       </tr>`
     )
     .join('');
@@ -150,10 +239,19 @@ function filasTablaBonos(bonos) {
         <tr>
           <th>Ticker</th><th>Emisor</th><th>Moneda</th><th>Calif.</th><th>Ley</th>
           <th>TIR</th><th>Duration</th><th>Paridad</th>
+          ${mostrarMotivo ? '<th>Motivo</th>' : ''}
         </tr>
       </thead>
       <tbody>${filas}</tbody>
     </table>`;
+}
+
+function motivoTexto(bono) {
+  const etiqueta = ETIQUETA_MOTIVO[bono.motivoExclusion] || bono.motivoExclusion;
+  if (bono.motivoExclusion === 'brecha_alta') {
+    return `${etiqueta} (${formatPorcentaje(bono.brechaBid)})`;
+  }
+  return etiqueta;
 }
 
 function renderRanking() {
@@ -162,21 +260,22 @@ function renderRanking() {
     calificacionMinima: selectCalificacion.value || undefined,
     durationMin: inputDurationMin.value === '' ? undefined : parseFloat(inputDurationMin.value),
     durationMax: inputDurationMax.value === '' ? undefined : parseFloat(inputDurationMax.value),
+    umbralBrecha: umbralBrechaRanking(),
   };
-  const { resultados, excluidosPorLiquidez } = rankearBonos(bonosCargados, filtros);
+  const { resultados, excluidos } = rankearBonos(bonosCargados, filtros);
   tablaRanking.innerHTML = filasTablaBonos(resultados);
 
-  if (excluidosPorLiquidez.length > 0) {
+  if (excluidos.length > 0) {
     detalleExcluidos.classList.remove('oculto');
-    resumenExcluidos.textContent = `Ver ${excluidosPorLiquidez.length} bono(s) sin liquidez excluidos del ranking`;
-    tablaExcluidos.innerHTML = filasTablaBonos(excluidosPorLiquidez);
+    resumenExcluidos.textContent = `Ver ${excluidos.length} bono(s) excluidos del ranking (TIR poco confiable)`;
+    tablaExcluidos.innerHTML = filasTablaBonos(excluidos, { mostrarMotivo: true });
   } else {
     detalleExcluidos.classList.add('oculto');
   }
 }
 
-[selectMoneda, selectCalificacion, inputDurationMin, inputDurationMax].forEach((el) =>
-  el.addEventListener('input', renderRanking)
+[selectMoneda, selectCalificacion, inputDurationMin, inputDurationMax, inputUmbralBrechaRanking].forEach(
+  (el) => el.addEventListener('input', renderRanking)
 );
 
 // ---------- Sugerencias por ticker ----------
@@ -192,9 +291,15 @@ const campoToleranciaTir = document.getElementById('campo-tolerancia-tir');
 const inputToleranciaDuration = document.getElementById('tolerancia-duration');
 const inputToleranciaTir = document.getElementById('tolerancia-tir');
 const selectCalificacionSimilar = document.getElementById('calificacion-similar');
+const inputUmbralBrechaSugerencias = document.getElementById('sugerencias-umbral-brecha');
 const tablaSugerencias = document.getElementById('tabla-sugerencias');
 
 let modoActual = 'subirTir';
+
+function umbralBrechaSugerencias() {
+  const valor = parseFloat(inputUmbralBrechaSugerencias.value);
+  return Number.isFinite(valor) ? valor / 100 : UMBRAL_BRECHA_BID_DEFECTO;
+}
 
 function poblarTickers() {
   listaTickers.innerHTML = bonosCargados
@@ -208,14 +313,14 @@ function bonoPorTicker(ticker) {
 }
 
 function renderReferencia(bono) {
-  const avisoLiquidez = bono.liquido
-    ? ''
-    : ' <strong>— sin ofertas activas: su TIR puede no ser confiable.</strong>';
+  const aviso = bono.motivoExclusion
+    ? ` <strong>— ${motivoTexto(bono)}: su TIR puede no ser confiable.</strong>`
+    : '';
   referenciaInfo.classList.remove('oculto');
   referenciaInfo.innerHTML = `
     <strong>${bono.ticker}</strong> — ${bono.emisor ?? ''} ·
     ${ETIQUETA_MONEDA[bono.moneda] || bono.moneda || ''} · Calificación ${bono.calificacion ?? '—'} ·
-    TIR ${formatPorcentaje(bono.tir)} · Duration ${formatDuration(bono.duration)}${avisoLiquidez}`;
+    TIR ${formatPorcentaje(bono.tir)} · Duration ${formatDuration(bono.duration)}${aviso}`;
 }
 
 function renderTablaSugerencias(referencia, candidatos) {
@@ -260,25 +365,31 @@ function renderSugerencias() {
     return;
   }
 
-  const referencia = bonoPorTicker(ticker);
-  if (!referencia) {
+  const referenciaBase = bonoPorTicker(ticker);
+  if (!referenciaBase) {
     referenciaInfo.classList.add('oculto');
     controlesSugerencia.classList.add('oculto');
     mensajeEn(referenciaMensaje, 'No se encontró esa ON. Elegí un ticker de la lista.', 'error');
     return;
   }
   mensajeEn(referenciaMensaje, '', '');
-  renderReferencia(referencia);
   controlesSugerencia.classList.remove('oculto');
 
   const opciones = {
     toleranciaDuration: parseFloat(inputToleranciaDuration.value) || 0,
     toleranciaTir: (parseFloat(inputToleranciaTir.value) || 0) / 100,
     calificacionSimilar: selectCalificacionSimilar.value === 'si',
+    umbralBrecha: umbralBrechaSugerencias(),
   };
 
   try {
-    const { candidatos } = sugerirAlternativas(bonosCargados, referencia.ticker, modoActual, opciones);
+    const { referencia, candidatos } = sugerirAlternativas(
+      bonosCargados,
+      referenciaBase.ticker,
+      modoActual,
+      opciones
+    );
+    renderReferencia(referencia);
     renderTablaSugerencias(referencia, candidatos);
   } catch (error) {
     tablaSugerencias.innerHTML = '';
@@ -302,6 +413,26 @@ modoSugerencia.addEventListener('click', (e) => {
   renderSugerencias();
 });
 
-[inputTicker, inputToleranciaDuration, inputToleranciaTir, selectCalificacionSimilar].forEach((el) =>
-  el.addEventListener('input', renderSugerencias)
-);
+[
+  inputTicker,
+  inputToleranciaDuration,
+  inputToleranciaTir,
+  selectCalificacionSimilar,
+  inputUmbralBrechaSugerencias,
+].forEach((el) => el.addEventListener('input', renderSugerencias));
+
+// ---------- Carga inicial: datos guardados en este navegador ----------
+
+(function inicializar() {
+  const guardado = leerDeStorage();
+  if (!guardado) return;
+  bonosCargados = guardado.bonos;
+  actualizadoAActual = guardado.actualizadoA;
+  guardadoEn = guardado.guardadoEn;
+
+  notaActualizacion.textContent = actualizadoAActual ? `Datos de mercado: ${actualizadoAActual}` : '';
+  poblarCalificaciones();
+  poblarTickers();
+  renderRanking();
+  mostrarVistaCargada();
+})();

@@ -134,6 +134,14 @@ const COL = {
 
 const TEXTO_SIN_MERCADO = 'record could not be found';
 
+// Brecha entre el precio de la última operación y la mejor punta de compra
+// (Bid) a partir de la cual se considera que la TIR mostrada (calculada
+// sobre la última operación) ya no es confiable — puede ser una operación
+// vieja o fuera de mercado. El archivo no trae una punta de venta (Offer/
+// Ask) para las ONs, sólo Bid y Last, así que esto es la mejor señal de
+// "¿esta TIR se puede conseguir hoy?" que se puede armar con esos datos.
+const UMBRAL_BRECHA_BID_DEFECTO = 0.03;
+
 // Escala de calificación local (de mejor a peor). Lo que no está en esta
 // lista se ordena al final, sin romper nada.
 const ESCALA_CALIFICACION = [
@@ -154,8 +162,10 @@ function valorCelda(celda) {
   return v;
 }
 
-function esTextoSinMercado(valor) {
-  return typeof valor === 'string' && valor.toLowerCase().includes(TEXTO_SIN_MERCADO);
+function esValorSinMercado(valor) {
+  if (typeof valor === 'string') return valor.toLowerCase().includes(TEXTO_SIN_MERCADO);
+  // un precio o bid en 0 tampoco es una cotización real.
+  return valor === 0;
 }
 
 /** RIC del feed en crudo a partir del ticker: p.ej. "RUCDO" -> "ARRUCDD1=BA". */
@@ -208,10 +218,18 @@ function extraerBonos(workbook) {
     const ric = ricDesdeTicker(ticker);
     const filaPrecio = preciosPorRic.get(ric);
     let liquido = false;
+    let precioBid = null;
+    let precioUltimo = null;
+    let brechaBid = null;
     if (filaPrecio) {
       const bid = valorCelda(filaPrecio.getCell(9));
       const last = valorCelda(filaPrecio.getCell(3));
-      liquido = !esTextoSinMercado(bid) && !esTextoSinMercado(last);
+      liquido = !esValorSinMercado(bid) && !esValorSinMercado(last);
+      if (liquido) {
+        precioBid = bid;
+        precioUltimo = last;
+        brechaBid = (last - bid) / last;
+      }
     }
 
     bonos.push({
@@ -231,6 +249,9 @@ function extraerBonos(workbook) {
       paridad: valorCelda(fila.getCell(COL.paridad)),
       ric,
       liquido,
+      precioBid,
+      precioUltimo,
+      brechaBid,
     });
   }
 
@@ -243,15 +264,38 @@ async function procesarOns(arrayBuffer) {
   return extraerBonos(workbook);
 }
 
+// ---------- Confiabilidad de la TIR mostrada ----------
+
+/**
+ * Por qué no usar la TIR de un bono tal cual la muestra Corporativos, o
+ * null si no hay motivo (se puede confiar en ella):
+ *  - "sin_liquidez": no hay ninguna oferta de mercado detrás (no está el
+ *    RIC en el feed, o Bid/Last vienen sin dato) — la TIR mostrada es de
+ *    fantasía.
+ *  - "brecha_alta": hay una punta de compra (Bid), pero está lejos del
+ *    precio de la última operación — señal de que esa última operación
+ *    puede estar vieja o fuera de mercado, así que la TIR calculada sobre
+ *    ella tampoco es del todo confiable.
+ * El archivo no trae una punta de venta (Offer/Ask) para las ONs, sólo
+ * Bid y Last, así que no se puede calcular una "TIR de compra" exacta;
+ * esto es la aproximación más honesta posible con esos dos datos.
+ */
+function calcularMotivoExclusion(bono, umbralBrecha = UMBRAL_BRECHA_BID_DEFECTO) {
+  if (!bono.liquido) return 'sin_liquidez';
+  if (Math.abs(bono.brechaBid) > umbralBrecha) return 'brecha_alta';
+  return null;
+}
+
 // ---------- Ranking por características ----------
 
 /**
- * Filtra y ordena por TIR descendente. Los bonos ilíquidos que cumplen el
- * resto de los filtros se devuelven aparte (nunca mezclados en el ranking),
- * porque su TIR mostrada no es confiable al no haber ofertas de mercado.
+ * Filtra y ordena por TIR descendente. Los bonos sin liquidez o con una
+ * brecha grande entre Bid y la última operación (ver calcularMotivoExclusion)
+ * que cumplen el resto de los filtros se devuelven aparte (nunca mezclados
+ * en el ranking), porque su TIR mostrada no es confiable.
  */
 function rankearBonos(bonos, filtros = {}) {
-  const { moneda, calificacionMinima, durationMin, durationMax } = filtros;
+  const { moneda, calificacionMinima, durationMin, durationMax, umbralBrecha } = filtros;
   const indiceMinimo = calificacionMinima ? indiceCalificacion(calificacionMinima) : Infinity;
 
   const cumpleFiltros = (bono) => {
@@ -262,18 +306,21 @@ function rankearBonos(bonos, filtros = {}) {
     return true;
   };
 
-  const candidatos = bonos.filter(cumpleFiltros);
-  const resultados = candidatos.filter((b) => b.liquido).sort((a, b) => b.tir - a.tir);
-  const excluidosPorLiquidez = candidatos.filter((b) => !b.liquido).sort((a, b) => b.tir - a.tir);
+  const candidatos = bonos
+    .filter(cumpleFiltros)
+    .map((b) => ({ ...b, motivoExclusion: calcularMotivoExclusion(b, umbralBrecha) }));
+  const resultados = candidatos.filter((b) => !b.motivoExclusion).sort((a, b) => b.tir - a.tir);
+  const excluidos = candidatos.filter((b) => b.motivoExclusion).sort((a, b) => b.tir - a.tir);
 
-  return { resultados, excluidosPorLiquidez };
+  return { resultados, excluidos };
 }
 
 // ---------- Sugerencias a partir de un ticker ----------
 
 /**
  * A partir de una ON de referencia, busca alternativas de la misma moneda y
- * calificación (igual, o similar si se permite), líquidas, en dos modos:
+ * calificación (igual, o similar si se permite), confiables (ver
+ * calcularMotivoExclusion), en dos modos:
  *  - "subirTir": TIR mayor a la de referencia, permitiendo algo más de
  *    duration (hasta toleranciaDuration años de más).
  *  - "bajarDuration": duration menor a la de referencia, resignando como
@@ -285,12 +332,17 @@ function sugerirAlternativas(bonos, tickerReferencia, modo, opciones = {}) {
     toleranciaDuration = 1,
     toleranciaTir = 0.01,
     calificacionSimilar = false,
+    umbralBrecha,
   } = opciones;
 
-  const referencia = bonos.find((b) => b.ticker === tickerReferencia);
-  if (!referencia) {
+  const referenciaOriginal = bonos.find((b) => b.ticker === tickerReferencia);
+  if (!referenciaOriginal) {
     throw new Error(`No se encontró la ON "${tickerReferencia}" en el archivo.`);
   }
+  const referencia = {
+    ...referenciaOriginal,
+    motivoExclusion: calcularMotivoExclusion(referenciaOriginal, umbralBrecha),
+  };
 
   const indiceRef = indiceCalificacion(referencia.calificacion);
   const mismaFamiliaDeRiesgo = (bono) => {
@@ -298,13 +350,14 @@ function sugerirAlternativas(bonos, tickerReferencia, modo, opciones = {}) {
     return calificacionSimilar ? Math.abs(indice - indiceRef) <= 1 : indice === indiceRef;
   };
 
-  let candidatos = bonos.filter(
-    (b) =>
-      b.ticker !== referencia.ticker &&
-      b.liquido &&
-      b.moneda === referencia.moneda &&
-      mismaFamiliaDeRiesgo(b)
-  );
+  let candidatos = bonos
+    .filter(
+      (b) =>
+        b.ticker !== referencia.ticker &&
+        b.moneda === referencia.moneda &&
+        mismaFamiliaDeRiesgo(b)
+    )
+    .filter((b) => !calcularMotivoExclusion(b, umbralBrecha));
 
   if (modo === 'subirTir') {
     candidatos = candidatos.filter(

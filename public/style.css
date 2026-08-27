@@ -44,11 +44,35 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 20px 0 0;
   color: #dfe1fb;
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
+}
+
+.barra-superior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 0;
+}
+
+.barra-actualizacion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-actualizado {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #dfe1fb;
+}
+
+.badge-actualizado.vencido {
+  color: #ff9b9b;
 }
 
 .link-volver:hover {

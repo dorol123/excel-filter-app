@@ -9,9 +9,16 @@
 <body>
   <script src="beta-gate.js" data-clave="000" data-id="ons"></script>
   <div class="pagina-herramienta">
-  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="barra-superior">
+    <a href="index.html" class="link-volver">← Menú</a>
+    <div id="barra-actualizacion" class="barra-actualizacion oculto">
+      <span id="badge-actualizado" class="badge-actualizado"></span>
+      <label class="btn-secundario" for="archivo-actualizar">Actualizar datos</label>
+      <input type="file" id="archivo-actualizar" accept=".xlsm,.xlsx" hidden />
+    </div>
+  </div>
   <div class="contenedor" id="contenedor">
-  <main class="card">
+  <main class="card" id="tarjeta-carga">
     <div class="encabezado">
       <span class="icono" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -26,7 +33,8 @@
         </p>
         <p class="nota-privacidad">
           Todo el procesamiento ocurre en tu navegador: el archivo nunca se sube a ningún
-          servidor.
+          servidor. Los datos que cargues quedan guardados sólo en este navegador (no en
+          ningún servidor) para no tener que volver a subir el archivo cada vez.
         </p>
       </div>
     </div>
@@ -79,16 +87,24 @@
             <input type="number" id="ranking-duration-max" min="0" step="0.1" placeholder="Sin máximo" />
           </label>
         </div>
+        <div class="rango-fila">
+          <label class="rango-campo">
+            <span>Brecha Bid/Último máxima (%)</span>
+            <input type="number" id="ranking-umbral-brecha" min="0" step="0.5" value="3" />
+          </label>
+        </div>
+        <p class="nota-atajo">
+          El archivo no trae precio de oferta (Ask) para las ONs, sólo Bid y última operación.
+          Si la brecha entre ambos supera este porcentaje, la TIR se considera poco confiable
+          (la última operación puede estar vieja o fuera de mercado) y el bono se excluye del
+          ranking.
+        </p>
       </fieldset>
 
       <div class="tabla-wrap" id="tabla-ranking"></div>
 
       <details id="detalle-excluidos-ranking" class="detalle-excluidos oculto">
         <summary id="resumen-excluidos-ranking"></summary>
-        <p class="nota-atajo">
-          Estos bonos no tienen ofertas activas en el feed de mercado: su TIR puede no ser
-          confiable, así que se dejan afuera del ranking.
-        </p>
         <div class="tabla-wrap" id="tabla-excluidos-ranking"></div>
       </details>
     </div>
@@ -133,6 +149,17 @@
               </select>
             </label>
           </div>
+          <div class="rango-fila">
+            <label class="rango-campo">
+              <span>Brecha Bid/Último máxima admitida (%)</span>
+              <input type="number" id="sugerencias-umbral-brecha" min="0" step="0.5" value="3" />
+            </label>
+          </div>
+          <p class="nota-atajo">
+            Sólo se sugieren ONs con oferta de compra activa y sin una brecha grande entre esa
+            oferta y su última operación (no hay precio de venta/Ask en el archivo para
+            calcularlo exacto).
+          </p>
         </fieldset>
 
         <div class="tabla-wrap" id="tabla-sugerencias"></div>
