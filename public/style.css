@@ -1063,3 +1063,39 @@ body.beta-bloqueado {
 .detalle-excluidos .tabla-wrap {
   margin-top: 8px;
 }
+
+.calc-datos-bono,
+.calc-resultados {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfbfe;
+}
+
+.calc-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calc-dato-etiqueta {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.calc-dato-valor {
+  font-size: 0.92rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.calc-subtitulo {
+  margin: 18px 0 10px;
+  font-size: 0.92rem;
+  color: var(--navy-dark);
+}

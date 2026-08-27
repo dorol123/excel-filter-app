@@ -15,7 +15,7 @@
 
 // ---------- Recorte del .xlsm a sólo las hojas que hacen falta ----------
 
-async function recortarLibro(arrayBuffer, hojasAConservar) {
+async function recortarLibro(arrayBuffer, hojasAConservar, { quitarFormulas = false } = {}) {
   const zip = await JSZip.loadAsync(arrayBuffer);
   const workbookXmlPath = 'xl/workbook.xml';
   let workbookXml = await zip.file(workbookXmlPath).async('string');
@@ -76,6 +76,16 @@ async function recortarLibro(arrayBuffer, hojasAConservar) {
     if (!archivo) continue;
     let sheetXml = await archivo.async('string');
     sheetXml = sheetXml.replace(/<tableParts[\s\S]*?<\/tableParts>/, '');
+    if (quitarFormulas) {
+      // Sólo hace falta el valor cacheado (<v>) de cada celda, nunca la
+      // fórmula: ExcelJS no lee bien el resultado cacheado de las celdas
+      // con "fórmula compartida" (arrastradas hacia abajo en una columna,
+      // muy usadas en la tabla de flujo de pagos de estas hojas) y devuelve
+      // un objeto sin resultado en vez del valor. Sacando el <f>...</f> (o
+      // <f .../> de las compartidas sin cuerpo) de encima, ExcelJS lee el
+      // <v> directo como si fuera una celda de valor plano.
+      sheetXml = sheetXml.replace(/<f\b[^>]*\/>/g, '').replace(/<f\b[^>]*>[\s\S]*?<\/f>/g, '');
+    }
     zip.file(sheetPath, sheetXml);
 
     const nombreArchivo = target.split('/').pop();
@@ -100,8 +110,8 @@ async function recortarLibro(arrayBuffer, hojasAConservar) {
   return zip.generateAsync({ type: 'arraybuffer' });
 }
 
-async function cargarHojas(arrayBuffer, hojasAConservar) {
-  const bufferRecortado = await recortarLibro(arrayBuffer, hojasAConservar);
+async function cargarHojas(arrayBuffer, hojasAConservar, opciones = {}) {
+  const bufferRecortado = await recortarLibro(arrayBuffer, hojasAConservar, opciones);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(bufferRecortado);
   return workbook;
@@ -404,4 +414,249 @@ function sugerirAlternativas(bonos, tickerReferencia, modo, opciones = {}) {
   }
 
   return { referencia, candidatos };
+}
+
+// ---------- Calculadora por ON ----------
+//
+// Cada ON tiene su propia hoja (con el nombre del ticker) dentro del libro,
+// con la misma plantilla siempre: datos del bono, TIR/duration/paridad ya
+// calculados al precio de mercado actual, y la tabla de flujo de pagos
+// (fechas y montos de cada cupón/amortización futura). Esa plantilla es la
+// "calculadora" del Excel. Acá se lee tal cual para mostrar los resultados
+// al precio de mercado, y además se guarda lo necesario (flujo de pagos,
+// comisión, base de cálculo) para poder recalcular todo a un precio o una
+// cantidad de nominales distinta, sin tener que volver a tocar el archivo.
+
+function periodosPorAnio(frecuencia) {
+  const mapa = { Anual: 1, Semestral: 2, Cuatrimestral: 3, Trimestral: 4 };
+  return mapa[frecuencia] || 2;
+}
+
+/** DAYS360 de Excel (método US/NASD). */
+function dias360Excel(fechaA, fechaB) {
+  let diaA = fechaA.getDate();
+  let diaB = fechaB.getDate();
+  if (diaA === 31) diaA = 30;
+  if (diaB === 31 && diaA === 30) diaB = 30;
+  return (
+    (fechaB.getFullYear() - fechaA.getFullYear()) * 360 +
+    (fechaB.getMonth() - fechaA.getMonth()) * 30 +
+    (diaB - diaA)
+  );
+}
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/** Fracción de año entre dos fechas, con la base de cálculo del bono. */
+function fraccionAnio(fechaA, fechaB, baseCalculo) {
+  if (baseCalculo === '30/360') return dias360Excel(fechaA, fechaB) / 360;
+  return (fechaB.getTime() - fechaA.getTime()) / MS_POR_DIA / 365;
+}
+
+/** XIRR de Excel siempre usa días reales / 365, sin importar la base del bono. */
+function fraccionAnioXirr(fechaA, fechaB) {
+  return (fechaB.getTime() - fechaA.getTime()) / MS_POR_DIA / 365;
+}
+
+/**
+ * TIR efectiva (equivalente a XIRR de Excel): Newton-Raphson, con una
+ * bisección como respaldo para los casos en los que no converge (bonos muy
+ * castigados, con TIR negativa o extrema).
+ */
+function calcularXIRR(fechas, flujos) {
+  const van = (tasa) =>
+    flujos.reduce((suma, flujo, i) => suma + flujo / (1 + tasa) ** fraccionAnioXirr(fechas[0], fechas[i]), 0);
+  const derivadaVan = (tasa) =>
+    flujos.reduce((suma, flujo, i) => {
+      const t = fraccionAnioXirr(fechas[0], fechas[i]);
+      return t === 0 ? suma : suma + (-t * flujo) / (1 + tasa) ** (t + 1);
+    }, 0);
+
+  let tasa = 0.15;
+  for (let iter = 0; iter < 100; iter++) {
+    const valor = van(tasa);
+    const derivada = derivadaVan(tasa);
+    if (Math.abs(derivada) < 1e-12) break;
+    const nuevaTasa = tasa - valor / derivada;
+    if (!Number.isFinite(nuevaTasa) || nuevaTasa <= -0.999999) break;
+    if (Math.abs(nuevaTasa - tasa) < 1e-9) return nuevaTasa;
+    tasa = nuevaTasa;
+  }
+
+  let bajo = -0.9;
+  let alto = 10;
+  let vBajo = van(bajo);
+  const vAlto = van(alto);
+  if (Number.isFinite(vBajo) && Number.isFinite(vAlto) && vBajo * vAlto <= 0) {
+    for (let iter = 0; iter < 200; iter++) {
+      const medio = (bajo + alto) / 2;
+      const vMedio = van(medio);
+      if (Math.abs(vMedio) < 1e-6) return medio;
+      if (vMedio > 0 === vBajo > 0) {
+        bajo = medio;
+        vBajo = vMedio;
+      } else {
+        alto = medio;
+      }
+    }
+    return (bajo + alto) / 2;
+  }
+
+  throw new Error('No se pudo calcular la TIR para ese precio.');
+}
+
+/**
+ * Lee la "calculadora" de una ON puntual: sus datos fijos, sus resultados
+ * al precio de mercado actual (tal cual los cachea el Excel) y el flujo de
+ * pagos futuro, necesario para recalcular todo a otro precio/nominales.
+ */
+async function cargarDatosCalculadora(arrayBuffer, ticker) {
+  const workbook = await cargarHojas(arrayBuffer, [ticker, 'Detalles'], { quitarFormulas: true });
+  const hoja = workbook.getWorksheet(ticker);
+  const hojaDetalles = workbook.getWorksheet('Detalles');
+  const leer = (coord) => valorCelda(hoja.getCell(coord));
+
+  const estatico = {
+    emisor: leer('C3'),
+    sector: leer('C4'),
+    calificacion: leer('C5'),
+    monedaCobro: leer('C6'),
+    tipoTasa: leer('C7'),
+    interesAnual: leer('C8'),
+    frecuencia: leer('C9'),
+    baseCalculo: leer('C10'),
+    amortizacionTexto: leer('C11'),
+    fechaEmision: leer('C12'),
+    fechaVencimiento: leer('C13'),
+    fechasCobro: leer('C14'),
+    ley: leer('C15'),
+    nominalesMinimos: leer('C16'),
+    multiplo: leer('C17'),
+  };
+
+  const mercado = {
+    tirEfectiva: leer('F3'),
+    tirNominal: leer('F4'),
+    currentYield: leer('F5'),
+    valorResidual: leer('I3'),
+    interesesCorridos: leer('I4'),
+    valorTecnico: leer('I5'),
+    paridad: leer('I6'),
+    duration: leer('I9'),
+    modDuration: leer('I10'),
+    convexity: leer('I11'),
+    changeInPrice: leer('I12'),
+  };
+
+  const nominalesOriginal = leer('C20');
+  const cambioYield = leer('C21');
+  const fechaLiquidacion = leer('M9');
+  const precioOriginalTotal = leer('J17'); // cash flow negativo (precio pagado)
+  const comision = valorCelda(hojaDetalles.getCell('F3'));
+
+  if (!(fechaLiquidacion instanceof Date) || !Number.isFinite(precioOriginalTotal)) {
+    throw new Error(`No se pudo leer la calculadora de "${ticker}": faltan datos de precio o liquidación.`);
+  }
+
+  // precio "de pizarra" (por cada 100 de nominal), invirtiendo la fórmula
+  // que arma el precio total: -precioTotal = (precio/100) * nominales * (1+comisión)
+  const precioMercado = (-precioOriginalTotal * 100) / (nominalesOriginal * (1 + comision));
+
+  const flujos = [];
+  let r = 18;
+  while (true) {
+    const fecha = leer(`E${r}`);
+    if (!(fecha instanceof Date)) break;
+    flujos.push({
+      fecha,
+      amortizacionUsd: leer(`H${r}`) || 0,
+      interesUsd: leer(`I${r}`) || 0,
+    });
+    r++;
+  }
+  if (flujos.length === 0) {
+    throw new Error(`No se encontró el flujo de pagos de "${ticker}".`);
+  }
+
+  return {
+    ticker,
+    estatico,
+    mercado,
+    nominalesOriginal,
+    cambioYield,
+    fechaLiquidacion,
+    precioMercado,
+    comision,
+    flujos,
+  };
+}
+
+/**
+ * Recalcula TIR, duration, paridad, etc. a partir del flujo de pagos ya
+ * leído, para un precio y una cantidad de nominales distintos a los de
+ * mercado. La convexity y el "change in price" no se recalculan (dependen
+ * de una columna auxiliar del Excel que no hace falta leer para lo demás):
+ * quedan como referencia al precio de mercado original.
+ */
+function recalcularCalculadora(datos, opciones = {}) {
+  const precio = Number.isFinite(opciones.precio) ? opciones.precio : datos.precioMercado;
+  const nominales = Number.isFinite(opciones.nominales) ? opciones.nominales : datos.nominalesOriginal;
+  const ratioNominales = nominales / datos.nominalesOriginal;
+
+  const precioTotal = -(precio / 100) * nominales * (1 + datos.comision);
+
+  const fechas = [datos.fechaLiquidacion, ...datos.flujos.map((f) => f.fecha)];
+  const montosFuturos = datos.flujos.map((f) => (f.amortizacionUsd + f.interesUsd) * ratioNominales);
+  const montos = [precioTotal, ...montosFuturos];
+
+  const tir = calcularXIRR(fechas, montos);
+
+  const periodos = periodosPorAnio(datos.estatico.frecuencia);
+  const tirNominal = tir > 0 ? periodos * ((1 + tir) ** (1 / periodos) - 1) : null;
+
+  let sumaVP = 0;
+  let sumaVPxT = 0;
+  for (let i = 0; i < datos.flujos.length; i++) {
+    const t = fraccionAnio(datos.fechaLiquidacion, datos.flujos[i].fecha, datos.estatico.baseCalculo);
+    const vp = montosFuturos[i] / (1 + tir) ** t;
+    sumaVP += vp;
+    sumaVPxT += vp * t;
+  }
+  const duration = sumaVPxT / sumaVP;
+  const modDuration = duration / (1 + tir / periodos);
+
+  const valorResidual = datos.mercado.valorResidual * ratioNominales;
+  const interesesCorridos = datos.mercado.interesesCorridos * ratioNominales;
+  const valorTecnico = valorResidual + interesesCorridos;
+  const paridad = -precioTotal / valorTecnico;
+  const currentYield = (datos.estatico.interesAnual * valorResidual) / (-precioTotal - interesesCorridos);
+  const changeInPrice = -modDuration * datos.cambioYield + 0.5 * datos.mercado.convexity * datos.cambioYield ** 2;
+
+  const sumaFlujosFuturos = montosFuturos.reduce((acc, m) => acc + m, 0);
+  const aFinishPct = sumaFlujosFuturos / -precioTotal - 1;
+  const aFinishUsd = sumaFlujosFuturos + precioTotal;
+
+  return {
+    precio,
+    nominales,
+    precioTotal,
+    tir,
+    tirNominal,
+    currentYield,
+    duration,
+    modDuration,
+    paridad,
+    valorResidual,
+    interesesCorridos,
+    valorTecnico,
+    changeInPrice,
+    aFinishPct,
+    aFinishUsd,
+    flujos: datos.flujos.map((f, i) => ({
+      fecha: f.fecha,
+      amortizacionUsd: f.amortizacionUsd * ratioNominales,
+      interesUsd: f.interesUsd * ratioNominales,
+      total: montosFuturos[i],
+    })),
+  };
 }

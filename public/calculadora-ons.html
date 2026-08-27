@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de ONs</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script src="beta-gate.js" data-clave="000" data-id="calculadora-ons"></script>
+  <div class="pagina-herramienta">
+  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="contenedor" id="contenedor">
+  <main class="card">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6" />
+          <path d="M8 8h8M8 12h3M13 12h3M8 16h3M13 16h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Calculadora de ONs<span class="badge-beta">Beta</span></h1>
+        <p class="subtitulo">
+          Subí el Monitor de ONs, elegí una ON y probá a qué TIR y duration quedaría a
+          cualquier precio o cantidad de nominales — igual que la calculadora de cada hoja
+          del Excel.
+        </p>
+        <p class="nota-privacidad">
+          Todo el procesamiento ocurre en tu navegador: el archivo nunca se sube a ningún
+          servidor.
+        </p>
+      </div>
+    </div>
+
+    <label class="dropzone" id="dropzone" for="archivo">
+      <span id="texto-dropzone">Arrastrá el Monitor de ONs (.xlsm) acá o hacé click para elegirlo</span>
+    </label>
+    <input type="file" id="archivo" name="archivo" accept=".xlsm,.xlsx" hidden />
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+
+    <fieldset class="rango oculto" id="fieldset-ticker">
+      <legend>ON a calcular</legend>
+      <label class="rango-campo">
+        <span>Ticker</span>
+        <input type="text" id="ticker-input" list="lista-tickers" placeholder="Ej: RUCDO" autocomplete="off" />
+        <datalist id="lista-tickers"></datalist>
+      </label>
+    </fieldset>
+    <p id="ticker-mensaje" class="mensaje"></p>
+  </main>
+
+  <section id="resultado" class="preview-card oculto">
+    <div class="preview-header">
+      <h2 id="resultado-titulo">ON</h2>
+    </div>
+
+    <div class="calc-datos-bono" id="datos-bono"></div>
+
+    <fieldset class="rango">
+      <legend>Calculadora</legend>
+      <div class="rango-fila">
+        <label class="rango-campo">
+          <span>Precio (cada 100 de nominal)</span>
+          <input type="number" id="input-precio" min="0" step="0.01" />
+        </label>
+        <label class="rango-campo">
+          <span>Nominales a comprar</span>
+          <input type="number" id="input-nominales" min="0" step="1" />
+        </label>
+      </div>
+      <div class="rango-atajos">
+        <button type="button" class="btn-atajo" id="btn-precio-mercado">Volver al precio de mercado</button>
+      </div>
+    </fieldset>
+
+    <div class="calc-resultados" id="calc-resultados"></div>
+
+    <h3 class="calc-subtitulo">Flujo de pagos</h3>
+    <div class="tabla-wrap" id="tabla-flujo"></div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="ons-motor.js"></script>
+  <script src="calculadora-ons.js"></script>
+</body>
+</html>
