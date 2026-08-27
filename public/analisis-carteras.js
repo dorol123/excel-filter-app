@@ -125,8 +125,13 @@ function pathSectorDona(anguloInicio, anguloFin) {
 /**
  * Arma la dona como un sector <path> por categoría (no círculos apilados),
  * cada uno con su propio desplazamiento (--dx/--dy) hacia afuera para poder
- * "desprenderlo" un poco con CSS al pasar el mouse. Cada sector y su fila
- * en la leyenda comparten data-categoria para poder resaltarlos juntos.
+ * "desprenderlo" un poco con CSS al pasar el mouse. Cada sector se dibuja
+ * por partida doble: un <path> invisible con la forma ORIGINAL (el que
+ * escucha el mouse) y, encima, el <path> de color que se anima. Si el
+ * mouse escuchara directamente sobre el path animado, al desprenderse el
+ * sector se movería por debajo del cursor y dispararía mouseleave/
+ * mouseenter en bucle (el "parpadeo" al pasar cerca del borde); con la capa
+ * fija de abajo eso no pasa, porque su forma nunca cambia.
  */
 function construirDona(items, total) {
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -153,12 +158,20 @@ function construirDona(items, total) {
     anguloAcumulado = anguloFin;
     if (fraccion <= 0) return;
 
+    const d = pathSectorDona(anguloInicio, anguloFin);
     const anguloMedio = (anguloInicio + anguloFin) / 2;
     const dx = Math.sin(anguloMedio) * DONA_DISTANCIA_DESPRENDIDO;
     const dy = -Math.cos(anguloMedio) * DONA_DISTANCIA_DESPRENDIDO;
 
+    const zonaHover = document.createElementNS(svgNS, 'path');
+    zonaHover.setAttribute('d', d);
+    zonaHover.setAttribute('fill', 'transparent');
+    zonaHover.setAttribute('class', 'analisis-torta-hit');
+    zonaHover.dataset.categoria = item.nombre;
+    svg.appendChild(zonaHover);
+
     const sector = document.createElementNS(svgNS, 'path');
-    sector.setAttribute('d', pathSectorDona(anguloInicio, anguloFin));
+    sector.setAttribute('d', d);
     sector.setAttribute('fill', item.color);
     sector.setAttribute('class', 'analisis-torta-sector');
     sector.dataset.categoria = item.nombre;
@@ -203,9 +216,9 @@ function renderTorta(datos) {
   centro.textContent = formatMonto(datos.totalCartera, datos.moneda, 0);
   envoltorio.appendChild(centro);
 
-  envoltorio.querySelectorAll('.analisis-torta-sector').forEach((sector) => {
-    sector.addEventListener('mouseenter', () => resaltarCategoria(sector.dataset.categoria));
-    sector.addEventListener('mouseleave', () => resaltarCategoria(null));
+  envoltorio.querySelectorAll('.analisis-torta-hit').forEach((zona) => {
+    zona.addEventListener('mouseenter', () => resaltarCategoria(zona.dataset.categoria));
+    zona.addEventListener('mouseleave', () => resaltarCategoria(null));
   });
 
   tarjeta.appendChild(envoltorio);
@@ -264,7 +277,7 @@ function renderTablas(datos) {
     tabla.className = 'tabla-excel';
     tabla.innerHTML = `
       <thead>
-        <tr><th></th><th>Especie</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Valor Actual</th><th>% Cartera</th></tr>
+        <tr><th>Especie</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Valor Actual</th><th>% Cartera</th></tr>
       </thead>
       <tbody></tbody>`;
     const tbody = tabla.querySelector('tbody');
@@ -275,26 +288,26 @@ function renderTablas(datos) {
       const porcentaje = datos.totalCartera > 0 ? activo.valorActual / datos.totalCartera : 0;
       const { fondo, textoClaro } = colorCalor(porcentaje, porcentajeMaximo);
       const fila = document.createElement('tr');
+      fila.className = 'fila-especie';
       fila.innerHTML = `
-        <td class="columna-check"><input type="checkbox" class="check-especie" data-indice="${indice}" /></td>
         <td>${activo.especie}</td>
         <td>${activo.descripcion}</td>
         <td class="columna-importe">${activo.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</td>
         <td class="columna-importe">${formatMonto(activo.precio, datos.moneda, 2)}</td>
-        <td class="columna-importe"></td>
+        <td class="columna-importe celda-calor"></td>
         <td class="columna-importe">${formatPorcentaje(porcentaje)}</td>
       `;
-      const celdaValor = fila.children[5];
+      const celdaValor = fila.querySelector('.celda-calor');
       celdaValor.textContent = formatMonto(activo.valorActual, datos.moneda, 0);
       celdaValor.style.background = fondo;
       celdaValor.style.color = textoClaro ? '#ffffff' : 'inherit';
       celdaValor.style.fontWeight = '600';
 
-      const check = fila.querySelector('.check-especie');
-      check.addEventListener('change', () => {
-        if (check.checked) seleccionEspecies.add(indice);
+      fila.addEventListener('click', () => {
+        const seleccionada = !seleccionEspecies.has(indice);
+        if (seleccionada) seleccionEspecies.add(indice);
         else seleccionEspecies.delete(indice);
-        fila.classList.toggle('fila-seleccionada', check.checked);
+        fila.classList.toggle('fila-seleccionada', seleccionada);
         actualizarPopupSeleccion();
       });
 
@@ -315,6 +328,7 @@ const popupSeleccion = document.getElementById('popup-seleccion');
 const popupSeleccionTitulo = document.getElementById('popup-seleccion-titulo');
 const popupSeleccionSuma = document.getElementById('popup-seleccion-suma');
 const popupSeleccionLista = document.getElementById('popup-seleccion-lista');
+const popupSeleccionPorcentaje = document.getElementById('popup-seleccion-porcentaje');
 const btnLimpiarSeleccion = document.getElementById('btn-limpiar-seleccion');
 
 function actualizarPopupSeleccion() {
@@ -330,19 +344,19 @@ function actualizarPopupSeleccion() {
   const porcentaje = datosCartera.totalCartera > 0 ? suma / datosCartera.totalCartera : 0;
 
   popupSeleccionTitulo.textContent = `${activosSeleccionados.length} especie${activosSeleccionados.length === 1 ? '' : 's'} seleccionada${activosSeleccionados.length === 1 ? '' : 's'}`;
-  popupSeleccionSuma.textContent = `${formatMonto(suma, datosCartera.moneda, 0)} (${formatPorcentaje(porcentaje)} de la cartera)`;
+  popupSeleccionSuma.textContent = formatMonto(suma, datosCartera.moneda, 0);
   popupSeleccionLista.innerHTML = activosSeleccionados
     .map((a) => `<div class="popup-seleccion-item"><span>${a.especie}</span><span>${formatMonto(a.valorActual, datosCartera.moneda, 0)}</span></div>`)
     .join('');
+  popupSeleccionPorcentaje.textContent = `${formatPorcentaje(porcentaje)} de la cartera`;
 
   popupSeleccion.classList.remove('oculto');
 }
 
 btnLimpiarSeleccion.addEventListener('click', () => {
   seleccionEspecies.clear();
-  columnaTablas.querySelectorAll('.check-especie').forEach((check) => {
-    check.checked = false;
-    check.closest('tr').classList.remove('fila-seleccionada');
+  columnaTablas.querySelectorAll('.fila-especie.fila-seleccionada').forEach((fila) => {
+    fila.classList.remove('fila-seleccionada');
   });
   actualizarPopupSeleccion();
 });

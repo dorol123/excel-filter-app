@@ -1190,13 +1190,16 @@ body.beta-bloqueado {
   font-size: 0.8rem;
 }
 
-.analisis-torta-sector {
-  transform: translate(0, 0);
-  transition: transform 0.18s ease, opacity 0.18s ease;
+.analisis-torta-hit {
   cursor: pointer;
 }
 
-.analisis-torta-sector:hover,
+.analisis-torta-sector {
+  transform: translate(0, 0);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  pointer-events: none;
+}
+
 .analisis-torta-sector.resaltado {
   transform: translate(var(--dx), var(--dy));
 }
@@ -1255,17 +1258,17 @@ body.beta-bloqueado {
   width: 100%;
 }
 
-.columna-check {
-  width: 28px;
-}
-
-.check-especie {
-  accent-color: var(--navy);
+.fila-especie {
   cursor: pointer;
 }
 
-.fila-seleccionada td {
-  background: var(--navy-tint) !important;
+.fila-especie:hover td {
+  background: var(--navy-tint);
+}
+
+.fila-seleccionada td,
+.fila-seleccionada:hover td {
+  background: #d6e0fb;
 }
 
 .popup-seleccion {
@@ -1343,6 +1346,15 @@ body.beta-bloqueado {
 
 .popup-seleccion-item:last-child {
   border-bottom: none;
+}
+
+.popup-seleccion-porcentaje {
+  margin: 0;
+  padding: 8px 16px 14px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: right;
+  border-top: 1px solid var(--border);
 }
 
 @media (max-width: 900px) {
