@@ -65,6 +65,8 @@ async function manejarArchivo(archivo) {
   try {
     const arrayBuffer = await archivo.arrayBuffer();
     datosCartera = await procesarCarteraPdf(arrayBuffer);
+    seleccionEspecies.clear();
+    actualizarPopupSeleccion();
     renderCartera(datosCartera);
     tarjetaCarga.classList.add('oculto');
     resultado.classList.remove('oculto');
@@ -248,8 +250,6 @@ function renderTablas(datos) {
   const categoriasEnOrden = [...new Set(datos.activos.map((a) => a.categoria))];
 
   categoriasEnOrden.forEach((categoria) => {
-    const activosCategoria = datos.activos.filter((a) => a.categoria === categoria);
-
     const seccion = document.createElement('div');
     seccion.className = 'seccion-moneda';
 
@@ -264,16 +264,19 @@ function renderTablas(datos) {
     tabla.className = 'tabla-excel';
     tabla.innerHTML = `
       <thead>
-        <tr><th>Especie</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Valor Actual</th><th>% Cartera</th></tr>
+        <tr><th></th><th>Especie</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Valor Actual</th><th>% Cartera</th></tr>
       </thead>
       <tbody></tbody>`;
     const tbody = tabla.querySelector('tbody');
 
-    activosCategoria.forEach((activo) => {
+    datos.activos.forEach((activo, indice) => {
+      if (activo.categoria !== categoria) return;
+
       const porcentaje = datos.totalCartera > 0 ? activo.valorActual / datos.totalCartera : 0;
       const { fondo, textoClaro } = colorCalor(porcentaje, porcentajeMaximo);
       const fila = document.createElement('tr');
       fila.innerHTML = `
+        <td class="columna-check"><input type="checkbox" class="check-especie" data-indice="${indice}" /></td>
         <td>${activo.especie}</td>
         <td>${activo.descripcion}</td>
         <td class="columna-importe">${activo.cantidad.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</td>
@@ -281,11 +284,20 @@ function renderTablas(datos) {
         <td class="columna-importe"></td>
         <td class="columna-importe">${formatPorcentaje(porcentaje)}</td>
       `;
-      const celdaValor = fila.children[4];
+      const celdaValor = fila.children[5];
       celdaValor.textContent = formatMonto(activo.valorActual, datos.moneda, 0);
       celdaValor.style.background = fondo;
       celdaValor.style.color = textoClaro ? '#ffffff' : 'inherit';
       celdaValor.style.fontWeight = '600';
+
+      const check = fila.querySelector('.check-especie');
+      check.addEventListener('change', () => {
+        if (check.checked) seleccionEspecies.add(indice);
+        else seleccionEspecies.delete(indice);
+        fila.classList.toggle('fila-seleccionada', check.checked);
+        actualizarPopupSeleccion();
+      });
+
       tbody.appendChild(fila);
     });
 
@@ -294,6 +306,46 @@ function renderTablas(datos) {
     columnaTablas.appendChild(seccion);
   });
 }
+
+// ---------- Selección de especies y suma ----------
+
+let seleccionEspecies = new Set();
+
+const popupSeleccion = document.getElementById('popup-seleccion');
+const popupSeleccionTitulo = document.getElementById('popup-seleccion-titulo');
+const popupSeleccionSuma = document.getElementById('popup-seleccion-suma');
+const popupSeleccionLista = document.getElementById('popup-seleccion-lista');
+const btnLimpiarSeleccion = document.getElementById('btn-limpiar-seleccion');
+
+function actualizarPopupSeleccion() {
+  if (!datosCartera || seleccionEspecies.size === 0) {
+    popupSeleccion.classList.add('oculto');
+    return;
+  }
+
+  const activosSeleccionados = [...seleccionEspecies]
+    .map((indice) => datosCartera.activos[indice])
+    .filter(Boolean);
+  const suma = activosSeleccionados.reduce((acc, a) => acc + a.valorActual, 0);
+  const porcentaje = datosCartera.totalCartera > 0 ? suma / datosCartera.totalCartera : 0;
+
+  popupSeleccionTitulo.textContent = `${activosSeleccionados.length} especie${activosSeleccionados.length === 1 ? '' : 's'} seleccionada${activosSeleccionados.length === 1 ? '' : 's'}`;
+  popupSeleccionSuma.textContent = `${formatMonto(suma, datosCartera.moneda, 0)} (${formatPorcentaje(porcentaje)} de la cartera)`;
+  popupSeleccionLista.innerHTML = activosSeleccionados
+    .map((a) => `<div class="popup-seleccion-item"><span>${a.especie}</span><span>${formatMonto(a.valorActual, datosCartera.moneda, 0)}</span></div>`)
+    .join('');
+
+  popupSeleccion.classList.remove('oculto');
+}
+
+btnLimpiarSeleccion.addEventListener('click', () => {
+  seleccionEspecies.clear();
+  columnaTablas.querySelectorAll('.check-especie').forEach((check) => {
+    check.checked = false;
+    check.closest('tr').classList.remove('fila-seleccionada');
+  });
+  actualizarPopupSeleccion();
+});
 
 function renderCartera(datos) {
   const detalles = [
