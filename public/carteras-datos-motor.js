@@ -267,20 +267,64 @@ function extraerFondosPropios(hoja) {
 }
 
 /**
+ * Cotización del dólar MEP en la hoja "FX": se ubica por texto ("Último" en
+ * el encabezado, "MEP" en la fila) en vez de una celda fija, porque la
+ * posición de la tabla de cotizaciones dentro de la hoja puede moverse.
+ */
+function extraerCotizacionMep(hoja) {
+  let filaEncabezado = null;
+  let colUltimo = null;
+  let colDolar = null;
+  for (let r = 1; r <= hoja.rowCount && filaEncabezado === null; r++) {
+    const fila = hoja.getRow(r);
+    for (let c = 1; c <= fila.cellCount; c++) {
+      if (valorCeldaCarteras(fila.getCell(c)) === 'Último') {
+        filaEncabezado = r;
+        colUltimo = c;
+        break;
+      }
+    }
+  }
+  if (filaEncabezado === null) return null;
+
+  const encabezados = hoja.getRow(filaEncabezado);
+  for (let c = 1; c <= encabezados.cellCount; c++) {
+    if (valorCeldaCarteras(encabezados.getCell(c)) === 'Dólar') {
+      colDolar = c;
+      break;
+    }
+  }
+  if (colDolar === null) return null;
+
+  for (let r = filaEncabezado + 1; r <= hoja.rowCount; r++) {
+    const fila = hoja.getRow(r);
+    const etiqueta = valorCeldaCarteras(fila.getCell(colDolar));
+    if (typeof etiqueta === 'string' && etiqueta.startsWith('MEP')) {
+      const valor = valorCeldaCarteras(fila.getCell(colUltimo));
+      return Number.isFinite(valor) ? valor : null;
+    }
+  }
+  return null;
+}
+
+/**
  * Procesa el Monitor de instrumentos (100% en el navegador) y devuelve la
  * lista combinada de ONs, soberanos, letras/bonos en pesos y fondos
- * propios, lista para buscar por ticker o por emisor.
+ * propios, lista para buscar por ticker o por emisor. También devuelve la
+ * cotización del dólar MEP (hoja "FX"), para poder convertir los montos en
+ * pesos a dólares y armar un total único de la cartera.
  */
 async function procesarInstrumentosDisponibles(arrayBuffer) {
-  const hojas = ['Corporativos', 'Soberanos', 'Letras-Bonos $', 'OFFSHORE'];
+  const hojas = ['Corporativos', 'Soberanos', 'Letras-Bonos $', 'OFFSHORE', 'FX'];
   const workbook = await cargarHojasCarteras(arrayBuffer, hojas);
 
   const hojaCorp = workbook.getWorksheet('Corporativos');
   const hojaSob = workbook.getWorksheet('Soberanos');
   const hojaLetras = workbook.getWorksheet('Letras-Bonos $');
   const hojaOff = workbook.getWorksheet('OFFSHORE');
-  if (!hojaCorp || !hojaSob || !hojaLetras || !hojaOff) {
-    throw new Error('Faltan hojas esperadas en el archivo (Corporativos, Soberanos, Letras-Bonos $, OFFSHORE).');
+  const hojaFx = workbook.getWorksheet('FX');
+  if (!hojaCorp || !hojaSob || !hojaLetras || !hojaOff || !hojaFx) {
+    throw new Error('Faltan hojas esperadas en el archivo (Corporativos, Soberanos, Letras-Bonos $, OFFSHORE, FX).');
   }
 
   const instrumentos = [
@@ -290,5 +334,5 @@ async function procesarInstrumentosDisponibles(arrayBuffer) {
     ...extraerFondosPropios(hojaOff),
   ];
 
-  return instrumentos;
+  return { instrumentos, cotizacionMep: extraerCotizacionMep(hojaFx) };
 }

@@ -52,6 +52,7 @@ const STORAGE_KEY_DATOS = 'carteras-datos-v2';
 const DOS_HORAS_MS = 2 * 60 * 60 * 1000;
 
 let instrumentosDisponibles = [];
+let cotizacionMep = null;
 let guardadoEnDatos = null;
 let seleccionActual = null;
 let sugerenciaActivaIndice = -1;
@@ -61,7 +62,7 @@ function guardarDatosEnStorage() {
   try {
     localStorage.setItem(
       STORAGE_KEY_DATOS,
-      JSON.stringify({ instrumentos: instrumentosDisponibles, guardadoEn: guardadoEnDatos })
+      JSON.stringify({ instrumentos: instrumentosDisponibles, cotizacionMep, guardadoEn: guardadoEnDatos })
     );
   } catch (error) {
     console.error('No se pudo guardar en localStorage:', error);
@@ -113,6 +114,7 @@ setInterval(actualizarBadgeDatos, 30000);
   const datos = leerDatosDeStorage();
   if (!datos) return;
   instrumentosDisponibles = datos.instrumentos;
+  cotizacionMep = datos.cotizacionMep || null;
   guardadoEnDatos = datos.guardadoEn;
   actualizarBadgeDatos();
 })();
@@ -123,16 +125,18 @@ async function manejarArchivoDatos(archivo) {
   badgeDatos.className = 'badge-datos';
   try {
     const arrayBuffer = await archivo.arrayBuffer();
-    const nuevos = await procesarInstrumentosDisponibles(arrayBuffer);
+    const { instrumentos: nuevos, cotizacionMep: nuevaCotizacion } = await procesarInstrumentosDisponibles(arrayBuffer);
     if (nuevos.length === 0) {
       mostrarMensaje('No se encontraron instrumentos en el archivo.', 'error');
       actualizarBadgeDatos();
       return;
     }
     instrumentosDisponibles = nuevos;
+    cotizacionMep = nuevaCotizacion;
     guardadoEnDatos = Date.now();
     guardarDatosEnStorage();
     actualizarBadgeDatos();
+    renderCartera();
     mostrarMensaje(`${nuevos.length} instrumentos cargados para buscar.`, 'exito');
   } catch (error) {
     console.error(error);
@@ -349,6 +353,19 @@ function construirEncabezadoCartera() {
   return encabezado;
 }
 
+// Tonos de azul según % de la cartera: más oscuro cuanto más pesa el
+// instrumento. La raíz cuadrada separa mejor las porciones chicas (si no,
+// con una cartera diversificada casi todas las porciones quedan clarísimas
+// y se ven iguales).
+const AZUL_CLARO = [199, 212, 247];
+const AZUL_OSCURO = [16, 18, 83];
+
+function colorEscalaAzul(fraccion) {
+  const t = Math.min(1, Math.sqrt(Math.max(fraccion, 0)));
+  const canal = (i) => Math.round(AZUL_CLARO[i] + (AZUL_OSCURO[i] - AZUL_CLARO[i]) * t);
+  return `rgb(${canal(0)}, ${canal(1)}, ${canal(2)})`;
+}
+
 function construirDona(items, total) {
   const RADIO = 49;
   const CIRC = 2 * Math.PI * RADIO;
@@ -377,7 +394,7 @@ function construirDona(items, total) {
     arco.setAttribute('cy', '60');
     arco.setAttribute('r', String(RADIO));
     arco.setAttribute('fill', 'none');
-    arco.setAttribute('stroke', item.color);
+    arco.setAttribute('stroke', colorEscalaAzul(fraccion));
     arco.setAttribute('stroke-width', '14');
     arco.setAttribute('stroke-dasharray', `${largo} ${CIRC}`);
     arco.setAttribute('stroke-dashoffset', String(-acumulado));
@@ -389,25 +406,49 @@ function construirDona(items, total) {
   return svg;
 }
 
-function construirTarjetaDona(moneda, items, total) {
+/** Valor de un instrumento convertido a dólares: los pesos se convierten con
+ * la cotización del dólar MEP del Monitor; los que ya están en dólares
+ * (MEP o Cable) se usan tal cual. */
+function valorEnUsd(item) {
+  if (item.moneda === 'Pesos') {
+    return cotizacionMep ? item.valor / cotizacionMep : null;
+  }
+  return item.valor;
+}
+
+function construirTarjetaDonaUnica(items) {
+  const itemsEnUsd = items.map((item) => ({ ...item, valor: valorEnUsd(item) }));
+  const itemsValidos = itemsEnUsd.filter((item) => Number.isFinite(item.valor) && item.valor > 0);
+  const excluidos = itemsEnUsd.length - itemsValidos.length;
+  const total = itemsValidos.reduce((acc, it) => acc + it.valor, 0);
+
   const tarjeta = document.createElement('div');
   tarjeta.className = 'dona-tarjeta';
 
   const titulo = document.createElement('span');
   titulo.className = 'dona-titulo';
-  titulo.textContent = ETIQUETA_MONEDA[moneda];
+  titulo.textContent = 'Cartera total';
   tarjeta.appendChild(titulo);
 
   const envoltorio = document.createElement('div');
   envoltorio.className = 'dona-envoltorio';
-  envoltorio.appendChild(construirDona(items, total));
+  envoltorio.appendChild(construirDona(itemsValidos, total));
 
   const centro = document.createElement('span');
   centro.className = 'dona-centro';
-  centro.textContent = formatMoneda(total, moneda);
+  centro.textContent = formatMoneda(total, 'DolarMEP');
   envoltorio.appendChild(centro);
 
   tarjeta.appendChild(envoltorio);
+
+  const nota = document.createElement('p');
+  nota.className = 'dona-nota';
+  nota.textContent =
+    excluidos > 0
+      ? `Equivalente en USD (dólar MEP) · ${excluidos} en pesos sin cotización`
+      : 'Equivalente en USD (dólar MEP)';
+  tarjeta.appendChild(nota);
+
   return tarjeta;
 }
 
@@ -610,8 +651,9 @@ function renderCartera() {
     const total = itemsConColor.reduce((acc, it) => acc + it.valor, 0);
 
     columnaLista.appendChild(construirSeccionMoneda(moneda, itemsConColor, total));
-    columnaDonas.appendChild(construirTarjetaDona(moneda, itemsConColor, total));
   });
+
+  columnaDonas.appendChild(construirTarjetaDonaUnica(instrumentos));
 
   cuerpo.appendChild(columnaLista);
   cuerpo.appendChild(columnaDonas);
