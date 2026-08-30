@@ -255,7 +255,7 @@ function extraerFondosPropios(hoja) {
     resultado.push({
       ticker: String(valorCeldaCarteras(fila.getCell(colNombre))),
       nombre: categoriaFondo || '',
-      categoria: 'Fondo propio',
+      categoria: 'Fondos Balanz',
       moneda: 'DolarCable',
       tir: null,
       duration: null,
