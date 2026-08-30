@@ -207,19 +207,28 @@ function extraerLetrasBonos(hoja) {
  * duration/TIR como los bonos, así que se ubica por el texto del título y
  * se identifica cada fondo por su ISIN. No trae una columna de moneda
  * explícita: los fondos offshore se asumen en Dólar Cable.
+ *
+ * La hoja tiene más de una celda de texto que arranca con "Fondos" (hay,
+ * por ejemplo, un índice/menú aparte llamado "Fondos OFF"), así que la
+ * búsqueda del encabezado ("ISIN") se acota a un puñado de columnas cerca
+ * del título: si se buscara sin límite a lo largo de toda la fila se puede
+ * terminar enganchando, por error, el "ISIN" de otra tabla de más a la
+ * derecha en esa misma fila.
  */
 function extraerFondosPropios(hoja) {
+  const VENTANA_COLUMNAS = 8;
   let filaTitulo = null;
-  for (let r = 1; r <= hoja.rowCount; r++) {
+  let colTitulo = null;
+  for (let r = 1; r <= hoja.rowCount && filaTitulo === null; r++) {
     const fila = hoja.getRow(r);
     for (let c = 1; c <= fila.cellCount; c++) {
       const v = valorCeldaCarteras(fila.getCell(c));
       if (typeof v === 'string' && v.startsWith('Fondos Propios')) {
         filaTitulo = r;
+        colTitulo = c;
         break;
       }
     }
-    if (filaTitulo) break;
   }
   if (filaTitulo === null) return [];
 
@@ -228,7 +237,7 @@ function extraerFondosPropios(hoja) {
   let colIsin = null;
   let colNombre = null;
   let colCategoria = null;
-  for (let c = 1; c <= encabezados.cellCount; c++) {
+  for (let c = colTitulo; c <= colTitulo + VENTANA_COLUMNAS; c++) {
     const v = valorCeldaCarteras(encabezados.getCell(c));
     if (v === 'ISIN') colIsin = c;
     if (v === 'Nombre') colNombre = c;

@@ -13,8 +13,15 @@ const listaSugerencias = document.getElementById('lista-sugerencias');
 const panelStats = document.getElementById('panel-stats');
 const statsDurationUsd = document.getElementById('stats-duration-usd');
 const statsDurationArs = document.getElementById('stats-duration-ars');
+const statsTirUsd = document.getElementById('stats-tir-usd');
+const statsTirArs = document.getElementById('stats-tir-ars');
 const statsCalificaciones = document.getElementById('stats-calificaciones');
 const statsCalifLista = document.getElementById('stats-calif-lista');
+
+function formatPorcentaje(valor) {
+  if (!Number.isFinite(valor)) return '—';
+  return `${(valor * 100).toFixed(2)}%`;
+}
 
 const ETIQUETA_MONEDA = { Pesos: 'Pesos', DolarMEP: 'Dólar MEP', DolarCable: 'Dólar Cable' };
 const PREFIJO_MONEDA = { Pesos: '$', DolarMEP: 'US$', DolarCable: 'US$' };
@@ -154,7 +161,7 @@ function buscarInstrumentos(query) {
   if (tokens.length === 0) return [];
   return instrumentosDisponibles
     .filter((inst) => {
-      const haystack = normalizarTexto(`${inst.ticker} ${inst.nombre}`);
+      const haystack = normalizarTexto(`${inst.ticker} ${inst.nombre} ${inst.categoria}`);
       return tokens.every((token) => haystack.includes(token));
     })
     .slice(0, 8);
@@ -223,12 +230,19 @@ function renderSugerencias(query) {
     nombre.className = 'sugerencia-nombre';
     nombre.textContent = inst.nombre || '';
 
+    item.appendChild(ticker);
+    item.appendChild(nombre);
+
+    if (Number.isFinite(inst.tir)) {
+      const tir = document.createElement('span');
+      tir.className = 'sugerencia-tir';
+      tir.textContent = formatPorcentaje(inst.tir);
+      item.appendChild(tir);
+    }
+
     const categoria = document.createElement('span');
     categoria.className = 'sugerencia-categoria';
     categoria.textContent = inst.categoria;
-
-    item.appendChild(ticker);
-    item.appendChild(nombre);
     item.appendChild(categoria);
     item.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -414,6 +428,13 @@ function construirSeccionMoneda(moneda, items, total) {
     nombre.appendChild(dot);
     nombre.appendChild(document.createTextNode(item.nombre));
 
+    if (Number.isFinite(item.tir)) {
+      const tir = document.createElement('span');
+      tir.className = 'fila-instrumento-tir';
+      tir.textContent = `TIR ${formatPorcentaje(item.tir)}`;
+      nombre.appendChild(tir);
+    }
+
     const valor = document.createElement('span');
     valor.className = 'fila-instrumento-valor';
     valor.textContent = formatMoneda(item.valor, moneda);
@@ -473,11 +494,11 @@ function mergearCalificacion(calificacion) {
   return calificacion;
 }
 
-function calcularDurationPonderada(items) {
-  const conDuration = items.filter((i) => Number.isFinite(i.duration) && i.valor > 0);
-  const sumaValor = conDuration.reduce((acc, i) => acc + i.valor, 0);
+function calcularPromedioPonderado(items, campo) {
+  const conDato = items.filter((i) => Number.isFinite(i[campo]) && i.valor > 0);
+  const sumaValor = conDato.reduce((acc, i) => acc + i.valor, 0);
   if (sumaValor === 0) return null;
-  const sumaPonderada = conDuration.reduce((acc, i) => acc + i.valor * i.duration, 0);
+  const sumaPonderada = conDato.reduce((acc, i) => acc + i.valor * i[campo], 0);
   return sumaPonderada / sumaValor;
 }
 
@@ -491,10 +512,15 @@ function actualizarStats() {
   const enDolares = instrumentos.filter((i) => i.moneda === 'DolarMEP' || i.moneda === 'DolarCable');
   const enPesos = instrumentos.filter((i) => i.moneda === 'Pesos');
 
-  const durationUsd = calcularDurationPonderada(enDolares);
-  const durationArs = calcularDurationPonderada(enPesos);
+  const durationUsd = calcularPromedioPonderado(enDolares, 'duration');
+  const durationArs = calcularPromedioPonderado(enPesos, 'duration');
   statsDurationUsd.textContent = durationUsd !== null ? `${durationUsd.toFixed(2)} a.` : '—';
   statsDurationArs.textContent = durationArs !== null ? `${durationArs.toFixed(2)} a.` : '—';
+
+  const tirUsd = calcularPromedioPonderado(enDolares, 'tir');
+  const tirArs = calcularPromedioPonderado(enPesos, 'tir');
+  statsTirUsd.textContent = formatPorcentaje(tirUsd);
+  statsTirArs.textContent = formatPorcentaje(tirArs);
 
   const ons = instrumentos.filter((i) => i.categoria === 'ON');
   statsCalifLista.innerHTML = '';

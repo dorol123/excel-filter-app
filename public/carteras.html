@@ -41,6 +41,30 @@
       <input type="file" id="archivo-datos" accept=".xlsm,.xlsx" hidden />
     </div>
 
+    <div class="panel-stats oculto" id="panel-stats">
+      <p class="panel-stats-titulo">Cartera en construcción</p>
+      <div class="stats-fila">
+        <span class="stats-etiqueta">Duration (Dólares)</span>
+        <span class="stats-valor" id="stats-duration-usd">—</span>
+      </div>
+      <div class="stats-fila">
+        <span class="stats-etiqueta">Duration (Pesos)</span>
+        <span class="stats-valor" id="stats-duration-ars">—</span>
+      </div>
+      <div class="stats-fila">
+        <span class="stats-etiqueta">TIR esperada (Dólares)</span>
+        <span class="stats-valor" id="stats-tir-usd">—</span>
+      </div>
+      <div class="stats-fila">
+        <span class="stats-etiqueta">TIR esperada (Pesos)</span>
+        <span class="stats-valor" id="stats-tir-ars">—</span>
+      </div>
+      <div class="stats-calificaciones oculto" id="stats-calificaciones">
+        <p class="stats-calif-titulo">Calificación crediticia (ONs)</p>
+        <div id="stats-calif-lista"></div>
+      </div>
+    </div>
+
     <form id="form-instrumento">
       <label class="rango-campo campo-busqueda">
         <span>Instrumento (ticker o emisor)</span>
@@ -66,22 +90,6 @@
     </form>
 
     <p id="mensaje-cartera" class="mensaje" role="status"></p>
-
-    <div class="panel-stats oculto" id="panel-stats">
-      <p class="panel-stats-titulo">Cartera en construcción</p>
-      <div class="stats-fila">
-        <span class="stats-etiqueta">Duration (Dólares)</span>
-        <span class="stats-valor" id="stats-duration-usd">—</span>
-      </div>
-      <div class="stats-fila">
-        <span class="stats-etiqueta">Duration (Pesos)</span>
-        <span class="stats-valor" id="stats-duration-ars">—</span>
-      </div>
-      <div class="stats-calificaciones oculto" id="stats-calificaciones">
-        <p class="stats-calif-titulo">Calificación crediticia (ONs)</p>
-        <div id="stats-calif-lista"></div>
-      </div>
-    </div>
   </main>
 
   <section class="preview-card">
