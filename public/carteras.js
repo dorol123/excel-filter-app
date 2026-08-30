@@ -47,7 +47,7 @@ function mostrarMensaje(texto, tipo) {
 // Independiente del localStorage de ons.js: esta herramienta guarda su propia lista de
 // instrumentos buscables por ticker/emisor, con su propio storage key.
 
-const STORAGE_KEY_DATOS = 'carteras-datos-v1';
+const STORAGE_KEY_DATOS = 'carteras-datos-v2';
 const DOS_HORAS_MS = 2 * 60 * 60 * 1000;
 
 let instrumentosDisponibles = [];
