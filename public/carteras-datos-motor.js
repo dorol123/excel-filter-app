@@ -245,15 +245,16 @@ function extraerFondosPropios(hoja) {
   }
   if (!colIsin || !colNombre) return [];
 
+  // El fondo se identifica por su nombre (p. ej. "BALANZ INCOME"), no por el
+  // ISIN: nadie busca un fondo por ISIN. El ISIN queda afuera, no hace falta.
   const resultado = [];
   let r = filaEncabezado + 1;
   while (valorCeldaCarteras(hoja.getRow(r).getCell(colIsin))) {
     const fila = hoja.getRow(r);
-    const nombre = valorCeldaCarteras(fila.getCell(colNombre));
     const categoriaFondo = colCategoria ? valorCeldaCarteras(fila.getCell(colCategoria)) : null;
     resultado.push({
-      ticker: String(valorCeldaCarteras(fila.getCell(colIsin))),
-      nombre: categoriaFondo ? `${nombre} (${categoriaFondo})` : nombre,
+      ticker: String(valorCeldaCarteras(fila.getCell(colNombre))),
+      nombre: categoriaFondo || '',
       categoria: 'Fondo propio',
       moneda: 'DolarCable',
       tir: null,
