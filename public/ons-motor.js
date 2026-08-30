@@ -119,11 +119,31 @@ async function cargarHojas(arrayBuffer, hojasAConservar, opciones = {}) {
 
 // ---------- Extracción de datos ----------
 
-// Filas 219 a 411 de "Corporativos": listado consolidado (todas las
-// calificaciones juntas), una fila por ON, ya resuelto a la moneda en la que
-// efectivamente cotiza cada bono.
-const FILA_INICIO_LISTADO = 219;
-const FILA_FIN_LISTADO = 411;
+// "Corporativos" trae varios bloques (uno por calificación) y, al final, un
+// bloque consolidado con todas las ONs juntas — el que interesa acá, ya
+// resuelto a la moneda en la que efectivamente cotiza cada bono. La fila
+// exacta donde empieza cambia de un archivo a otro (se agregan o sacan
+// bonos de los bloques anteriores), así que en vez de hardcodear el rango
+// se busca el último encabezado "Ticker" de la columna B y se lee desde ahí
+// hasta que esa columna queda en blanco.
+function encontrarBloqueConsolidado(hojaCorp) {
+  let filaEncabezado = null;
+  for (let r = 1; r <= hojaCorp.rowCount; r++) {
+    if (valorCelda(hojaCorp.getRow(r).getCell(COL.ticker)) === 'Ticker') {
+      filaEncabezado = r;
+    }
+  }
+  if (filaEncabezado === null) {
+    throw new Error('No se encontró el listado de ONs en la hoja "Corporativos".');
+  }
+
+  let filaFin = filaEncabezado;
+  while (valorCelda(hojaCorp.getRow(filaFin + 1).getCell(COL.ticker))) {
+    filaFin += 1;
+  }
+  return { inicio: filaEncabezado + 1, fin: filaFin };
+}
+
 const COL = {
   ticker: 2,
   emisor: 3,
@@ -219,8 +239,9 @@ function extraerBonos(workbook) {
 
   const preciosPorRic = indexarPrecios(hojaPrecios);
   const bonos = [];
+  const { inicio, fin } = encontrarBloqueConsolidado(hojaCorp);
 
-  for (let r = FILA_INICIO_LISTADO; r <= FILA_FIN_LISTADO; r++) {
+  for (let r = inicio; r <= fin; r++) {
     const fila = hojaCorp.getRow(r);
     const ticker = valorCelda(fila.getCell(COL.ticker));
     if (!ticker) continue;
