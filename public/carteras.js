@@ -8,6 +8,7 @@ const btnVaciar = document.getElementById('btn-vaciar-cartera');
 const btnDescargar = document.getElementById('btn-descargar-presentacion');
 
 const badgeDatos = document.getElementById('badge-datos');
+const recuadroDatosNota = document.getElementById('recuadro-datos-nota');
 const inputArchivoDatos = document.getElementById('archivo-datos');
 const listaSugerencias = document.getElementById('lista-sugerencias');
 const panelStats = document.getElementById('panel-stats');
@@ -95,12 +96,15 @@ function actualizarBadgeDatos() {
   if (!guardadoEnDatos) {
     badgeDatos.textContent = 'Sin datos cargados';
     badgeDatos.className = 'badge-datos';
+    recuadroDatosNota.classList.remove('oculto');
     return;
   }
   const vencido = Date.now() - guardadoEnDatos > DOS_HORAS_MS;
   badgeDatos.textContent = `${instrumentosDisponibles.length} instrumentos · actualizado ${formatHaceTiempoDatos(guardadoEnDatos)}`;
   badgeDatos.className = 'badge-datos ' + (vencido ? 'vencido' : 'cargado');
   badgeDatos.title = new Date(guardadoEnDatos).toLocaleString('es-AR');
+  // Ya cargado: la nota explicativa deja de aportar y sólo agrega alto a la tarjeta.
+  recuadroDatosNota.classList.add('oculto');
 }
 
 setInterval(actualizarBadgeDatos, 30000);
@@ -174,10 +178,19 @@ function ocultarSugerencias() {
   sugerenciaActivaIndice = -1;
 }
 
+// Los fondos Balanz sólo se suscriben en Dólar Cable: no tiene sentido dejar
+// elegir otra moneda para ellos.
+const CATEGORIA_MONEDA_FIJA = 'Fondos Balanz';
+
+function aplicarBloqueoMoneda(bloqueada) {
+  selectMoneda.disabled = bloqueada;
+}
+
 function elegirSugerencia(inst) {
   const textoMostrado = `${inst.ticker} — ${inst.nombre}`;
   inputNombre.value = textoMostrado;
   selectMoneda.value = inst.moneda;
+  aplicarBloqueoMoneda(inst.categoria === CATEGORIA_MONEDA_FIJA);
   seleccionActual = {
     ticker: inst.ticker,
     nombre: inst.nombre,
@@ -258,6 +271,7 @@ function renderSugerencias(query) {
 inputNombre.addEventListener('input', () => {
   if (seleccionActual && inputNombre.value !== seleccionActual.textoMostrado) {
     seleccionActual = null;
+    aplicarBloqueoMoneda(false);
   }
   renderSugerencias(inputNombre.value);
 });
@@ -639,6 +653,7 @@ form.addEventListener('submit', (e) => {
   inputNombre.value = '';
   inputValor.value = '';
   seleccionActual = null;
+  aplicarBloqueoMoneda(false);
   ocultarSugerencias();
   inputNombre.focus();
 });

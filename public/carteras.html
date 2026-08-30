@@ -21,10 +21,6 @@
       </span>
       <div>
         <h1>Presentador de Carteras</h1>
-        <p class="subtitulo">
-          Cargá los instrumentos de la cartera; se van a ir mostrando en el visor de la derecha
-          a medida que los agregues.
-        </p>
       </div>
     </div>
 
@@ -33,9 +29,8 @@
         <span class="recuadro-datos-titulo">Datos de mercado</span>
         <span class="badge-datos" id="badge-datos">Sin datos cargados</span>
       </div>
-      <p class="recuadro-datos-nota">
-        Subí el Monitor para poder buscar ONs, soberanos, letras y fondos Balanz por ticker o
-        emisor y precargar sus datos. Se procesa en tu navegador y queda guardado sólo acá.
+      <p class="recuadro-datos-nota" id="recuadro-datos-nota">
+        Subí el Monitor para buscar ONs, soberanos, letras y fondos Balanz por ticker o emisor.
       </p>
       <label class="btn-secundario recuadro-datos-boton" for="archivo-datos">Subir Monitor (.xlsm)</label>
       <input type="file" id="archivo-datos" accept=".xlsm,.xlsx" hidden />
@@ -43,21 +38,27 @@
 
     <div class="panel-stats oculto" id="panel-stats">
       <p class="panel-stats-titulo">Cartera en construcción</p>
-      <div class="stats-fila">
-        <span class="stats-etiqueta">Duration (Dólares)</span>
-        <span class="stats-valor" id="stats-duration-usd">—</span>
+      <div class="stats-moneda-fila">
+        <span class="stats-moneda-etiqueta">Dólares</span>
+        <span class="stats-moneda-dato">
+          <span class="stats-moneda-dato-num" id="stats-duration-usd">—</span>
+          <span class="stats-moneda-dato-label">Duration</span>
+        </span>
+        <span class="stats-moneda-dato">
+          <span class="stats-moneda-dato-num" id="stats-tir-usd">—</span>
+          <span class="stats-moneda-dato-label">TIR esperada</span>
+        </span>
       </div>
-      <div class="stats-fila">
-        <span class="stats-etiqueta">Duration (Pesos)</span>
-        <span class="stats-valor" id="stats-duration-ars">—</span>
-      </div>
-      <div class="stats-fila">
-        <span class="stats-etiqueta">TIR esperada (Dólares)</span>
-        <span class="stats-valor" id="stats-tir-usd">—</span>
-      </div>
-      <div class="stats-fila">
-        <span class="stats-etiqueta">TIR esperada (Pesos)</span>
-        <span class="stats-valor" id="stats-tir-ars">—</span>
+      <div class="stats-moneda-fila">
+        <span class="stats-moneda-etiqueta">Pesos</span>
+        <span class="stats-moneda-dato">
+          <span class="stats-moneda-dato-num" id="stats-duration-ars">—</span>
+          <span class="stats-moneda-dato-label">Duration</span>
+        </span>
+        <span class="stats-moneda-dato">
+          <span class="stats-moneda-dato-num" id="stats-tir-ars">—</span>
+          <span class="stats-moneda-dato-label">TIR esperada</span>
+        </span>
       </div>
       <div class="stats-calificaciones oculto" id="stats-calificaciones">
         <p class="stats-calif-titulo">Calificación crediticia (ONs)</p>
