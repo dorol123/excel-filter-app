@@ -1371,3 +1371,212 @@ body.beta-bloqueado {
     transform: none;
   }
 }
+
+/* Presentador de Carteras: recuadro de datos de mercado */
+
+.recuadro-datos {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfbfe;
+}
+
+.recuadro-datos-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recuadro-datos-titulo {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--navy-dark);
+}
+
+.badge-datos {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.badge-datos.cargado {
+  color: var(--success);
+}
+
+.badge-datos.vencido {
+  color: var(--error);
+}
+
+.recuadro-datos-nota {
+  margin: 6px 0 10px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.recuadro-datos-boton {
+  display: inline-block;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Presentador de Carteras: búsqueda de instrumentos */
+
+.campo-busqueda {
+  position: relative;
+}
+
+.lista-sugerencias {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 14px 30px -12px rgba(23, 27, 107, 0.35);
+}
+
+.sugerencia-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.sugerencia-item:hover,
+.sugerencia-item.activa {
+  background: var(--navy-tint);
+}
+
+.sugerencia-ticker {
+  font-weight: 700;
+  color: var(--navy-dark);
+  flex-shrink: 0;
+}
+
+.sugerencia-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.sugerencia-categoria {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--navy);
+  background: var(--navy-tint);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.sugerencia-vacia {
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Presentador de Carteras: panel de estadísticas en vivo */
+
+.panel-stats {
+  margin-top: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfbfe;
+}
+
+.panel-stats-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--navy);
+  margin: 0 0 10px;
+}
+
+.stats-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+  padding: 4px 0;
+}
+
+.stats-etiqueta {
+  color: var(--muted);
+}
+
+.stats-valor {
+  font-weight: 700;
+  color: var(--navy-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-calificaciones {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.stats-calif-titulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.stats-calif-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+}
+
+.stats-calif-etiqueta {
+  width: 66px;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--navy-dark);
+}
+
+.stats-calif-barra {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--navy-tint);
+  overflow: hidden;
+}
+
+.stats-calif-barra-relleno {
+  height: 100%;
+  background: var(--navy);
+  border-radius: 3px;
+}
+
+.stats-calif-pct {
+  width: 38px;
+  flex-shrink: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}

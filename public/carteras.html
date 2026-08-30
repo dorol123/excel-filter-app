@@ -28,10 +28,24 @@
       </div>
     </div>
 
+    <div class="recuadro-datos" id="recuadro-datos">
+      <div class="recuadro-datos-encabezado">
+        <span class="recuadro-datos-titulo">Datos de mercado</span>
+        <span class="badge-datos" id="badge-datos">Sin datos cargados</span>
+      </div>
+      <p class="recuadro-datos-nota">
+        Subí el Monitor para poder buscar ONs, soberanos, letras y fondos propios por ticker o
+        emisor y precargar sus datos. Se procesa en tu navegador y queda guardado sólo acá.
+      </p>
+      <label class="btn-secundario recuadro-datos-boton" for="archivo-datos">Subir Monitor (.xlsm)</label>
+      <input type="file" id="archivo-datos" accept=".xlsm,.xlsx" hidden />
+    </div>
+
     <form id="form-instrumento">
-      <label class="rango-campo">
-        <span>Nombre del instrumento</span>
-        <input type="text" id="nombre-instrumento" placeholder="Ej: Bono AL30" required />
+      <label class="rango-campo campo-busqueda">
+        <span>Instrumento (ticker o emisor)</span>
+        <input type="text" id="nombre-instrumento" placeholder="Ej: AL30, Aluar..." autocomplete="off" required />
+        <div class="lista-sugerencias oculto" id="lista-sugerencias"></div>
       </label>
 
       <label class="rango-campo">
@@ -52,6 +66,22 @@
     </form>
 
     <p id="mensaje-cartera" class="mensaje" role="status"></p>
+
+    <div class="panel-stats oculto" id="panel-stats">
+      <p class="panel-stats-titulo">Cartera en construcción</p>
+      <div class="stats-fila">
+        <span class="stats-etiqueta">Duration (Dólares)</span>
+        <span class="stats-valor" id="stats-duration-usd">—</span>
+      </div>
+      <div class="stats-fila">
+        <span class="stats-etiqueta">Duration (Pesos)</span>
+        <span class="stats-valor" id="stats-duration-ars">—</span>
+      </div>
+      <div class="stats-calificaciones oculto" id="stats-calificaciones">
+        <p class="stats-calif-titulo">Calificación crediticia (ONs)</p>
+        <div id="stats-calif-lista"></div>
+      </div>
+    </div>
   </main>
 
   <section class="preview-card">
@@ -72,6 +102,9 @@
   </div>
 
   <script src="vendor/html2canvas.min.js"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="carteras-datos-motor.js"></script>
   <script src="carteras.js"></script>
 </body>
 </html>

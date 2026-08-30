@@ -7,6 +7,15 @@ const visor = document.getElementById('cartera-visor');
 const btnVaciar = document.getElementById('btn-vaciar-cartera');
 const btnDescargar = document.getElementById('btn-descargar-presentacion');
 
+const badgeDatos = document.getElementById('badge-datos');
+const inputArchivoDatos = document.getElementById('archivo-datos');
+const listaSugerencias = document.getElementById('lista-sugerencias');
+const panelStats = document.getElementById('panel-stats');
+const statsDurationUsd = document.getElementById('stats-duration-usd');
+const statsDurationArs = document.getElementById('stats-duration-ars');
+const statsCalificaciones = document.getElementById('stats-calificaciones');
+const statsCalifLista = document.getElementById('stats-calif-lista');
+
 const ETIQUETA_MONEDA = { Pesos: 'Pesos', DolarMEP: 'Dólar MEP', DolarCable: 'Dólar Cable' };
 const PREFIJO_MONEDA = { Pesos: '$', DolarMEP: 'US$', DolarCable: 'US$' };
 const ORDEN_MONEDAS = ['Pesos', 'DolarMEP', 'DolarCable'];
@@ -26,6 +35,239 @@ function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
   mensaje.className = 'mensaje' + (tipo ? ' ' + tipo : '');
 }
+
+// ---------- Datos de mercado (Monitor de instrumentos), 100% en el navegador ----------
+// Independiente del localStorage de ons.js: esta herramienta guarda su propia lista de
+// instrumentos buscables por ticker/emisor, con su propio storage key.
+
+const STORAGE_KEY_DATOS = 'carteras-datos-v1';
+const DOS_HORAS_MS = 2 * 60 * 60 * 1000;
+
+let instrumentosDisponibles = [];
+let guardadoEnDatos = null;
+let seleccionActual = null;
+let sugerenciaActivaIndice = -1;
+let sugerenciasRenderizadas = [];
+
+function guardarDatosEnStorage() {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY_DATOS,
+      JSON.stringify({ instrumentos: instrumentosDisponibles, guardadoEn: guardadoEnDatos })
+    );
+  } catch (error) {
+    console.error('No se pudo guardar en localStorage:', error);
+  }
+}
+
+function leerDatosDeStorage() {
+  try {
+    const crudo = localStorage.getItem(STORAGE_KEY_DATOS);
+    if (!crudo) return null;
+    const datos = JSON.parse(crudo);
+    if (!Array.isArray(datos.instrumentos) || datos.instrumentos.length === 0) return null;
+    return datos;
+  } catch (error) {
+    console.error('No se pudo leer localStorage:', error);
+    return null;
+  }
+}
+
+function formatHaceTiempoDatos(timestampMs) {
+  const segundos = Math.floor((Date.now() - timestampMs) / 1000);
+  if (segundos < 60) return 'hace instantes';
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `hace ${minutos} minuto${minutos === 1 ? '' : 's'}`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} hora${horas === 1 ? '' : 's'}`;
+  const dias = Math.floor(horas / 24);
+  return `hace ${dias} día${dias === 1 ? '' : 's'}`;
+}
+
+function actualizarBadgeDatos() {
+  if (!guardadoEnDatos) {
+    badgeDatos.textContent = 'Sin datos cargados';
+    badgeDatos.className = 'badge-datos';
+    return;
+  }
+  const vencido = Date.now() - guardadoEnDatos > DOS_HORAS_MS;
+  badgeDatos.textContent = `${instrumentosDisponibles.length} instrumentos · actualizado ${formatHaceTiempoDatos(guardadoEnDatos)}`;
+  badgeDatos.className = 'badge-datos ' + (vencido ? 'vencido' : 'cargado');
+  badgeDatos.title = new Date(guardadoEnDatos).toLocaleString('es-AR');
+}
+
+setInterval(actualizarBadgeDatos, 30000);
+
+(function cargarDatosGuardados() {
+  const datos = leerDatosDeStorage();
+  if (!datos) return;
+  instrumentosDisponibles = datos.instrumentos;
+  guardadoEnDatos = datos.guardadoEn;
+  actualizarBadgeDatos();
+})();
+
+async function manejarArchivoDatos(archivo) {
+  if (!archivo) return;
+  badgeDatos.textContent = 'Procesando…';
+  badgeDatos.className = 'badge-datos';
+  try {
+    const arrayBuffer = await archivo.arrayBuffer();
+    const nuevos = await procesarInstrumentosDisponibles(arrayBuffer);
+    if (nuevos.length === 0) {
+      mostrarMensaje('No se encontraron instrumentos en el archivo.', 'error');
+      actualizarBadgeDatos();
+      return;
+    }
+    instrumentosDisponibles = nuevos;
+    guardadoEnDatos = Date.now();
+    guardarDatosEnStorage();
+    actualizarBadgeDatos();
+    mostrarMensaje(`${nuevos.length} instrumentos cargados para buscar.`, 'exito');
+  } catch (error) {
+    console.error(error);
+    mostrarMensaje(error.message || 'No se pudo procesar el archivo.', 'error');
+    actualizarBadgeDatos();
+  }
+}
+
+inputArchivoDatos.addEventListener('change', () => {
+  manejarArchivoDatos(inputArchivoDatos.files[0]);
+  inputArchivoDatos.value = '';
+});
+
+// ---------- Búsqueda de instrumentos por ticker o emisor ----------
+
+// Construido con fromCharCode (en vez de escribir el rango literal) para evitar ambigüedad
+// visual entre los caracteres combinantes y su forma escapada.
+const RANGO_DIACRITICOS = String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f);
+const REGEX_DIACRITICOS = new RegExp('[' + RANGO_DIACRITICOS + ']', 'g');
+
+function normalizarTexto(texto) {
+  return String(texto || '')
+    .normalize('NFD')
+    .replace(REGEX_DIACRITICOS, '')
+    .toLowerCase();
+}
+
+function buscarInstrumentos(query) {
+  const tokens = normalizarTexto(query).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return [];
+  return instrumentosDisponibles
+    .filter((inst) => {
+      const haystack = normalizarTexto(`${inst.ticker} ${inst.nombre}`);
+      return tokens.every((token) => haystack.includes(token));
+    })
+    .slice(0, 8);
+}
+
+function ocultarSugerencias() {
+  listaSugerencias.classList.add('oculto');
+  listaSugerencias.innerHTML = '';
+  sugerenciasRenderizadas = [];
+  sugerenciaActivaIndice = -1;
+}
+
+function elegirSugerencia(inst) {
+  const textoMostrado = `${inst.ticker} — ${inst.nombre}`;
+  inputNombre.value = textoMostrado;
+  selectMoneda.value = inst.moneda;
+  seleccionActual = {
+    ticker: inst.ticker,
+    nombre: inst.nombre,
+    categoria: inst.categoria,
+    moneda: inst.moneda,
+    tir: inst.tir,
+    duration: inst.duration,
+    calificacion: inst.calificacion,
+    textoMostrado,
+  };
+  ocultarSugerencias();
+  inputValor.focus();
+}
+
+function marcarSugerenciaActiva(indice) {
+  sugerenciaActivaIndice = indice;
+  const items = listaSugerencias.querySelectorAll('.sugerencia-item');
+  items.forEach((item, i) => item.classList.toggle('activa', i === indice));
+}
+
+function renderSugerencias(query) {
+  if (instrumentosDisponibles.length === 0 || !query.trim()) {
+    ocultarSugerencias();
+    return;
+  }
+
+  const resultados = buscarInstrumentos(query);
+  sugerenciasRenderizadas = resultados;
+  sugerenciaActivaIndice = -1;
+  listaSugerencias.innerHTML = '';
+
+  if (resultados.length === 0) {
+    const vacio = document.createElement('div');
+    vacio.className = 'sugerencia-vacia';
+    vacio.textContent = 'Sin coincidencias — se agrega como instrumento manual.';
+    listaSugerencias.appendChild(vacio);
+    listaSugerencias.classList.remove('oculto');
+    return;
+  }
+
+  resultados.forEach((inst) => {
+    const item = document.createElement('div');
+    item.className = 'sugerencia-item';
+
+    const ticker = document.createElement('span');
+    ticker.className = 'sugerencia-ticker';
+    ticker.textContent = inst.ticker;
+
+    const nombre = document.createElement('span');
+    nombre.className = 'sugerencia-nombre';
+    nombre.textContent = inst.nombre || '';
+
+    const categoria = document.createElement('span');
+    categoria.className = 'sugerencia-categoria';
+    categoria.textContent = inst.categoria;
+
+    item.appendChild(ticker);
+    item.appendChild(nombre);
+    item.appendChild(categoria);
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      elegirSugerencia(inst);
+    });
+
+    listaSugerencias.appendChild(item);
+  });
+
+  listaSugerencias.classList.remove('oculto');
+}
+
+inputNombre.addEventListener('input', () => {
+  if (seleccionActual && inputNombre.value !== seleccionActual.textoMostrado) {
+    seleccionActual = null;
+  }
+  renderSugerencias(inputNombre.value);
+});
+
+inputNombre.addEventListener('keydown', (e) => {
+  if (listaSugerencias.classList.contains('oculto') || sugerenciasRenderizadas.length === 0) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    marcarSugerenciaActiva(Math.min(sugerenciaActivaIndice + 1, sugerenciasRenderizadas.length - 1));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    marcarSugerenciaActiva(Math.max(sugerenciaActivaIndice - 1, 0));
+  } else if (e.key === 'Enter' && sugerenciaActivaIndice >= 0) {
+    e.preventDefault();
+    elegirSugerencia(sugerenciasRenderizadas[sugerenciaActivaIndice]);
+  } else if (e.key === 'Escape') {
+    ocultarSugerencias();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.campo-busqueda')) ocultarSugerencias();
+});
 
 function formatMoneda(valor, moneda) {
   const texto = valor.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -219,6 +461,85 @@ function construirSeccionMoneda(moneda, items, total) {
   return seccion;
 }
 
+// ---------- Estadísticas en vivo (duration por moneda, calificación de ONs) ----------
+// La duration no se promedia entre monedas distintas sin un tipo de cambio (no sería
+// financieramente válido): se separa en Dólares (MEP + Cable) y Pesos.
+
+const ETIQUETA_CALIFICACION_SIN_DATO = 'Sin calificar';
+
+function mergearCalificacion(calificacion) {
+  if (!calificacion) return ETIQUETA_CALIFICACION_SIN_DATO;
+  if (calificacion === 'AA' || calificacion === 'AA-') return 'AA/AA-';
+  return calificacion;
+}
+
+function calcularDurationPonderada(items) {
+  const conDuration = items.filter((i) => Number.isFinite(i.duration) && i.valor > 0);
+  const sumaValor = conDuration.reduce((acc, i) => acc + i.valor, 0);
+  if (sumaValor === 0) return null;
+  const sumaPonderada = conDuration.reduce((acc, i) => acc + i.valor * i.duration, 0);
+  return sumaPonderada / sumaValor;
+}
+
+function actualizarStats() {
+  if (instrumentos.length === 0) {
+    panelStats.classList.add('oculto');
+    return;
+  }
+  panelStats.classList.remove('oculto');
+
+  const enDolares = instrumentos.filter((i) => i.moneda === 'DolarMEP' || i.moneda === 'DolarCable');
+  const enPesos = instrumentos.filter((i) => i.moneda === 'Pesos');
+
+  const durationUsd = calcularDurationPonderada(enDolares);
+  const durationArs = calcularDurationPonderada(enPesos);
+  statsDurationUsd.textContent = durationUsd !== null ? `${durationUsd.toFixed(2)} a.` : '—';
+  statsDurationArs.textContent = durationArs !== null ? `${durationArs.toFixed(2)} a.` : '—';
+
+  const ons = instrumentos.filter((i) => i.categoria === 'ON');
+  statsCalifLista.innerHTML = '';
+  if (ons.length === 0) {
+    statsCalificaciones.classList.add('oculto');
+    return;
+  }
+  statsCalificaciones.classList.remove('oculto');
+
+  const totalOn = ons.reduce((acc, i) => acc + i.valor, 0);
+  const grupos = new Map();
+  ons.forEach((i) => {
+    const clave = mergearCalificacion(i.calificacion);
+    grupos.set(clave, (grupos.get(clave) || 0) + i.valor);
+  });
+
+  const filas = [...grupos.entries()].sort((a, b) => b[1] - a[1]);
+  filas.forEach(([calificacion, valor]) => {
+    const pct = totalOn > 0 ? (valor / totalOn) * 100 : 0;
+
+    const fila = document.createElement('div');
+    fila.className = 'stats-calif-fila';
+
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'stats-calif-etiqueta';
+    etiqueta.textContent = calificacion;
+
+    const barra = document.createElement('div');
+    barra.className = 'stats-calif-barra';
+    const relleno = document.createElement('div');
+    relleno.className = 'stats-calif-barra-relleno';
+    relleno.style.width = `${pct}%`;
+    barra.appendChild(relleno);
+
+    const pctSpan = document.createElement('span');
+    pctSpan.className = 'stats-calif-pct';
+    pctSpan.textContent = `${pct.toFixed(0)}%`;
+
+    fila.appendChild(etiqueta);
+    fila.appendChild(barra);
+    fila.appendChild(pctSpan);
+    statsCalifLista.appendChild(fila);
+  });
+}
+
 function renderCartera() {
   visor.innerHTML = '';
   visor.appendChild(construirEncabezadoCartera());
@@ -228,6 +549,7 @@ function renderCartera() {
     vacio.className = 'tabla-vacia';
     vacio.textContent = 'Todavía no agregaste ningún instrumento.';
     visor.appendChild(vacio);
+    actualizarStats();
     return;
   }
 
@@ -254,25 +576,44 @@ function renderCartera() {
   cuerpo.appendChild(columnaLista);
   cuerpo.appendChild(columnaDonas);
   visor.appendChild(cuerpo);
+  actualizarStats();
 }
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
-  const nombre = inputNombre.value.trim();
+  const textoIngresado = inputNombre.value.trim();
   const valor = parseFloat(inputValor.value);
   const moneda = selectMoneda.value;
 
-  if (!nombre || !Number.isFinite(valor) || valor < 0) {
+  if (!textoIngresado || !Number.isFinite(valor) || valor < 0) {
     mostrarMensaje('Completá el nombre y un valor válido.', 'error');
     return;
   }
 
-  instrumentos.push({ id: siguienteId++, nombre, valor, moneda });
+  const seleccion = seleccionActual && seleccionActual.textoMostrado === textoIngresado ? seleccionActual : null;
+
+  const instrumento = seleccion
+    ? {
+        id: siguienteId++,
+        nombre: `${seleccion.ticker} · ${seleccion.nombre}`,
+        valor,
+        moneda,
+        ticker: seleccion.ticker,
+        categoria: seleccion.categoria,
+        tir: seleccion.tir,
+        duration: seleccion.duration,
+        calificacion: seleccion.calificacion,
+      }
+    : { id: siguienteId++, nombre: textoIngresado, valor, moneda };
+
+  instrumentos.push(instrumento);
   renderCartera();
   mostrarMensaje('', null);
 
   inputNombre.value = '';
   inputValor.value = '';
+  seleccionActual = null;
+  ocultarSugerencias();
   inputNombre.focus();
 });
 
