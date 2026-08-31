@@ -434,6 +434,10 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+#zona-copiar-imagen {
+  display: contents;
+}
+
 .btn-secundario {
   width: auto;
   margin-top: 0;

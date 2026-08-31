@@ -151,6 +151,13 @@ function actualizarTabla() {
   tablaWrap.appendChild(
     construirTabla(vistaPreviaActual.encabezados, filas, vistaPreviaActual.colImporte, vistaPreviaActual.colAsesor)
   );
+
+  actualizarBotonesCopiarImagen(
+    vistaPreviaActual.encabezados,
+    filas,
+    vistaPreviaActual.colImporte,
+    vistaPreviaActual.colAsesor
+  );
 }
 
 function renderVistaPrevia() {
@@ -207,7 +214,9 @@ btnSeleccionarTodo.addEventListener('click', () => {
   seleccion.addRange(rango);
 });
 
-const btnCopiarImagen = document.getElementById('btn-copiar-imagen');
+const zonaCopiarImagen = document.getElementById('zona-copiar-imagen');
+const notaCopiarImagen = document.getElementById('nota-copiar-imagen');
+const UMBRAL_DIVIDIR_IMAGEN = 60;
 
 function descargarBlob(blob, nombreArchivo) {
   const url = URL.createObjectURL(blob);
@@ -241,31 +250,69 @@ async function generarImagenDeTabla(tabla) {
   }
 }
 
-btnCopiarImagen.addEventListener('click', async () => {
-  const tabla = document.getElementById('tabla-activa');
-  if (!tabla) return;
-
-  const textoOriginal = btnCopiarImagen.textContent;
-  btnCopiarImagen.disabled = true;
-  btnCopiarImagen.textContent = 'Generando imagen...';
+async function manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExito) {
+  const textoOriginal = boton.textContent;
+  boton.disabled = true;
+  boton.textContent = 'Generando imagen...';
 
   try {
     const blob = await generarImagenDeTabla(tabla);
 
     if (navigator.clipboard && window.ClipboardItem) {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      mostrarMensaje('Imagen copiada. Pegala en WhatsApp con Ctrl+V (o Cmd+V).', 'exito');
+      mostrarMensaje(`${etiquetaExito} Pegala en WhatsApp con Ctrl+V (o Cmd+V).`, 'exito');
     } else {
-      descargarBlob(blob, 'tabla-acreditaciones.png');
+      descargarBlob(blob, nombreArchivo);
       mostrarMensaje('Tu navegador no permite copiar imágenes; se descargó como archivo.', 'exito');
     }
   } catch (err) {
     mostrarMensaje('No se pudo copiar la imagen: ' + err.message, 'error');
   } finally {
-    btnCopiarImagen.disabled = false;
-    btnCopiarImagen.textContent = textoOriginal;
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
   }
-});
+}
+
+function crearBotonCopiarImagen(etiqueta, tabla, nombreArchivo, etiquetaExito) {
+  const boton = document.createElement('button');
+  boton.type = 'button';
+  boton.className = 'btn-secundario';
+  boton.textContent = etiqueta;
+  boton.addEventListener('click', () => manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExito));
+  return boton;
+}
+
+/**
+ * Con muchas órdenes la tabla queda muy alta; WhatsApp comprime las imágenes
+ * y una sola imagen gigante pierde bastante calidad (texto ilegible). Por
+ * eso, pasado el umbral, se arman dos imágenes más cortas en vez de una.
+ */
+function actualizarBotonesCopiarImagen(encabezados, filas, colImporte, colAsesor) {
+  zonaCopiarImagen.innerHTML = '';
+
+  if (filas.length > UMBRAL_DIVIDIR_IMAGEN) {
+    const mitad = Math.ceil(filas.length / 2);
+    const tablaParte1 = construirTabla(encabezados, filas.slice(0, mitad), colImporte, colAsesor);
+    const tablaParte2 = construirTabla(encabezados, filas.slice(mitad), colImporte, colAsesor);
+
+    zonaCopiarImagen.appendChild(
+      crearBotonCopiarImagen('Copiar imagen 1', tablaParte1, 'tabla-acreditaciones-1.png', 'Imagen 1 copiada.')
+    );
+    zonaCopiarImagen.appendChild(
+      crearBotonCopiarImagen('Copiar imagen 2', tablaParte2, 'tabla-acreditaciones-2.png', 'Imagen 2 copiada.')
+    );
+
+    notaCopiarImagen.textContent =
+      `Son ${filas.length} órdenes: se armaron 2 imágenes porque en una sola la calidad bajaría mucho.`;
+    notaCopiarImagen.classList.remove('oculto');
+  } else {
+    const tabla = construirTabla(encabezados, filas, colImporte, colAsesor);
+    zonaCopiarImagen.appendChild(
+      crearBotonCopiarImagen('Copiar imagen', tabla, 'tabla-acreditaciones.png', 'Imagen copiada.')
+    );
+    notaCopiarImagen.classList.add('oculto');
+  }
+}
 
 let ultimoArchivoBuffer = null;
 let ultimoNombreArchivo = null;
