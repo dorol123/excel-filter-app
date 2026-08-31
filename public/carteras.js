@@ -6,6 +6,8 @@ const mensaje = document.getElementById('mensaje-cartera');
 const visor = document.getElementById('cartera-visor');
 const btnVaciar = document.getElementById('btn-vaciar-cartera');
 const btnDescargar = document.getElementById('btn-descargar-presentacion');
+const panelRecientes = document.getElementById('panel-recientes');
+const listaRecientes = document.getElementById('lista-recientes');
 
 const badgeDatos = document.getElementById('badge-datos');
 const recuadroDatosNota = document.getElementById('recuadro-datos-nota');
@@ -42,6 +44,124 @@ let mostrarInputCliente = false;
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
   mensaje.className = 'mensaje' + (tipo ? ' ' + tipo : '');
+}
+
+// ---------- Persistencia: la cartera actual y un historial de recientes ----------
+// Todo queda sólo en este navegador (localStorage), nunca sale de acá.
+
+const STORAGE_KEY_ACTUAL = 'carteras-actual-v1';
+const STORAGE_KEY_RECIENTES = 'carteras-recientes-v1';
+const MAX_RECIENTES = 8;
+
+function guardarCarteraActual() {
+  try {
+    if (instrumentos.length === 0 && !nombreCliente) {
+      localStorage.removeItem(STORAGE_KEY_ACTUAL);
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY_ACTUAL, JSON.stringify({ instrumentos, nombreCliente, siguienteId }));
+  } catch (error) {
+    console.error('No se pudo guardar la cartera actual:', error);
+  }
+}
+
+function leerCarteraActual() {
+  try {
+    const crudo = localStorage.getItem(STORAGE_KEY_ACTUAL);
+    if (!crudo) return null;
+    const datos = JSON.parse(crudo);
+    if (!Array.isArray(datos.instrumentos)) return null;
+    return datos;
+  } catch (error) {
+    console.error('No se pudo leer la cartera actual:', error);
+    return null;
+  }
+}
+
+function leerCarterasRecientes() {
+  try {
+    const crudo = localStorage.getItem(STORAGE_KEY_RECIENTES);
+    const datos = crudo ? JSON.parse(crudo) : [];
+    return Array.isArray(datos) ? datos : [];
+  } catch (error) {
+    console.error('No se pudieron leer las carteras recientes:', error);
+    return [];
+  }
+}
+
+function guardarCarterasRecientes(lista) {
+  try {
+    localStorage.setItem(STORAGE_KEY_RECIENTES, JSON.stringify(lista));
+  } catch (error) {
+    console.error('No se pudieron guardar las carteras recientes:', error);
+  }
+}
+
+/** Manda la cartera actual (si tiene algo) al historial de recientes antes de vaciarla o de cargar otra. */
+function archivarCarteraActualComoReciente() {
+  if (instrumentos.length === 0) return;
+  const entrada = { id: Date.now(), nombreCliente, instrumentos, guardadoEn: Date.now() };
+  const recientes = [entrada, ...leerCarterasRecientes()].slice(0, MAX_RECIENTES);
+  guardarCarterasRecientes(recientes);
+}
+
+function eliminarCarteraReciente(id) {
+  guardarCarterasRecientes(leerCarterasRecientes().filter((c) => c.id !== id));
+  renderCarterasRecientes();
+}
+
+function cargarCarteraReciente(entrada) {
+  archivarCarteraActualComoReciente();
+  eliminarCarteraReciente(entrada.id);
+  instrumentos = entrada.instrumentos.map((item) => ({ ...item }));
+  nombreCliente = entrada.nombreCliente || '';
+  mostrarInputCliente = false;
+  siguienteId = instrumentos.reduce((acc, item) => Math.max(acc, item.id + 1), 1);
+  guardarCarteraActual();
+  renderCartera();
+  mostrarMensaje('Cartera cargada.', 'exito');
+}
+
+function renderCarterasRecientes() {
+  const recientes = leerCarterasRecientes();
+  panelRecientes.classList.toggle('oculto', recientes.length === 0);
+  listaRecientes.innerHTML = '';
+
+  recientes.forEach((entrada) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'reciente-item';
+    item.addEventListener('click', () => cargarCarteraReciente(entrada));
+
+    const info = document.createElement('span');
+    info.className = 'reciente-item-info';
+
+    const nombre = document.createElement('span');
+    nombre.className = 'reciente-item-nombre';
+    nombre.textContent = entrada.nombreCliente || 'Cartera sin nombre';
+
+    const detalle = document.createElement('span');
+    detalle.className = 'reciente-item-detalle';
+    const cantidad = entrada.instrumentos.length;
+    detalle.textContent = `${cantidad} instrumento${cantidad === 1 ? '' : 's'} · ${formatHaceTiempoDatos(entrada.guardadoEn)}`;
+
+    info.appendChild(nombre);
+    info.appendChild(detalle);
+
+    const quitar = document.createElement('span');
+    quitar.className = 'reciente-item-quitar';
+    quitar.setAttribute('role', 'button');
+    quitar.setAttribute('aria-label', 'Quitar de recientes');
+    quitar.textContent = '×';
+    quitar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      eliminarCarteraReciente(entrada.id);
+    });
+
+    item.appendChild(info);
+    item.appendChild(quitar);
+    listaRecientes.appendChild(item);
+  });
 }
 
 // ---------- Datos de mercado (Monitor de instrumentos), 100% en el navegador ----------
@@ -334,6 +454,7 @@ function construirEncabezadoCartera() {
     input.value = nombreCliente;
     input.addEventListener('input', (e) => {
       nombreCliente = e.target.value;
+      guardarCarteraActual();
     });
     zonaCliente.appendChild(input);
     requestAnimationFrame(() => input.focus());
@@ -714,6 +835,7 @@ function renderCartera() {
     vacio.textContent = 'Todavía no agregaste ningún instrumento.';
     visor.appendChild(vacio);
     actualizarStats();
+    guardarCarteraActual();
     return;
   }
 
@@ -747,6 +869,7 @@ function renderCartera() {
   cuerpo.appendChild(columnaDonas);
   visor.appendChild(cuerpo);
   actualizarStats();
+  guardarCarteraActual();
 }
 
 form.addEventListener('submit', (e) => {
@@ -790,9 +913,13 @@ form.addEventListener('submit', (e) => {
 
 btnVaciar.addEventListener('click', () => {
   if (instrumentos.length === 0) return;
+  archivarCarteraActualComoReciente();
   instrumentos = [];
+  nombreCliente = '';
+  mostrarInputCliente = false;
   renderCartera();
-  mostrarMensaje('', null);
+  renderCarterasRecientes();
+  mostrarMensaje('Cartera guardada en recientes.', 'exito');
 });
 
 function nombreArchivoSlug(texto) {
@@ -866,4 +993,16 @@ btnDescargar.addEventListener('click', async () => {
   }
 });
 
+(function cargarCarteraActualGuardada() {
+  const datos = leerCarteraActual();
+  if (!datos) return;
+  instrumentos = datos.instrumentos;
+  nombreCliente = datos.nombreCliente || '';
+  siguienteId = Number.isFinite(datos.siguienteId)
+    ? datos.siguienteId
+    : instrumentos.reduce((acc, item) => Math.max(acc, item.id + 1), 1);
+  mostrarInputCliente = Boolean(nombreCliente);
+})();
+
+renderCarterasRecientes();
 renderCartera();
