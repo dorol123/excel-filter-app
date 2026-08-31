@@ -808,6 +808,40 @@ button:disabled {
   text-align: center;
 }
 
+/* Sólo afecta a la dona del Presentador de Carteras (envuelta en
+   .dona-tarjeta): Análisis de Carteras usa .analisis-torta-tarjeta para la
+   suya y no hereda esto. */
+.dona-tarjeta .dona-centro {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dona-centro-sub {
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cartera-torta-hit {
+  cursor: pointer;
+}
+
+.cartera-torta-sector {
+  transform: translate(0, 0);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.cartera-torta-sector.resaltado {
+  transform: translate(var(--dx), var(--dy));
+}
+
+.cartera-torta-sector.atenuado {
+  opacity: 0.4;
+}
+
 .seccion-moneda {
   margin-bottom: 24px;
 }
@@ -831,7 +865,6 @@ button:disabled {
 
 .fila-instrumento {
   padding: 10px 2px;
-  border-bottom: 1px solid var(--border);
 }
 
 .fila-instrumento-top {
@@ -868,17 +901,34 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-.fila-instrumento-barra {
+.fila-instrumento-pct {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fila-instrumento-pct-barra {
+  display: inline-block;
+  width: 36px;
   height: 4px;
-  background: var(--navy-tint);
   border-radius: 2px;
+  background: var(--navy-tint);
   overflow: hidden;
 }
 
-.fila-instrumento-barra-relleno {
+.fila-instrumento-pct-relleno {
+  display: block;
   height: 100%;
   background: var(--navy);
   border-radius: 2px;
+}
+
+.fila-instrumento-pct-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .fila-instrumento-valor {

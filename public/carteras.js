@@ -366,41 +366,84 @@ function colorEscalaAzul(fraccion) {
   return `rgb(${canal(0)}, ${canal(1)}, ${canal(2)})`;
 }
 
+// ---------- Dona interactiva de la cartera total ----------
+// Sectores como <path> (no círculos apilados) para poder "desprender" el
+// que está bajo el mouse. Cada sector se dibuja por partida doble: un
+// <path> invisible con la forma ORIGINAL (el que escucha el mouse) y,
+// encima, el <path> de color que se anima — si el mouse escuchara sobre el
+// path animado, al desprenderse el sector se movería por debajo del cursor
+// y dispararía mouseleave/mouseenter en bucle cerca del borde.
+
+const DONA_VIEWBOX = 120;
+const DONA_CENTRO = DONA_VIEWBOX / 2;
+const DONA_RADIO_EXTERNO = 56;
+const DONA_RADIO_INTERNO = 42;
+const DONA_DISTANCIA_DESPRENDIDO = 6;
+
+function puntoEnDona(radio, anguloRad) {
+  return [DONA_CENTRO + radio * Math.sin(anguloRad), DONA_CENTRO - radio * Math.cos(anguloRad)];
+}
+
+function pathSectorDona(anguloInicio, anguloFin) {
+  const [x1, y1] = puntoEnDona(DONA_RADIO_EXTERNO, anguloInicio);
+  const [x2, y2] = puntoEnDona(DONA_RADIO_EXTERNO, anguloFin);
+  const [x3, y3] = puntoEnDona(DONA_RADIO_INTERNO, anguloFin);
+  const [x4, y4] = puntoEnDona(DONA_RADIO_INTERNO, anguloInicio);
+  const arcoGrande = anguloFin - anguloInicio > Math.PI ? 1 : 0;
+  return [
+    `M ${x1} ${y1}`,
+    `A ${DONA_RADIO_EXTERNO} ${DONA_RADIO_EXTERNO} 0 ${arcoGrande} 1 ${x2} ${y2}`,
+    `L ${x3} ${y3}`,
+    `A ${DONA_RADIO_INTERNO} ${DONA_RADIO_INTERNO} 0 ${arcoGrande} 0 ${x4} ${y4}`,
+    'Z',
+  ].join(' ');
+}
+
 function construirDona(items, total) {
-  const RADIO = 49;
-  const CIRC = 2 * Math.PI * RADIO;
   const svgNS = 'http://www.w3.org/2000/svg';
 
   const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', '120');
-  svg.setAttribute('height', '120');
-  svg.setAttribute('viewBox', '0 0 120 120');
+  svg.setAttribute('width', String(DONA_VIEWBOX));
+  svg.setAttribute('height', String(DONA_VIEWBOX));
+  svg.setAttribute('viewBox', `0 0 ${DONA_VIEWBOX} ${DONA_VIEWBOX}`);
 
   const fondo = document.createElementNS(svgNS, 'circle');
-  fondo.setAttribute('cx', '60');
-  fondo.setAttribute('cy', '60');
-  fondo.setAttribute('r', String(RADIO));
+  fondo.setAttribute('cx', String(DONA_CENTRO));
+  fondo.setAttribute('cy', String(DONA_CENTRO));
+  fondo.setAttribute('r', String((DONA_RADIO_EXTERNO + DONA_RADIO_INTERNO) / 2));
   fondo.setAttribute('fill', 'none');
   fondo.setAttribute('stroke', '#e4e7f7');
-  fondo.setAttribute('stroke-width', '14');
+  fondo.setAttribute('stroke-width', String(DONA_RADIO_EXTERNO - DONA_RADIO_INTERNO));
   svg.appendChild(fondo);
 
-  let acumulado = 0;
-  items.forEach((item) => {
+  let anguloAcumulado = 0;
+  items.forEach((item, indice) => {
     const fraccion = total > 0 ? item.valor / total : 0;
-    const largo = fraccion * CIRC;
-    const arco = document.createElementNS(svgNS, 'circle');
-    arco.setAttribute('cx', '60');
-    arco.setAttribute('cy', '60');
-    arco.setAttribute('r', String(RADIO));
-    arco.setAttribute('fill', 'none');
-    arco.setAttribute('stroke', colorEscalaAzul(fraccion));
-    arco.setAttribute('stroke-width', '14');
-    arco.setAttribute('stroke-dasharray', `${largo} ${CIRC}`);
-    arco.setAttribute('stroke-dashoffset', String(-acumulado));
-    arco.setAttribute('transform', 'rotate(-90 60 60)');
-    svg.appendChild(arco);
-    acumulado += largo;
+    const anguloInicio = anguloAcumulado;
+    const anguloFin = anguloAcumulado + fraccion * 2 * Math.PI;
+    anguloAcumulado = anguloFin;
+    if (fraccion <= 0) return;
+
+    const d = pathSectorDona(anguloInicio, anguloFin);
+    const anguloMedio = (anguloInicio + anguloFin) / 2;
+    const dx = Math.sin(anguloMedio) * DONA_DISTANCIA_DESPRENDIDO;
+    const dy = -Math.cos(anguloMedio) * DONA_DISTANCIA_DESPRENDIDO;
+
+    const zonaHover = document.createElementNS(svgNS, 'path');
+    zonaHover.setAttribute('d', d);
+    zonaHover.setAttribute('fill', 'transparent');
+    zonaHover.setAttribute('class', 'cartera-torta-hit');
+    zonaHover.dataset.indice = String(indice);
+    svg.appendChild(zonaHover);
+
+    const sector = document.createElementNS(svgNS, 'path');
+    sector.setAttribute('d', d);
+    sector.setAttribute('fill', colorEscalaAzul(fraccion));
+    sector.setAttribute('class', 'cartera-torta-sector');
+    sector.dataset.indice = String(indice);
+    sector.style.setProperty('--dx', `${dx}px`);
+    sector.style.setProperty('--dy', `${dy}px`);
+    svg.appendChild(sector);
   });
 
   return svg;
@@ -436,8 +479,37 @@ function construirTarjetaDonaUnica(items) {
 
   const centro = document.createElement('span');
   centro.className = 'dona-centro';
-  centro.textContent = formatMoneda(total, 'DolarMEP');
+  const centroValor = document.createElement('span');
+  const centroSub = document.createElement('span');
+  centroSub.className = 'dona-centro-sub';
+  centro.appendChild(centroValor);
+  centro.appendChild(centroSub);
   envoltorio.appendChild(centro);
+
+  const mostrarTotal = () => {
+    centroValor.textContent = formatMoneda(total, 'DolarMEP');
+    centroSub.textContent = 'Total';
+  };
+  mostrarTotal();
+
+  envoltorio.querySelectorAll('.cartera-torta-hit').forEach((zona) => {
+    const item = itemsValidos[Number(zona.dataset.indice)];
+    zona.addEventListener('mouseenter', () => {
+      envoltorio.querySelectorAll('.cartera-torta-sector').forEach((sector) => {
+        const activo = sector.dataset.indice === zona.dataset.indice;
+        sector.classList.toggle('resaltado', activo);
+        sector.classList.toggle('atenuado', !activo);
+      });
+      centroValor.textContent = item.ticker || item.nombre;
+      centroSub.textContent = formatPorcentaje(total > 0 ? item.valor / total : 0);
+    });
+    zona.addEventListener('mouseleave', () => {
+      envoltorio.querySelectorAll('.cartera-torta-sector').forEach((sector) => {
+        sector.classList.remove('resaltado', 'atenuado');
+      });
+      mostrarTotal();
+    });
+  });
 
   tarjeta.appendChild(envoltorio);
 
@@ -452,7 +524,7 @@ function construirTarjetaDonaUnica(items) {
   return tarjeta;
 }
 
-function construirSeccionMoneda(moneda, items, total) {
+function construirSeccionMoneda(moneda, items, total, totalGeneralUsd) {
   const seccion = document.createElement('div');
   seccion.className = 'seccion-moneda';
 
@@ -490,6 +562,25 @@ function construirSeccionMoneda(moneda, items, total) {
       nombre.appendChild(tir);
     }
 
+    const valorUsd = valorEnUsd(item);
+    if (totalGeneralUsd > 0 && Number.isFinite(valorUsd)) {
+      const pctCartera = valorUsd / totalGeneralUsd;
+      const pct = document.createElement('span');
+      pct.className = 'fila-instrumento-pct';
+      const barraPct = document.createElement('span');
+      barraPct.className = 'fila-instrumento-pct-barra';
+      const rellenoPct = document.createElement('span');
+      rellenoPct.className = 'fila-instrumento-pct-relleno';
+      rellenoPct.style.width = `${Math.min(pctCartera * 100, 100)}%`;
+      barraPct.appendChild(rellenoPct);
+      const numPct = document.createElement('span');
+      numPct.className = 'fila-instrumento-pct-num';
+      numPct.textContent = formatPorcentaje(pctCartera);
+      pct.appendChild(barraPct);
+      pct.appendChild(numPct);
+      nombre.appendChild(pct);
+    }
+
     const valor = document.createElement('span');
     valor.className = 'fila-instrumento-valor';
     valor.textContent = formatMoneda(item.valor, moneda);
@@ -508,14 +599,6 @@ function construirSeccionMoneda(moneda, items, total) {
     top.appendChild(valor);
     top.appendChild(quitar);
     fila.appendChild(top);
-
-    const barra = document.createElement('div');
-    barra.className = 'fila-instrumento-barra';
-    const relleno = document.createElement('div');
-    relleno.className = 'fila-instrumento-barra-relleno';
-    relleno.style.width = total > 0 ? `${(item.valor / total) * 100}%` : '0%';
-    barra.appendChild(relleno);
-    fila.appendChild(barra);
 
     lista.appendChild(fila);
   });
@@ -643,6 +726,11 @@ function renderCartera() {
   const columnaDonas = document.createElement('div');
   columnaDonas.className = 'cartera-columna-donas';
 
+  const totalGeneralUsd = instrumentos.reduce((acc, item) => {
+    const valorUsd = valorEnUsd(item);
+    return Number.isFinite(valorUsd) ? acc + valorUsd : acc;
+  }, 0);
+
   ORDEN_MONEDAS.forEach((moneda) => {
     const items = instrumentos.filter((i) => i.moneda === moneda);
     if (items.length === 0) return;
@@ -650,7 +738,7 @@ function renderCartera() {
     const itemsConColor = items.map((item, i) => ({ ...item, color: colorInstrumento(i) }));
     const total = itemsConColor.reduce((acc, it) => acc + it.valor, 0);
 
-    columnaLista.appendChild(construirSeccionMoneda(moneda, itemsConColor, total));
+    columnaLista.appendChild(construirSeccionMoneda(moneda, itemsConColor, total, totalGeneralUsd));
   });
 
   columnaDonas.appendChild(construirTarjetaDonaUnica(instrumentos));
