@@ -229,9 +229,17 @@ function descargarBlob(blob, nombreArchivo) {
   URL.revokeObjectURL(url);
 }
 
-async function generarImagenDeTabla(tabla) {
+async function generarImagenDeTabla(tabla, titulo) {
   const envoltorio = document.createElement('div');
   envoltorio.style.cssText = 'position:fixed; left:-10000px; top:0; display:inline-block; padding:16px; background:#ffffff;';
+
+  if (titulo) {
+    const encabezadoImagen = document.createElement('div');
+    encabezadoImagen.textContent = titulo;
+    encabezadoImagen.style.cssText = 'font: 700 16px -apple-system, sans-serif; color: #101253; margin-bottom: 10px;';
+    envoltorio.appendChild(encabezadoImagen);
+  }
+
   const tablaClon = tabla.cloneNode(true);
   tablaClon.querySelectorAll('.columna-hora').forEach((celda) => celda.remove());
   envoltorio.appendChild(tablaClon);
@@ -250,13 +258,13 @@ async function generarImagenDeTabla(tabla) {
   }
 }
 
-async function manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExito) {
+async function manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExito, titulo) {
   const textoOriginal = boton.textContent;
   boton.disabled = true;
   boton.textContent = 'Generando imagen...';
 
   try {
-    const blob = await generarImagenDeTabla(tabla);
+    const blob = await generarImagenDeTabla(tabla, titulo);
 
     if (navigator.clipboard && window.ClipboardItem) {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
@@ -273,13 +281,32 @@ async function manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExi
   }
 }
 
-function crearBotonCopiarImagen(etiqueta, tabla, nombreArchivo, etiquetaExito) {
+function crearBotonCopiarImagen(etiqueta, tabla, nombreArchivo, etiquetaExito, titulo) {
   const boton = document.createElement('button');
   boton.type = 'button';
   boton.className = 'btn-secundario';
   boton.textContent = etiqueta;
-  boton.addEventListener('click', () => manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExito));
+  boton.addEventListener('click', () => manejarClickCopiarImagen(boton, tabla, nombreArchivo, etiquetaExito, titulo));
   return boton;
+}
+
+const ETIQUETA_MONEDA_HOJA = { Pesos: 'Pesos', Dolares: 'Dólares' };
+
+function formatFechaDDMMYYYY(fechaISO) {
+  const [anio, mes, dia] = fechaISO.split('-');
+  return `${dia}/${mes}/${anio}`;
+}
+
+/** Título que va arriba de todo en la imagen copiada: moneda + el rango de fecha/hora pedido. */
+function tituloImagenTabla(nombreHoja) {
+  const moneda = ETIQUETA_MONEDA_HOJA[nombreHoja] || nombreHoja;
+  if (fechaDesde.value === fechaHasta.value) {
+    return `${moneda} desde ${horaDesde.value} hasta ${horaHasta.value} — ${formatFechaDDMMYYYY(fechaDesde.value)}`;
+  }
+  return (
+    `${moneda} desde ${horaDesde.value} (${formatFechaDDMMYYYY(fechaDesde.value)}) ` +
+    `hasta ${horaHasta.value} (${formatFechaDDMMYYYY(fechaHasta.value)})`
+  );
 }
 
 /**
@@ -289,6 +316,7 @@ function crearBotonCopiarImagen(etiqueta, tabla, nombreArchivo, etiquetaExito) {
  */
 function actualizarBotonesCopiarImagen(encabezados, filas, colImporte, colAsesor) {
   zonaCopiarImagen.innerHTML = '';
+  const titulo = tituloImagenTabla(hojaActiva);
 
   if (filas.length > UMBRAL_DIVIDIR_IMAGEN) {
     const mitad = Math.ceil(filas.length / 2);
@@ -296,10 +324,10 @@ function actualizarBotonesCopiarImagen(encabezados, filas, colImporte, colAsesor
     const tablaParte2 = construirTabla(encabezados, filas.slice(mitad), colImporte, colAsesor);
 
     zonaCopiarImagen.appendChild(
-      crearBotonCopiarImagen('Copiar imagen 1', tablaParte1, 'tabla-acreditaciones-1.png', 'Imagen 1 copiada.')
+      crearBotonCopiarImagen('Copiar imagen 1', tablaParte1, 'tabla-acreditaciones-1.png', 'Imagen 1 copiada.', titulo)
     );
     zonaCopiarImagen.appendChild(
-      crearBotonCopiarImagen('Copiar imagen 2', tablaParte2, 'tabla-acreditaciones-2.png', 'Imagen 2 copiada.')
+      crearBotonCopiarImagen('Copiar imagen 2', tablaParte2, 'tabla-acreditaciones-2.png', 'Imagen 2 copiada.', titulo)
     );
 
     notaCopiarImagen.textContent =
@@ -308,7 +336,7 @@ function actualizarBotonesCopiarImagen(encabezados, filas, colImporte, colAsesor
   } else {
     const tabla = construirTabla(encabezados, filas, colImporte, colAsesor);
     zonaCopiarImagen.appendChild(
-      crearBotonCopiarImagen('Copiar imagen', tabla, 'tabla-acreditaciones.png', 'Imagen copiada.')
+      crearBotonCopiarImagen('Copiar imagen', tabla, 'tabla-acreditaciones.png', 'Imagen copiada.', titulo)
     );
     notaCopiarImagen.classList.add('oculto');
   }
