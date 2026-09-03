@@ -74,6 +74,13 @@ function formatImporte(importe) {
   return '$ ' + Math.round(importe).toLocaleString('es-AR');
 }
 
+function normalizarNombre(valor) {
+  return String(valor || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+}
+
 function construirTabla(encabezados, filas, colImporte, colAsesor) {
   const colFecha = encabezados.indexOf('Fecha Acreditación');
   const colCuenta = encabezados.indexOf('Cuenta');
@@ -111,11 +118,16 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
   } else {
     filas.forEach((fila) => {
       const tr = document.createElement('tr');
+      const ocultarCuenta =
+        colCuenta !== -1 &&
+        normalizarNombre(fila.valores[colCuenta]) === normalizarNombre(fila.valores[colAsesor]);
       fila.valores.forEach((valor, i) => {
         const td = document.createElement('td');
         if (i === colImporte) {
           td.textContent = formatImporte(fila.importe);
           td.classList.add('columna-importe');
+        } else if (i === colCuenta && ocultarCuenta) {
+          td.textContent = '';
         } else {
           td.textContent = valor === null || valor === undefined ? '' : String(valor);
         }
