@@ -1,42 +1,45 @@
-<title>Pizarra</title>
+<title>PaneWEB</title>
 <style>
   :root {
-    --ground: #F4F6F1;
+    --ground: #F7F1E1;
     --surface: #FFFFFF;
-    --surface-raised: #FBFCF9;
-    --ink: #101E17;
-    --muted: #57685D;
+    --surface-raised: #FBF5E6;
+    --ink: #13223D;
+    --muted: #6E6656;
     --accent: #B5760F;
     --accent-ink: #4A2F06;
-    --line: #DCE3D6;
+    --accent-blue: #1E4FA0;
+    --line: #E1DCC9;
     --positive: #2F7A46;
     --negative: #B6472A;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #0A1512;
-      --surface: #101E19;
-      --surface-raised: #142720;
-      --ink: #E7EDE3;
-      --muted: #8CA396;
+      --ground: #0A1220;
+      --surface: #121D33;
+      --surface-raised: #172544;
+      --ink: #F3ECDA;
+      --muted: #A9A28C;
       --accent: #E3A83E;
       --accent-ink: #2A1C05;
-      --line: #20342B;
+      --accent-blue: #6B9AEC;
+      --line: #223252;
       --positive: #57B274;
       --negative: #DB7752;
     }
   }
 
   :root[data-theme="dark"] {
-    --ground: #0A1512;
-    --surface: #101E19;
-    --surface-raised: #142720;
-    --ink: #E7EDE3;
-    --muted: #8CA396;
+    --ground: #0A1220;
+    --surface: #121D33;
+    --surface-raised: #172544;
+    --ink: #F3ECDA;
+    --muted: #A9A28C;
     --accent: #E3A83E;
     --accent-ink: #2A1C05;
-    --line: #20342B;
+    --accent-blue: #6B9AEC;
+    --line: #223252;
     --positive: #57B274;
     --negative: #DB7752;
   }
@@ -139,15 +142,7 @@
   }
 
   .masthead h1 span {
-    color: var(--accent);
-  }
-
-  .masthead-sub {
-    max-width: 46ch;
-    margin: 22px 0 0;
-    font-size: 1.08rem;
-    line-height: 1.55;
-    color: var(--muted);
+    color: var(--accent-blue);
   }
 
   /* ---------- Board ---------- */
@@ -186,7 +181,7 @@
     right: 24px;
     bottom: 0;
     height: 2px;
-    background: var(--accent);
+    background: var(--accent-blue);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.2s ease;
@@ -198,7 +193,7 @@
   }
 
   .panel:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-blue);
     outline-offset: -2px;
   }
 
@@ -258,11 +253,7 @@
     gap: 6px;
   }
 
-  .panel:hover .panel-ir { color: var(--accent-ink); }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .panel:hover .panel-ir { color: var(--accent); }
-  }
-  :root[data-theme="dark"] .panel:hover .panel-ir { color: var(--accent); }
+  .panel:hover .panel-ir { color: var(--accent-blue); }
 
   /* ---------- Footer ---------- */
 
@@ -291,11 +282,7 @@
 
 <header class="masthead">
   <div class="masthead-etiqueta"><span class="punto-vivo"></span> Mesa de herramientas interna</div>
-  <h1>Pizarra<span>.</span></h1>
-  <p class="masthead-sub">
-    Cinco herramientas para el día a día: acreditaciones, carteras y ONs. Todo corre en tu
-    navegador — ningún archivo se sube a ningún servidor.
-  </p>
+  <h1>PaneWEB<span>.</span></h1>
 </header>
 
 <main class="tablero">
@@ -390,7 +377,7 @@
 </main>
 
 <footer>
-  <span><strong>Pizarra</strong> — procesamiento 100% local, nada sale del navegador.</span>
+  <span><strong>PaneWEB</strong> — procesamiento 100% local, nada sale del navegador.</span>
   <span>build interna · no pública</span>
 </footer>
 
