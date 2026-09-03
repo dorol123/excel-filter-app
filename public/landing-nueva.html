@@ -1,36 +1,11 @@
 <title>PaneWEB</title>
 <style>
+  /*
+   * Paleta fija, deliberada: azul corporativo de fondo (Balanz) con acentos
+   * cobre en íconos y datos. No cambia con el tema del sistema — es una
+   * identidad propia, no una superficie que deba adaptarse a claro/oscuro.
+   */
   :root {
-    --ground: #F7F1E1;
-    --surface: #FFFFFF;
-    --surface-raised: #FBF5E6;
-    --ink: #13223D;
-    --muted: #6E6656;
-    --accent: #B5760F;
-    --accent-ink: #4A2F06;
-    --accent-blue: #1E4FA0;
-    --line: #E1DCC9;
-    --positive: #2F7A46;
-    --negative: #B6472A;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ground: #0A1220;
-      --surface: #121D33;
-      --surface-raised: #172544;
-      --ink: #F3ECDA;
-      --muted: #A9A28C;
-      --accent: #E3A83E;
-      --accent-ink: #2A1C05;
-      --accent-blue: #6B9AEC;
-      --line: #223252;
-      --positive: #57B274;
-      --negative: #DB7752;
-    }
-  }
-
-  :root[data-theme="dark"] {
     --ground: #0A1220;
     --surface: #121D33;
     --surface-raised: #172544;
