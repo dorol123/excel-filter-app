@@ -1,0 +1,421 @@
+<title>Pizarra</title>
+<style>
+  :root {
+    --ground: #F4F6F1;
+    --surface: #FFFFFF;
+    --surface-raised: #FBFCF9;
+    --ink: #101E17;
+    --muted: #57685D;
+    --accent: #B5760F;
+    --accent-ink: #4A2F06;
+    --line: #DCE3D6;
+    --positive: #2F7A46;
+    --negative: #B6472A;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0A1512;
+      --surface: #101E19;
+      --surface-raised: #142720;
+      --ink: #E7EDE3;
+      --muted: #8CA396;
+      --accent: #E3A83E;
+      --accent-ink: #2A1C05;
+      --line: #20342B;
+      --positive: #57B274;
+      --negative: #DB7752;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0A1512;
+    --surface: #101E19;
+    --surface-raised: #142720;
+    --ink: #E7EDE3;
+    --muted: #8CA396;
+    --accent: #E3A83E;
+    --accent-ink: #2A1C05;
+    --line: #20342B;
+    --positive: #57B274;
+    --negative: #DB7752;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .mono {
+    font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  h1, h2, h3, .display {
+    font-family: "Big Shoulders Display", "Arial Narrow", sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  /* ---------- Ticker tape ---------- */
+
+  .cinta {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .cinta-pista {
+    display: inline-flex;
+    align-items: center;
+    animation: desplazar 42s linear infinite;
+  }
+
+  .cinta:hover .cinta-pista {
+    animation-play-state: paused;
+  }
+
+  @keyframes desplazar {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .cinta-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.55em;
+    padding: 9px 22px;
+    font-size: 0.78rem;
+  }
+
+  .cinta-ticker { font-weight: 700; color: var(--ink); }
+  .cinta-tir { color: var(--muted); }
+  .cinta-var.pos { color: var(--positive); }
+  .cinta-var.neg { color: var(--negative); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cinta-pista { animation: none; }
+    .cinta { overflow-x: auto; }
+  }
+
+  /* ---------- Masthead ---------- */
+
+  .masthead {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 64px 28px 40px;
+  }
+
+  .masthead-etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .punto-vivo {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--positive);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--positive) 22%, transparent);
+  }
+
+  .masthead h1 {
+    font-size: clamp(3.4rem, 9vw, 6.4rem);
+    line-height: 0.86;
+    color: var(--ink);
+  }
+
+  .masthead h1 span {
+    color: var(--accent);
+  }
+
+  .masthead-sub {
+    max-width: 46ch;
+    margin: 22px 0 0;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  /* ---------- Board ---------- */
+
+  .tablero {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 8px 28px 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .panel {
+    background: var(--surface);
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: background 0.15s ease;
+  }
+
+  .panel:hover {
+    background: var(--surface-raised);
+  }
+
+  .panel::after {
+    content: "";
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
+
+  .panel:hover::after,
+  .panel:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  .panel:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .panel-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .panel-icono {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+
+  .panel-icono svg { width: 100%; height: 100%; }
+
+  .estado {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .estado.beta {
+    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--accent) 24%, var(--surface));
+    border-color: transparent;
+  }
+
+  .panel-titulo {
+    font-size: 1.5rem;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .panel-desc {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .panel-ir {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .panel:hover .panel-ir { color: var(--accent-ink); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .panel:hover .panel-ir { color: var(--accent); }
+  }
+  :root[data-theme="dark"] .panel:hover .panel-ir { color: var(--accent); }
+
+  /* ---------- Footer ---------- */
+
+  footer {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 26px 28px 56px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    justify-content: space-between;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+  }
+
+  footer strong { color: var(--ink); }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<div class="cinta" aria-hidden="true">
+  <div class="cinta-pista" id="cintaPista"></div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-etiqueta"><span class="punto-vivo"></span> Mesa de herramientas interna</div>
+  <h1>Pizarra<span>.</span></h1>
+  <p class="masthead-sub">
+    Cinco herramientas para el día a día: acreditaciones, carteras y ONs. Todo corre en tu
+    navegador — ningún archivo se sube a ningún servidor.
+  </p>
+</header>
+
+<main class="tablero">
+  <a class="panel" href="acreditaciones.html">
+    <div class="panel-top">
+      <span class="panel-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="18" height="18" rx="1" stroke="currentColor" stroke-width="1.6" />
+          <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span class="estado">Estable</span>
+    </div>
+    <h2 class="panel-titulo">Procesador de<br>Acreditaciones</h2>
+    <p class="panel-desc">
+      Subís el Excel del día, lo separa en Pesos y Dólares, filtra por rango horario y asesor,
+      y lo deja listo para descargar o copiar como imagen.
+    </p>
+    <span class="panel-ir">abrir →</span>
+  </a>
+
+  <a class="panel" href="carteras.html">
+    <div class="panel-top">
+      <span class="panel-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 17l5-6 4 4 5-7 4 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M3 20h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span class="estado beta">Beta</span>
+    </div>
+    <h2 class="panel-titulo">Presentador de<br>Carteras</h2>
+    <p class="panel-desc">
+      Buscás ONs, soberanos y fondos por ticker o emisor, armás la cartera y mostrás duration,
+      TIR esperada y calificación en vivo mientras la construís.
+    </p>
+    <span class="panel-ir">abrir →</span>
+  </a>
+
+  <a class="panel" href="ons.html">
+    <div class="panel-top">
+      <span class="panel-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 19V9M10 19V5M16 19v-7M22 19V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span class="estado beta">Beta</span>
+    </div>
+    <h2 class="panel-titulo">Comparador<br>de ONs</h2>
+    <p class="panel-desc">
+      Subís el Monitor y comparás por TIR, duration y calificación, o pedís alternativas a
+      partir de una ON puntual — filtrando las que no tienen mercado real.
+    </p>
+    <span class="panel-ir">abrir →</span>
+  </a>
+
+  <a class="panel" href="calculadora-ons.html">
+    <div class="panel-top">
+      <span class="panel-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="16" height="18" rx="1" stroke="currentColor" stroke-width="1.6" />
+          <path d="M8 8h8M8 12h3M13 12h3M8 16h3M13 16h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span class="estado beta">Beta</span>
+    </div>
+    <h2 class="panel-titulo">Calculadora<br>de ONs</h2>
+    <p class="panel-desc">
+      Elegís una ON del Monitor y probás a qué TIR y duration queda a cualquier precio o
+      cantidad de nominales, sin esperar a que se mueva el mercado.
+    </p>
+    <span class="panel-ir">abrir →</span>
+  </a>
+
+  <a class="panel" href="analisis-carteras.html">
+    <div class="panel-top">
+      <span class="panel-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 12V3.5a8.5 8.5 0 1 1-8.5 8.5H12z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M12 12L4.5 16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span class="estado beta">Beta</span>
+    </div>
+    <h2 class="panel-titulo">Análisis<br>de Carteras</h2>
+    <p class="panel-desc">
+      Subís el resumen de cuenta en PDF y armás la distribución por tipo de activo, con
+      selección y exportación a Excel con el mismo formato del visor.
+    </p>
+    <span class="panel-ir">abrir →</span>
+  </a>
+</main>
+
+<footer>
+  <span><strong>Pizarra</strong> — procesamiento 100% local, nada sale del navegador.</span>
+  <span>build interna · no pública</span>
+</footer>
+
+<script>
+  (function () {
+    var tickers = [
+      { t: 'AL30', tir: '11,4%', v: '+0,3%', pos: true },
+      { t: 'GD35', tir: '10,8%', v: '-0,2%', pos: false },
+      { t: 'AE38', tir: '9,6%', v: '+0,1%', pos: true },
+      { t: 'YMCXO', tir: '7,9%', v: '+0,4%', pos: true },
+      { t: 'GD41', tir: '10,2%', v: '-0,1%', pos: false },
+      { t: 'AL29', tir: '12,1%', v: '+0,2%', pos: true },
+      { t: 'PNDCO', tir: '6,8%', v: '-0,3%', pos: false },
+      { t: 'GD46', tir: '10,9%', v: '+0,1%', pos: true }
+    ];
+
+    function itemHTML(item) {
+      return '<span class="cinta-item mono">' +
+        '<span class="cinta-ticker">' + item.t + '</span>' +
+        '<span class="cinta-tir">TIR ' + item.tir + '</span>' +
+        '<span class="cinta-var ' + (item.pos ? 'pos' : 'neg') + '">' + item.v + '</span>' +
+        '</span>';
+    }
+
+    var html = tickers.map(itemHTML).join('');
+    document.getElementById('cintaPista').innerHTML = html + html;
+  })();
+</script>
