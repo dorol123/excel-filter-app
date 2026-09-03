@@ -46,11 +46,14 @@ function colorCategoria(indice) {
   return PALETA_CATEGORIAS[indice % PALETA_CATEGORIAS.length];
 }
 
-/** Fondo cada vez más oscuro cuanto mayor es la porción de la cartera (misma fórmula que en el Excel exportado). */
+/** Fondo cada vez más marcado (cobre) cuanto mayor es la porción de la cartera. En pantalla se
+ * apoya sobre fondo oscuro (PaneWEB), por eso el tono va hacia cobre en vez de navy — navy
+ * blend se perdía contra la tarjeta oscura. El Excel exportado sigue yendo hacia blanco (fórmula
+ * aparte en analisis-carteras-motor.js), porque Excel se abre con su propio fondo claro. */
 function colorCalor(porcentaje, porcentajeMaximo) {
   const intensidad = calcularIntensidadCalor(porcentaje, porcentajeMaximo);
   const alpha = 0.06 + intensidad * 0.74;
-  return { fondo: `rgba(23, 27, 107, ${alpha.toFixed(3)})`, textoClaro: intensidad > 0.55 };
+  return { fondo: `rgba(227, 168, 62, ${alpha.toFixed(3)})`, textoClaro: intensidad > 0.55 };
 }
 
 // ---------- Carga del PDF ----------
@@ -146,7 +149,7 @@ function construirDona(items, total) {
   fondo.setAttribute('cy', String(DONA_CENTRO));
   fondo.setAttribute('r', String((DONA_RADIO_EXTERNO + DONA_RADIO_INTERNO) / 2));
   fondo.setAttribute('fill', 'none');
-  fondo.setAttribute('stroke', '#e4e7f7');
+  fondo.setAttribute('stroke', '#223252');
   fondo.setAttribute('stroke-width', String(DONA_RADIO_EXTERNO - DONA_RADIO_INTERNO));
   svg.appendChild(fondo);
 

@@ -1,18 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/*
+ * Paleta PaneWEB: azul corporativo (Balanz) como identidad de fondo, con
+ * acentos cobre en íconos/datos — misma paleta que la portada nueva
+ * (public/landing-nueva.html). Es una identidad fija, no condicional al
+ * tema del sistema.
+ *
+ * Los nombres --navy/--navy-dark/--navy-tint quedan por compatibilidad con
+ * el resto del CSS (evita renombrar cientos de var(--navy) en todo el
+ * archivo), pero ahora valen: --navy = acento interactivo (antes navy
+ * oscuro sobre blanco, ahora azul brillante sobre fondo oscuro),
+ * --navy-dark = título/énfasis (ahora crema clara), --navy-tint =
+ * superficie/hover sutil (ahora una superficie un poco más clara que la
+ * tarjeta, no un tinte claro).
+ */
 :root {
-  color-scheme: light;
-  --bg: #eef0fa;
-  --bg-accent: #dde2f5;
-  --card-bg: #ffffff;
-  --text: #1b1f2b;
-  --muted: #6b7086;
-  --border: #dde1f0;
-  --navy: #171b6b;
-  --navy-dark: #101253;
-  --navy-tint: #eef0fb;
+  color-scheme: dark;
+  --bg: #0a1220;
+  --bg-accent: #172544;
+  --card-bg: #121d33;
+  --text: #dcd6c2;
+  --muted: #a9a28c;
+  --border: #223252;
+  --navy: #6b9aec;
+  --navy-dark: #f5efdc;
+  --navy-tint: #172544;
   --accent: var(--navy);
-  --accent-hover: var(--navy-dark);
-  --error: #dc2626;
-  --success: #147d4b;
+  --accent-hover: #8fb4f2;
+  --error: #ef7a5c;
+  --success: #57b274;
+  --copper: #e3a83e;
+  --copper-tint: rgba(227, 168, 62, 0.16);
 }
 
 * {
@@ -26,12 +44,12 @@ body {
   align-items: flex-start;
   justify-content: center;
   background:
-    radial-gradient(1100px 650px at 12% -15%, #4750c9 0%, transparent 55%),
-    radial-gradient(900px 700px at 105% 115%, #2a2f96 0%, transparent 60%),
-    linear-gradient(160deg, #0d0f45 0%, #171b6b 45%, #262c93 100%);
+    radial-gradient(1100px 650px at 12% -15%, #1e3a6b 0%, transparent 55%),
+    radial-gradient(900px 700px at 105% 115%, #14264a 0%, transparent 60%),
+    linear-gradient(160deg, #060b14 0%, #0a1220 45%, #101b30 100%);
   background-attachment: fixed;
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   padding: 24px;
 }
 
@@ -44,7 +62,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #dfe1fb;
+  color: var(--text);
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
@@ -68,7 +86,7 @@ body {
 .badge-actualizado {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #dfe1fb;
+  color: var(--text);
 }
 
 .badge-actualizado.vencido {
@@ -76,7 +94,7 @@ body {
 }
 
 .link-volver:hover {
-  color: #ffffff;
+  color: var(--copper);
   text-decoration: underline;
 }
 
@@ -114,7 +132,7 @@ body {
   border-radius: 16px;
   padding: 32px;
   padding-top: 36px;
-  box-shadow: 0 20px 45px -20px rgba(23, 27, 107, 0.28), 0 2px 6px rgba(23, 27, 107, 0.06);
+  box-shadow: 0 20px 45px -20px rgba(2, 8, 20, 0.28), 0 2px 6px rgba(2, 8, 20, 0.06);
   overflow: hidden;
 }
 
@@ -125,7 +143,7 @@ body {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--navy), #4750c9 55%, #7b82e0);
+  background: linear-gradient(90deg, var(--copper), var(--navy) 60%, var(--accent-hover));
 }
 
 .encabezado {
@@ -139,24 +157,26 @@ body {
   flex-shrink: 0;
   width: 42px;
   height: 42px;
-  border-radius: 11px;
-  background: var(--navy);
-  color: #ffffff;
+  background: transparent;
+  color: var(--copper);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .icono svg {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
 }
 
 h1 {
-  font-size: 1.25rem;
+  font-family: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 1.6rem;
   margin: 0 0 6px;
   color: var(--navy-dark);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
 }
 
 .subtitulo {
@@ -172,7 +192,7 @@ h1 {
   justify-content: center;
   text-align: center;
   min-height: 120px;
-  border: 2px dashed #c4c9ea;
+  border: 2px dashed var(--border);
   border-radius: 12px;
   padding: 16px;
   cursor: pointer;
@@ -183,12 +203,12 @@ h1 {
 }
 
 .dropzone:hover {
-  border-color: #a7aee0;
+  border-color: var(--navy);
 }
 
 .dropzone.dragover {
   border-color: var(--navy);
-  background: #e3e6fa;
+  background: var(--copper-tint);
 }
 
 .dropzone.con-archivo {
@@ -204,7 +224,7 @@ h1 {
   padding: 14px 16px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fbfbfe;
+  background: var(--navy-tint);
 }
 
 .rango legend {
@@ -240,14 +260,14 @@ h1 {
   font-size: 0.9rem;
   color: var(--text);
   font-family: inherit;
-  background: #ffffff;
+  background: var(--bg);
 }
 
 .rango-campo input:focus,
 .rango-campo select:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(23, 27, 107, 0.12);
+  box-shadow: 0 0 0 3px rgba(107, 154, 236, 0.4);
 }
 
 .rango-atajos {
@@ -276,7 +296,7 @@ h1 {
   width: auto;
   margin-top: 0;
   padding: 6px 12px;
-  background: #ffffff;
+  background: var(--card-bg);
   color: var(--navy);
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -287,7 +307,7 @@ h1 {
 
 .btn-atajo:hover:not(:disabled) {
   background: var(--navy-tint);
-  border-color: #a7aee0;
+  border-color: var(--navy);
   box-shadow: none;
 }
 
@@ -298,17 +318,17 @@ button {
   border: none;
   border-radius: 9px;
   background: var(--navy);
-  color: white;
+  color: var(--bg);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 18px -8px rgba(23, 27, 107, 0.55);
+  box-shadow: 0 8px 18px -8px rgba(2, 8, 20, 0.55);
   transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
 }
 
 button:hover:not(:disabled) {
   background: var(--accent-hover);
-  box-shadow: 0 10px 20px -8px rgba(23, 27, 107, 0.6);
+  box-shadow: 0 10px 20px -8px rgba(2, 8, 20, 0.6);
 }
 
 button:active:not(:disabled) {
@@ -316,8 +336,8 @@ button:active:not(:disabled) {
 }
 
 button:disabled {
-  background: #dfe1ee;
-  color: #9a9fbd;
+  background: var(--border);
+  color: var(--muted);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -347,12 +367,16 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 20px 45px -20px rgba(23, 27, 107, 0.28), 0 2px 6px rgba(23, 27, 107, 0.06);
+  box-shadow: 0 20px 45px -20px rgba(2, 8, 20, 0.28), 0 2px 6px rgba(2, 8, 20, 0.06);
 }
 
 .preview-header h2 {
+  font-family: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
   margin: 0 0 14px;
-  font-size: 1.05rem;
+  font-size: 1.4rem;
+  letter-spacing: 0.01em;
   color: var(--navy-dark);
 }
 
@@ -418,14 +442,14 @@ button:disabled {
   font-family: inherit;
   font-weight: 500;
   color: var(--text);
-  background: #ffffff;
+  background: var(--bg);
   max-width: 220px;
 }
 
 .filtro-asesor select:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(23, 27, 107, 0.12);
+  box-shadow: 0 0 0 3px rgba(107, 154, 236, 0.4);
 }
 
 .toolbar-botones {
@@ -442,7 +466,7 @@ button:disabled {
   width: auto;
   margin-top: 0;
   padding: 7px 14px;
-  background: #ffffff;
+  background: var(--card-bg);
   color: var(--navy);
   border: 1px solid var(--border);
   font-size: 0.8rem;
@@ -462,6 +486,7 @@ button:disabled {
   border-radius: 8px;
 }
 
+/* Tabla genérica (ranking de ONs, calculadora, análisis de carteras): sigue el retema. */
 .tabla-excel {
   border-collapse: collapse;
   width: 100%;
@@ -471,7 +496,7 @@ button:disabled {
 
 .tabla-excel th,
 .tabla-excel td {
-  border: 1px solid #dfe2f0;
+  border: 1px solid var(--border);
   padding: 6px 10px;
   white-space: nowrap;
   text-align: left;
@@ -481,17 +506,17 @@ button:disabled {
   position: sticky;
   top: 0;
   background: var(--navy);
-  color: #ffffff;
+  color: var(--bg);
   font-weight: 600;
   z-index: 1;
 }
 
 .tabla-excel tbody tr:nth-child(even) {
-  background: #f7f8fd;
+  background: var(--navy-tint);
 }
 
 .tabla-excel tbody tr:hover {
-  background: var(--navy-tint);
+  background: var(--border);
 }
 
 .tabla-excel td.columna-importe {
@@ -499,30 +524,80 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-.tabla-excel th.columna-fecha {
+/*
+ * .tabla-acreditaciones: la tabla de Acreditaciones. Se clona tal cual para
+ * las imágenes que se copian/comparten (ver generarImagenDeTabla en
+ * app.js), así que a pedido queda con sus colores y tipografía originales,
+ * fijos (no var()), sin importar el retema de PaneWEB del resto de la
+ * página — ni la tabla en pantalla ni las imágenes copiadas cambian.
+ */
+#tabla-wrap {
+  background: #ffffff;
+}
+
+.tabla-acreditaciones {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1b1f2b;
+}
+
+.tabla-acreditaciones th,
+.tabla-acreditaciones td {
+  border: 1px solid #dfe2f0;
+  padding: 6px 10px;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.tabla-acreditaciones thead th {
+  position: sticky;
+  top: 0;
+  background: #171b6b;
+  color: #ffffff;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.tabla-acreditaciones tbody tr:nth-child(even) {
+  background: #f7f8fd;
+}
+
+.tabla-acreditaciones tbody tr:hover {
+  background: #eef0fb;
+}
+
+.tabla-acreditaciones td.columna-importe {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-acreditaciones th.columna-fecha {
   white-space: normal;
   width: 90px;
 }
 
-.tabla-excel td.columna-fecha {
+.tabla-acreditaciones td.columna-fecha {
   width: 90px;
 }
 
-.tabla-excel th.columna-cuenta,
-.tabla-excel td.columna-cuenta {
+.tabla-acreditaciones th.columna-cuenta,
+.tabla-acreditaciones td.columna-cuenta {
   width: 300px;
   white-space: normal;
   word-break: break-word;
 }
 
-.tabla-excel th.columna-hora,
-.tabla-excel td.columna-hora {
+.tabla-acreditaciones th.columna-hora,
+.tabla-acreditaciones td.columna-hora {
   width: 64px;
   white-space: nowrap;
 }
 
-.tabla-excel td.destacado {
-  color: var(--error);
+.tabla-acreditaciones td.destacado {
+  color: #dc2626;
   font-weight: 700;
 }
 
@@ -584,9 +659,8 @@ button:disabled {
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: var(--navy);
-  color: #ffffff;
+  background: transparent;
+  color: var(--copper);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -663,14 +737,14 @@ button:disabled {
   margin: 0 0 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--card-bg);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.15s, background 0.15s;
 }
 
 .reciente-item:hover {
-  border-color: #a7aee0;
+  border-color: var(--navy);
   background: var(--navy-tint);
 }
 
@@ -714,7 +788,7 @@ button:disabled {
 }
 
 .reciente-item-quitar:hover {
-  background: #fde8e8;
+  background: rgba(239, 122, 92, 0.18);
   color: var(--error);
 }
 
@@ -737,13 +811,13 @@ button:disabled {
   margin-top: 0;
   padding: 8px 16px;
   background: var(--navy);
-  color: #ffffff;
+  color: var(--bg);
   border: none;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 6px 14px -8px rgba(23, 27, 107, 0.55);
+  box-shadow: 0 6px 14px -8px rgba(2, 8, 20, 0.55);
   transition: background 0.15s;
 }
 
@@ -752,8 +826,8 @@ button:disabled {
 }
 
 .btn-primario:disabled {
-  background: #dfe1ee;
-  color: #9a9fbd;
+  background: var(--border);
+  color: var(--muted);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -801,7 +875,7 @@ button:disabled {
 }
 
 .cartera-cliente-boton:hover {
-  background: #e3e6fa;
+  background: var(--copper-tint);
 }
 
 .cartera-cliente-input {
@@ -809,7 +883,7 @@ button:disabled {
   font-weight: 800;
   color: var(--navy-dark);
   border: none;
-  border-bottom: 2px dashed #c4c9ea;
+  border-bottom: 2px dashed var(--border);
   background: transparent;
   padding: 4px 0;
   width: 100%;
@@ -1045,7 +1119,7 @@ button:disabled {
 }
 
 .fila-instrumento-quitar:hover {
-  background: #fde8e8;
+  background: rgba(239, 122, 92, 0.18);
   color: var(--error);
 }
 
@@ -1088,9 +1162,9 @@ body.beta-bloqueado {
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(1100px 650px at 12% -15%, #4750c9 0%, transparent 55%),
-    radial-gradient(900px 700px at 105% 115%, #2a2f96 0%, transparent 60%),
-    linear-gradient(160deg, #0d0f45 0%, #171b6b 45%, #262c93 100%);
+    radial-gradient(1100px 650px at 12% -15%, #1e3a6b 0%, transparent 55%),
+    radial-gradient(900px 700px at 105% 115%, #14264a 0%, transparent 60%),
+    linear-gradient(160deg, #060b14 0%, #0a1220 45%, #101b30 100%);
 }
 
 .beta-card {
@@ -1101,7 +1175,7 @@ body.beta-bloqueado {
   border-radius: 16px;
   padding: 32px;
   text-align: center;
-  box-shadow: 0 20px 45px -20px rgba(23, 27, 107, 0.4);
+  box-shadow: 0 20px 45px -20px rgba(2, 8, 20, 0.4);
 }
 
 .beta-etiqueta {
@@ -1143,12 +1217,14 @@ body.beta-bloqueado {
   font-size: 0.95rem;
   font-family: inherit;
   text-align: center;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .beta-card input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(23, 27, 107, 0.12);
+  box-shadow: 0 0 0 3px rgba(107, 154, 236, 0.4);
 }
 
 .beta-card button {
@@ -1156,7 +1232,7 @@ body.beta-bloqueado {
   margin-top: 0;
   padding: 10px 16px;
   background: var(--navy);
-  color: #ffffff;
+  color: var(--bg);
   border: none;
   border-radius: 7px;
   font-size: 0.9rem;
@@ -1228,7 +1304,7 @@ body.beta-bloqueado {
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fbfbfe;
+  background: var(--navy-tint);
 }
 
 .calc-dato {
@@ -1331,8 +1407,8 @@ body.beta-bloqueado {
 }
 
 .analisis-leyenda-fila.resaltado {
-  background: #ffffff;
-  box-shadow: 0 4px 10px -4px rgba(23, 27, 107, 0.35);
+  background: var(--border);
+  box-shadow: 0 4px 10px -4px rgba(2, 8, 20, 0.35);
 }
 
 .analisis-torta-tarjeta .dona-envoltorio {
@@ -1371,11 +1447,11 @@ body.beta-bloqueado {
   top: calc(100% + 8px);
   right: 0;
   width: 220px;
-  background: #ffffff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  box-shadow: 0 20px 45px -20px rgba(23, 27, 107, 0.35), 0 2px 6px rgba(23, 27, 107, 0.1);
+  box-shadow: 0 20px 45px -20px rgba(2, 8, 20, 0.35), 0 2px 6px rgba(2, 8, 20, 0.1);
   z-index: 20;
 }
 
@@ -1422,7 +1498,7 @@ body.beta-bloqueado {
 
 .fila-seleccionada td,
 .fila-seleccionada:hover td {
-  background: #d6e0fb;
+  background: rgba(107, 154, 236, 0.28);
 }
 
 .popup-seleccion {
@@ -1434,9 +1510,9 @@ body.beta-bloqueado {
   max-height: 70vh;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 16px;
-  box-shadow: 0 24px 55px -20px rgba(23, 27, 107, 0.45), 0 2px 6px rgba(23, 27, 107, 0.1);
+  box-shadow: 0 24px 55px -20px rgba(2, 8, 20, 0.45), 0 2px 6px rgba(2, 8, 20, 0.1);
   z-index: 30;
   overflow: hidden;
 }
@@ -1452,7 +1528,7 @@ body.beta-bloqueado {
   gap: 8px;
   padding: 14px 16px;
   background: var(--navy);
-  color: #ffffff;
+  color: var(--bg);
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -1463,7 +1539,7 @@ body.beta-bloqueado {
   padding: 0;
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: var(--bg);
   font-size: 1.2rem;
   line-height: 1;
   cursor: pointer;
@@ -1533,7 +1609,7 @@ body.beta-bloqueado {
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fbfbfe;
+  background: var(--navy-tint);
 }
 
 .recuadro-datos-encabezado {
@@ -1592,10 +1668,10 @@ body.beta-bloqueado {
   margin-top: 4px;
   max-height: 260px;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 14px 30px -12px rgba(23, 27, 107, 0.35);
+  box-shadow: 0 14px 30px -12px rgba(2, 8, 20, 0.35);
 }
 
 .sugerencia-item {
@@ -1661,7 +1737,7 @@ body.beta-bloqueado {
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fbfbfe;
+  background: var(--navy-tint);
 }
 
 .panel-stats-titulo {
