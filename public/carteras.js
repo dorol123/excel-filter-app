@@ -173,6 +173,7 @@ const DOS_HORAS_MS = 2 * 60 * 60 * 1000;
 
 let instrumentosDisponibles = [];
 let cotizacionMep = null;
+let cotizacionMepEnVivo = null;
 let guardadoEnDatos = null;
 let seleccionActual = null;
 let sugerenciaActivaIndice = -1;
@@ -238,6 +239,26 @@ setInterval(actualizarBadgeDatos, 30000);
   guardadoEnDatos = datos.guardadoEn;
   actualizarBadgeDatos();
 })();
+
+/** Dólar MEP en vivo (data912.com), sólo como respaldo cuando todavía no se
+ * subió el Monitor: así la dona funciona igual con instrumentos cargados a
+ * mano en Pesos, sin depender de subir el Excel primero. Si el Monitor ya
+ * tiene su propia cotización, esa manda siempre (ver valorEnUsd). */
+async function cargarCotizacionMepFallback() {
+  if (cotizacionMep) return;
+  try {
+    const respuesta = await fetch('https://data912.com/live/mep');
+    if (!respuesta.ok) return;
+    const datos = await respuesta.json();
+    const al30 = Array.isArray(datos) ? datos.find((fila) => fila.ticker === 'AL30') : null;
+    if (al30 && Number.isFinite(al30.mark)) {
+      cotizacionMepEnVivo = al30.mark;
+      renderCartera();
+    }
+  } catch (error) {
+    console.error('No se pudo obtener el dólar MEP en vivo:', error);
+  }
+}
 
 async function manejarArchivoDatos(archivo) {
   if (!archivo) return;
@@ -474,17 +495,39 @@ function construirEncabezadoCartera() {
   return encabezado;
 }
 
-// Tonos de azul según % de la cartera: más oscuro cuanto más pesa el
-// instrumento. La raíz cuadrada separa mejor las porciones chicas (si no,
-// con una cartera diversificada casi todas las porciones quedan clarísimas
-// y se ven iguales).
-const AZUL_CLARO = [199, 212, 247];
-const AZUL_OSCURO = [16, 18, 83];
+// Colores de la dona: uno por instrumento, dentro de la familia de azules
+// pero variando tono/saturación/luminosidad (no un degradé por magnitud),
+// para que dos porciones del mismo valor no queden con el mismo color.
+// Cada instrumento saca un color "al azar" (hasheando su nombre+moneda,
+// para que no cambie de color en cada render) de esta paleta; después se
+// corrige por si dos porciones vecinas en la dona (incluyendo la primera
+// contra la última, que también son vecinas en el círculo) cayeron en el
+// mismo color, así siempre se pueden distinguir una de la otra.
+const PALETA_DONA_AZULES = [
+  'hsl(205, 85%, 60%)', 'hsl(222, 65%, 42%)', 'hsl(195, 90%, 72%)', 'hsl(232, 55%, 32%)',
+  'hsl(210, 80%, 50%)', 'hsl(200, 70%, 68%)', 'hsl(226, 85%, 78%)', 'hsl(215, 60%, 38%)',
+  'hsl(198, 75%, 45%)', 'hsl(220, 45%, 60%)', 'hsl(208, 95%, 82%)', 'hsl(235, 50%, 55%)',
+];
 
-function colorEscalaAzul(fraccion) {
-  const t = Math.min(1, Math.sqrt(Math.max(fraccion, 0)));
-  const canal = (i) => Math.round(AZUL_CLARO[i] + (AZUL_OSCURO[i] - AZUL_CLARO[i]) * t);
-  return `rgb(${canal(0)}, ${canal(1)}, ${canal(2)})`;
+function hashCadena(texto) {
+  let h = 0;
+  for (let i = 0; i < texto.length; i++) h = (h * 31 + texto.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function asignarColoresDona(items) {
+  const indices = items.map((item) => hashCadena(`${item.nombre}|${item.moneda}`) % PALETA_DONA_AZULES.length);
+  for (let i = 1; i < indices.length; i++) {
+    if (indices[i] === indices[i - 1]) indices[i] = (indices[i] + 1) % PALETA_DONA_AZULES.length;
+  }
+  const ultimo = indices.length - 1;
+  if (ultimo > 0 && indices[ultimo] === indices[0]) {
+    indices[ultimo] = (indices[ultimo] + 1) % PALETA_DONA_AZULES.length;
+    if (ultimo > 1 && indices[ultimo] === indices[ultimo - 1]) {
+      indices[ultimo] = (indices[ultimo] + 1) % PALETA_DONA_AZULES.length;
+    }
+  }
+  return indices.map((i) => PALETA_DONA_AZULES[i]);
 }
 
 // ---------- Dona interactiva de la cartera total ----------
@@ -537,6 +580,7 @@ function construirDona(items, total) {
   fondo.setAttribute('stroke-width', String(DONA_RADIO_EXTERNO - DONA_RADIO_INTERNO));
   svg.appendChild(fondo);
 
+  const colores = asignarColoresDona(items);
   let anguloAcumulado = 0;
   items.forEach((item, indice) => {
     const fraccion = total > 0 ? item.valor / total : 0;
@@ -559,7 +603,7 @@ function construirDona(items, total) {
 
     const sector = document.createElementNS(svgNS, 'path');
     sector.setAttribute('d', d);
-    sector.setAttribute('fill', colorEscalaAzul(fraccion));
+    sector.setAttribute('fill', colores[indice]);
     sector.setAttribute('class', 'cartera-torta-sector');
     sector.dataset.indice = String(indice);
     sector.style.setProperty('--dx', `${dx}px`);
@@ -571,11 +615,13 @@ function construirDona(items, total) {
 }
 
 /** Valor de un instrumento convertido a dólares: los pesos se convierten con
- * la cotización del dólar MEP del Monitor; los que ya están en dólares
- * (MEP o Cable) se usan tal cual. */
+ * la cotización del dólar MEP del Monitor (o, si todavía no se subió, con
+ * el MEP en vivo de respaldo); los que ya están en dólares (MEP o Cable) se
+ * usan tal cual. */
 function valorEnUsd(item) {
   if (item.moneda === 'Pesos') {
-    return cotizacionMep ? item.valor / cotizacionMep : null;
+    const mep = cotizacionMep || cotizacionMepEnVivo;
+    return mep ? item.valor / mep : null;
   }
   return item.valor;
 }
@@ -1006,3 +1052,4 @@ btnDescargar.addEventListener('click', async () => {
 
 renderCarterasRecientes();
 renderCartera();
+cargarCotizacionMepFallback();

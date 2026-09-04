@@ -601,18 +601,6 @@ button:disabled {
   font-weight: 700;
 }
 
-.tabla-excel td.celda-bid {
-  background: #fdecec;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.tabla-excel td.celda-offer {
-  background: #e8f6ee;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
 .tabla-vacia {
   padding: 24px;
   text-align: center;
