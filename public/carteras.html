@@ -91,36 +91,6 @@
     </form>
 
     <p id="mensaje-cartera" class="mensaje" role="status"></p>
-
-    <div class="recuadro-datos" id="recuadro-cotizaciones">
-      <div class="recuadro-datos-encabezado">
-        <span class="recuadro-datos-titulo">Cotizaciones en vivo</span>
-        <span class="badge-datos" id="badge-cotizaciones">Sin cargar</span>
-      </div>
-      <p class="recuadro-datos-nota">
-        Precios bid/offer de acciones, cedears y ONs en pesos, en vivo desde el mercado.
-      </p>
-      <button type="button" class="btn-secundario" id="btn-cargar-cotizaciones">Cargar cotizaciones</button>
-
-      <label class="rango-campo campo-busqueda oculto" id="campo-busqueda-cotizaciones" style="margin-top:14px;">
-        <span>Buscar ticker</span>
-        <input type="text" id="buscar-cotizacion" placeholder="Ej: GGAL, AL30D..." autocomplete="off" />
-      </label>
-
-      <div class="tabla-wrap oculto" id="wrap-tabla-cotizaciones" style="margin-top:14px;">
-        <table class="tabla-excel" id="tabla-cotizaciones">
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th>Categoría</th>
-              <th>Bid</th>
-              <th>Offer</th>
-            </tr>
-          </thead>
-          <tbody id="cuerpo-tabla-cotizaciones"></tbody>
-        </table>
-      </div>
-    </div>
   </main>
 
   <section class="preview-card">
@@ -150,7 +120,6 @@
   <script src="vendor/jszip.min.js"></script>
   <script src="vendor/exceljs.min.js"></script>
   <script src="carteras-datos-motor.js"></script>
-  <script src="carteras-apis-motor.js"></script>
   <script src="carteras.js"></script>
 </body>
 </html>

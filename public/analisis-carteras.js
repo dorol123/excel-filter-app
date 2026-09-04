@@ -476,3 +476,78 @@ btnExportarConfirmar.addEventListener('click', async () => {
     btnExportarConfirmar.textContent = textoOriginal;
   }
 });
+
+// --- Cotizaciones en vivo (acciones, cedears, ONs) ---
+
+let cotizacionesMercado = [];
+
+const btnCargarCotizaciones = document.getElementById('btn-cargar-cotizaciones');
+const badgeCotizaciones = document.getElementById('badge-cotizaciones');
+const campoBusquedaCotizaciones = document.getElementById('campo-busqueda-cotizaciones');
+const inputBuscarCotizacion = document.getElementById('buscar-cotizacion');
+const wrapTablaCotizaciones = document.getElementById('wrap-tabla-cotizaciones');
+const cuerpoTablaCotizaciones = document.getElementById('cuerpo-tabla-cotizaciones');
+
+function formatPrecioMercado(valor) {
+  return Number.isFinite(valor)
+    ? valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '—';
+}
+
+function renderTablaCotizaciones(lista) {
+  cuerpoTablaCotizaciones.innerHTML = '';
+  lista.forEach((item) => {
+    const fila = document.createElement('tr');
+
+    const tdTicker = document.createElement('td');
+    tdTicker.textContent = item.ticker;
+    fila.appendChild(tdTicker);
+
+    const tdCategoria = document.createElement('td');
+    tdCategoria.textContent = item.categoria;
+    fila.appendChild(tdCategoria);
+
+    const tdBid = document.createElement('td');
+    tdBid.textContent = formatPrecioMercado(item.bid);
+    tdBid.className = 'celda-bid';
+    fila.appendChild(tdBid);
+
+    const tdOffer = document.createElement('td');
+    tdOffer.textContent = formatPrecioMercado(item.offer);
+    tdOffer.className = 'celda-offer';
+    fila.appendChild(tdOffer);
+
+    cuerpoTablaCotizaciones.appendChild(fila);
+  });
+}
+
+if (btnCargarCotizaciones) {
+  btnCargarCotizaciones.addEventListener('click', async () => {
+    btnCargarCotizaciones.disabled = true;
+    badgeCotizaciones.textContent = 'Cargando...';
+    try {
+      cotizacionesMercado = await procesarInstrumentosDeMercado();
+      cotizacionesMercado.sort((a, b) => a.ticker.localeCompare(b.ticker));
+      renderTablaCotizaciones(cotizacionesMercado);
+      badgeCotizaciones.textContent = `${cotizacionesMercado.length} instrumentos`;
+      campoBusquedaCotizaciones.classList.remove('oculto');
+      wrapTablaCotizaciones.classList.remove('oculto');
+      btnCargarCotizaciones.textContent = 'Actualizar cotizaciones';
+    } catch (err) {
+      badgeCotizaciones.textContent = 'Error al cargar';
+      mostrarMensaje('No se pudieron cargar las cotizaciones: ' + err.message, 'error');
+    } finally {
+      btnCargarCotizaciones.disabled = false;
+    }
+  });
+}
+
+if (inputBuscarCotizacion) {
+  inputBuscarCotizacion.addEventListener('input', () => {
+    const texto = inputBuscarCotizacion.value.trim().toUpperCase();
+    const filtradas = texto
+      ? cotizacionesMercado.filter((item) => item.ticker.toUpperCase().includes(texto))
+      : cotizacionesMercado;
+    renderTablaCotizaciones(filtradas);
+  });
+}
