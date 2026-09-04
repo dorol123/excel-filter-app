@@ -533,7 +533,7 @@ function construirDona(items, total) {
   fondo.setAttribute('cy', String(DONA_CENTRO));
   fondo.setAttribute('r', String((DONA_RADIO_EXTERNO + DONA_RADIO_INTERNO) / 2));
   fondo.setAttribute('fill', 'none');
-  fondo.setAttribute('stroke', '#e4e7f7');
+  fondo.setAttribute('stroke', '#223252');
   fondo.setAttribute('stroke-width', String(DONA_RADIO_EXTERNO - DONA_RADIO_INTERNO));
   svg.appendChild(fondo);
 

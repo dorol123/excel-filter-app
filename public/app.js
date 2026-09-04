@@ -85,7 +85,7 @@ function construirTabla(encabezados, filas, colImporte, colAsesor) {
   const colFecha = encabezados.indexOf('Fecha Acreditación');
   const colCuenta = encabezados.indexOf('Cuenta');
   const tabla = document.createElement('table');
-  tabla.className = 'tabla-excel';
+  tabla.className = 'tabla-acreditaciones';
   tabla.id = 'tabla-activa';
 
   const thead = document.createElement('thead');
