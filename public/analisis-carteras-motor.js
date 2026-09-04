@@ -158,6 +158,7 @@ const COLOR_NAVY = 'FF171B6B';
 const COLOR_BORDE = 'FFDFE2F0';
 const COLOR_FILA_PAR = 'FFF7F8FD';
 const COLOR_TEXTO = 'FF1B1F2B';
+const COLOR_COPPER = 'FFE3A83E';
 
 /**
  * Qué tan "caliente" (oscuro) se ve un activo según qué porción de la
@@ -209,14 +210,48 @@ async function exportarCarteraExcel(datos, categoriasSeleccionadas) {
   }
 
   const encabezados = ['Categoría', 'Especie', 'Descripción', 'Cantidad', 'Precio', 'Valor Actual', '% Cartera'];
+  const numColumnas = encabezados.length;
+
+  // Portada del reporte: título + franja cobre (mismo acento de marca que
+  // la app) + línea de datos de la cuenta, igual que arriba de la vista en
+  // pantalla (ver renderCartera en analisis-carteras.js).
+  const filaTitulo = hoja.addRow([datos.nombre ? `Cartera de ${datos.nombre}` : 'Cartera']);
+  hoja.mergeCells(1, 1, 1, numColumnas);
+  filaTitulo.height = 28;
+  filaTitulo.getCell(1).font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
+  filaTitulo.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_NAVY } };
+  filaTitulo.getCell(1).alignment = { vertical: 'middle', indent: 1 };
+
+  const filaAcento = hoja.addRow([]);
+  hoja.mergeCells(2, 1, 2, numColumnas);
+  filaAcento.height = 4;
+  filaAcento.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_COPPER } };
+
+  const detalles = [
+    datos.comitente ? `Comitente: ${datos.comitente}` : null,
+    `Moneda: ${datos.moneda === 'USD' ? 'Dólares' : 'Pesos'}`,
+    datos.notaValuacion,
+  ]
+    .filter(Boolean)
+    .join('   ·   ');
+  const filaMeta = hoja.addRow([detalles]);
+  hoja.mergeCells(3, 1, 3, numColumnas);
+  filaMeta.height = 20;
+  filaMeta.getCell(1).font = { italic: true, color: { argb: COLOR_TEXTO } };
+  filaMeta.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_FILA_PAR } };
+  filaMeta.getCell(1).alignment = { vertical: 'middle', indent: 1 };
+
+  hoja.addRow([]);
+
+  const filaEncabezadoNum = 5;
   const filaEncabezado = hoja.addRow(encabezados);
   filaEncabezado.eachCell((celda) => {
     celda.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR_NAVY } };
     celda.border = bordeFinoExcel();
   });
-  hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: encabezados.length } };
-  hoja.views = [{ state: 'frozen', ySplit: 1 }];
+  hoja.autoFilter = { from: { row: filaEncabezadoNum, column: 1 }, to: { row: filaEncabezadoNum, column: numColumnas } };
+  hoja.views = [{ state: 'frozen', ySplit: filaEncabezadoNum }];
 
   activos.forEach((activo, indiceFila) => {
     const porcentaje = datos.totalCartera > 0 ? activo.valorActual / datos.totalCartera : 0;
