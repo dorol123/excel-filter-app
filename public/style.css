@@ -634,6 +634,19 @@ button:disabled {
   margin-top: 8px;
 }
 
+.lista-herramientas-titulo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 18px 0 -2px;
+}
+
+.lista-herramientas-titulo:first-child {
+  margin-top: 0;
+}
+
 .tarjeta-herramienta {
   display: flex;
   align-items: center;
