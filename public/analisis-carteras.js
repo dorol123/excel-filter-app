@@ -74,6 +74,7 @@ async function manejarArchivo(archivo) {
     tarjetaCarga.classList.add('oculto');
     resultado.classList.remove('oculto');
     mostrarMensaje(`${datosCartera.activos.length} activos cargados.`, 'exito');
+    cargarCotizacionesEnVivo();
   } catch (error) {
     console.error(error);
     mostrarMensaje(error.message || 'No se pudo procesar el PDF.', 'error');
@@ -280,7 +281,7 @@ function renderTablas(datos) {
     tabla.className = 'tabla-excel';
     tabla.innerHTML = `
       <thead>
-        <tr><th>Especie</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Valor Actual</th><th>% Cartera</th></tr>
+        <tr><th>Especie</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Valor Actual</th><th>% Cartera</th><th>Bid</th><th>Offer</th></tr>
       </thead>
       <tbody></tbody>`;
     const tbody = tabla.querySelector('tbody');
@@ -290,6 +291,7 @@ function renderTablas(datos) {
 
       const porcentaje = datos.totalCartera > 0 ? activo.valorActual / datos.totalCartera : 0;
       const { fondo, textoClaro } = colorCalor(porcentaje, porcentajeMaximo);
+      const cotizacion = cotizacionesPorTicker.get(activo.especie.toUpperCase());
       const fila = document.createElement('tr');
       fila.className = 'fila-especie';
       fila.innerHTML = `
@@ -299,6 +301,8 @@ function renderTablas(datos) {
         <td class="columna-importe">${formatMonto(activo.precio, datos.moneda, 2)}</td>
         <td class="columna-importe celda-calor"></td>
         <td class="columna-importe">${formatPorcentaje(porcentaje)}</td>
+        <td class="columna-importe celda-bid">${formatPrecioMercado(cotizacion && cotizacion.bid)}</td>
+        <td class="columna-importe celda-offer">${formatPrecioMercado(cotizacion && cotizacion.offer)}</td>
       `;
       const celdaValor = fila.querySelector('.celda-calor');
       celdaValor.textContent = formatMonto(activo.valorActual, datos.moneda, 0);
@@ -477,16 +481,13 @@ btnExportarConfirmar.addEventListener('click', async () => {
   }
 });
 
-// --- Cotizaciones en vivo (acciones, cedears, ONs) ---
+// --- Cotizaciones en vivo (acciones, cedears, ONs), por ticker de cada especie ---
+// Se piden solas al cargar el PDF y se muestran como columnas Bid/Offer en cada
+// tabla de categoría (ver renderTablas), buscando por especie en el mapa.
 
-let cotizacionesMercado = [];
+let cotizacionesPorTicker = new Map();
 
-const btnCargarCotizaciones = document.getElementById('btn-cargar-cotizaciones');
 const badgeCotizaciones = document.getElementById('badge-cotizaciones');
-const campoBusquedaCotizaciones = document.getElementById('campo-busqueda-cotizaciones');
-const inputBuscarCotizacion = document.getElementById('buscar-cotizacion');
-const wrapTablaCotizaciones = document.getElementById('wrap-tabla-cotizaciones');
-const cuerpoTablaCotizaciones = document.getElementById('cuerpo-tabla-cotizaciones');
 
 function formatPrecioMercado(valor) {
   return Number.isFinite(valor)
@@ -494,60 +495,19 @@ function formatPrecioMercado(valor) {
     : '—';
 }
 
-function renderTablaCotizaciones(lista) {
-  cuerpoTablaCotizaciones.innerHTML = '';
-  lista.forEach((item) => {
-    const fila = document.createElement('tr');
-
-    const tdTicker = document.createElement('td');
-    tdTicker.textContent = item.ticker;
-    fila.appendChild(tdTicker);
-
-    const tdCategoria = document.createElement('td');
-    tdCategoria.textContent = item.categoria;
-    fila.appendChild(tdCategoria);
-
-    const tdBid = document.createElement('td');
-    tdBid.textContent = formatPrecioMercado(item.bid);
-    tdBid.className = 'celda-bid';
-    fila.appendChild(tdBid);
-
-    const tdOffer = document.createElement('td');
-    tdOffer.textContent = formatPrecioMercado(item.offer);
-    tdOffer.className = 'celda-offer';
-    fila.appendChild(tdOffer);
-
-    cuerpoTablaCotizaciones.appendChild(fila);
-  });
-}
-
-if (btnCargarCotizaciones) {
-  btnCargarCotizaciones.addEventListener('click', async () => {
-    btnCargarCotizaciones.disabled = true;
-    badgeCotizaciones.textContent = 'Cargando...';
-    try {
-      cotizacionesMercado = await procesarInstrumentosDeMercado();
-      cotizacionesMercado.sort((a, b) => a.ticker.localeCompare(b.ticker));
-      renderTablaCotizaciones(cotizacionesMercado);
-      badgeCotizaciones.textContent = `${cotizacionesMercado.length} instrumentos`;
-      campoBusquedaCotizaciones.classList.remove('oculto');
-      wrapTablaCotizaciones.classList.remove('oculto');
-      btnCargarCotizaciones.textContent = 'Actualizar cotizaciones';
-    } catch (err) {
-      badgeCotizaciones.textContent = 'Error al cargar';
-      mostrarMensaje('No se pudieron cargar las cotizaciones: ' + err.message, 'error');
-    } finally {
-      btnCargarCotizaciones.disabled = false;
-    }
-  });
-}
-
-if (inputBuscarCotizacion) {
-  inputBuscarCotizacion.addEventListener('input', () => {
-    const texto = inputBuscarCotizacion.value.trim().toUpperCase();
-    const filtradas = texto
-      ? cotizacionesMercado.filter((item) => item.ticker.toUpperCase().includes(texto))
-      : cotizacionesMercado;
-    renderTablaCotizaciones(filtradas);
-  });
+async function cargarCotizacionesEnVivo() {
+  badgeCotizaciones.textContent = 'Cotizaciones: cargando...';
+  badgeCotizaciones.classList.remove('vencido', 'cargado');
+  try {
+    const instrumentos = await procesarInstrumentosDeMercado();
+    cotizacionesPorTicker = new Map(instrumentos.map((item) => [item.ticker.toUpperCase(), item]));
+    badgeCotizaciones.textContent = 'Cotizaciones en vivo';
+    badgeCotizaciones.classList.add('cargado');
+    if (datosCartera) renderTablas(datosCartera);
+  } catch (err) {
+    cotizacionesPorTicker = new Map();
+    badgeCotizaciones.textContent = 'Cotizaciones no disponibles';
+    badgeCotizaciones.classList.add('vencido');
+    console.error('No se pudieron cargar las cotizaciones en vivo:', err);
+  }
 }
