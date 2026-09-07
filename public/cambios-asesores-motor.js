@@ -5,8 +5,11 @@
  * Lee el reporte "Gestiones_CambiosDeAsesorEnCurso" (siempre el mismo
  * formato: una sola hoja, con encabezados en la fila 1) y arma las filas
  * listas para pegar en la hoja "Cambio de asesor" del libro Aperturas,
- * respetando su orden de columnas. Sólo interesan las gestiones cuya
- * UnidadDeNegocioDestino sea "Individuos"; las demás se descartan.
+ * respetando su orden de columnas. Esa hoja hace seguimiento de las cuentas
+ * que SALEN de un asesor de Individuos, así que sólo interesan las
+ * gestiones cuya UnidadDeNegocioOrigen sea "Individuos"; las demás (que
+ * entran a Individuos desde otra unidad, o no tocan Individuos) se
+ * descartan.
  */
 
 function valorCeldaCambios(celda) {
@@ -20,7 +23,7 @@ function valorCeldaCambios(celda) {
   return v;
 }
 
-const UNIDAD_DESTINO_INTERES = 'Individuos';
+const UNIDAD_ORIGEN_INTERES = 'Individuos';
 
 /**
  * Columnas de la hoja "Cambio de asesor" de Aperturas, en orden. Las que no
@@ -54,7 +57,7 @@ function soloFecha(valor) {
 /**
  * Procesa el reporte de gestiones (100% en el navegador) y devuelve las
  * filas ya mapeadas a las columnas de destino, filtradas a
- * UnidadDeNegocioDestino = "Individuos".
+ * UnidadDeNegocioOrigen = "Individuos".
  */
 async function procesarGestiones(arrayBuffer) {
   const workbook = new ExcelJS.Workbook();
@@ -70,16 +73,16 @@ async function procesarGestiones(arrayBuffer) {
     if (nombre) columnaPorNombre.set(String(nombre).trim(), numeroColumna);
   });
 
-  const colUnidadDestino = columnaPorNombre.get('UnidadDeNegocioDestino');
-  if (!colUnidadDestino) {
-    throw new Error('No se encontró la columna "UnidadDeNegocioDestino" en el archivo.');
+  const colUnidadOrigen = columnaPorNombre.get('UnidadDeNegocioOrigen');
+  if (!colUnidadOrigen) {
+    throw new Error('No se encontró la columna "UnidadDeNegocioOrigen" en el archivo.');
   }
 
   const filas = [];
   for (let numeroFila = 2; numeroFila <= hoja.rowCount; numeroFila++) {
     const filaExcel = hoja.getRow(numeroFila);
-    const unidadDestino = valorCeldaCambios(filaExcel.getCell(colUnidadDestino));
-    if (String(unidadDestino || '').trim() !== UNIDAD_DESTINO_INTERES) continue;
+    const unidadOrigen = valorCeldaCambios(filaExcel.getCell(colUnidadOrigen));
+    if (String(unidadOrigen || '').trim() !== UNIDAD_ORIGEN_INTERES) continue;
 
     const fila = {};
     COLUMNAS_DESTINO.forEach(({ destino, origen }) => {

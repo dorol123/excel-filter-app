@@ -38,7 +38,7 @@ function formatValorParaMostrar(valor) {
 
 function renderTabla(filas) {
   if (filas.length === 0) {
-    tablaWrap.innerHTML = '<p class="tabla-vacia">No hay gestiones a Individuos en este archivo.</p>';
+    tablaWrap.innerHTML = '<p class="tabla-vacia">No hay gestiones con origen Individuos en este archivo.</p>';
     return;
   }
 
@@ -68,9 +68,9 @@ async function manejarArchivo(archivo) {
     const arrayBuffer = await archivo.arrayBuffer();
     filasActuales = await procesarGestiones(arrayBuffer);
     renderTabla(filasActuales);
-    infoResultado.textContent = `${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} a Individuos, lista${filasActuales.length === 1 ? '' : 's'} para copiar.`;
+    infoResultado.textContent = `${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} con origen Individuos, lista${filasActuales.length === 1 ? '' : 's'} para copiar.`;
     resultado.classList.remove('oculto');
-    mostrarMensaje(`${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} a Individuos encontrada${filasActuales.length === 1 ? '' : 's'}.`, 'exito');
+    mostrarMensaje(`${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} con origen Individuos encontrada${filasActuales.length === 1 ? '' : 's'}.`, 'exito');
   } catch (error) {
     console.error(error);
     mostrarMensaje(error.message || 'No se pudo procesar el archivo.', 'error');
