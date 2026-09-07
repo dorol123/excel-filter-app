@@ -113,12 +113,13 @@
       <fieldset class="rango">
         <legend>ON de referencia</legend>
         <div class="rango-fila">
-          <label class="rango-campo campo-ticker">
+          <label class="rango-campo campo-ticker campo-busqueda">
             <span>Ticker</span>
-            <input type="text" id="sugerencias-ticker" list="lista-tickers" placeholder="Ej: RUCDO" autocomplete="off" />
-            <datalist id="lista-tickers"></datalist>
+            <input type="text" id="sugerencias-ticker" placeholder="Ej: RUCDO" autocomplete="off" />
+            <div class="lista-sugerencias oculto" id="lista-sugerencias-ticker"></div>
           </label>
         </div>
+        <p class="nota-atajo">Al hacer click aparecen todas, ordenadas de peor a mejor promedio entre calificación, duration y TIR.</p>
       </fieldset>
 
       <div id="referencia-info" class="referencia-info oculto"></div>

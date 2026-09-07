@@ -281,7 +281,6 @@ function renderRanking() {
 // ---------- Sugerencias por ticker ----------
 
 const inputTicker = document.getElementById('sugerencias-ticker');
-const listaTickers = document.getElementById('lista-tickers');
 const referenciaInfo = document.getElementById('referencia-info');
 const referenciaMensaje = document.getElementById('referencia-mensaje');
 const controlesSugerencia = document.getElementById('controles-sugerencia');
@@ -346,16 +345,140 @@ function umbralBrechaSugerencias() {
   return Number.isFinite(valor) ? valor / 100 : UMBRAL_BRECHA_BID_DEFECTO;
 }
 
+// Mismas ONs cargadas, pero ordenadas de peor a mejor promedio entre
+// calificación, duration y TIR (ver ordenarPorPeorPromedio en ons-motor.js),
+// para que el desplegable del ticker las muestre en ese orden.
+let bonosPeorPrimero = [];
+
 function poblarTickers() {
-  listaTickers.innerHTML = bonosCargados
-    .map((b) => `<option value="${b.ticker}">${b.emisor ?? ''}</option>`)
-    .join('');
+  bonosPeorPrimero = ordenarPorPeorPromedio(bonosCargados);
 }
 
 function bonoPorTicker(ticker) {
   const buscado = ticker.trim().toUpperCase();
   return bonosCargados.find((b) => b.ticker.toUpperCase() === buscado);
 }
+
+// ---------- Desplegable de tickers (peor promedio primero) ----------
+
+const listaSugerenciasTicker = document.getElementById('lista-sugerencias-ticker');
+const MAX_SUGERENCIAS_TICKER = 8;
+
+let sugerenciasTickerRenderizadas = [];
+let sugerenciaTickerActivaIndice = -1;
+
+function buscarTickers(query) {
+  const texto = query.trim().toUpperCase();
+  const candidatos = !texto
+    ? bonosPeorPrimero
+    : bonosPeorPrimero.filter((b) => {
+        const haystack = `${b.ticker} ${b.emisor ?? ''}`.toUpperCase();
+        return haystack.includes(texto);
+      });
+  return candidatos.slice(0, MAX_SUGERENCIAS_TICKER);
+}
+
+function ocultarListaTickers() {
+  listaSugerenciasTicker.classList.add('oculto');
+  listaSugerenciasTicker.innerHTML = '';
+  sugerenciasTickerRenderizadas = [];
+  sugerenciaTickerActivaIndice = -1;
+}
+
+function elegirTicker(bono) {
+  inputTicker.value = bono.ticker;
+  ocultarListaTickers();
+  renderSugerencias();
+}
+
+function marcarTickerActivo(indice) {
+  sugerenciaTickerActivaIndice = indice;
+  const items = listaSugerenciasTicker.querySelectorAll('.sugerencia-item');
+  items.forEach((item, i) => item.classList.toggle('activa', i === indice));
+}
+
+function renderListaTickers(query) {
+  if (bonosPeorPrimero.length === 0) {
+    ocultarListaTickers();
+    return;
+  }
+
+  const resultados = buscarTickers(query);
+  sugerenciasTickerRenderizadas = resultados;
+  sugerenciaTickerActivaIndice = -1;
+  listaSugerenciasTicker.innerHTML = '';
+
+  if (resultados.length === 0) {
+    const vacio = document.createElement('div');
+    vacio.className = 'sugerencia-vacia';
+    vacio.textContent = 'Sin coincidencias.';
+    listaSugerenciasTicker.appendChild(vacio);
+    listaSugerenciasTicker.classList.remove('oculto');
+    return;
+  }
+
+  resultados.forEach((bono) => {
+    const item = document.createElement('div');
+    item.className = 'sugerencia-item';
+
+    const ticker = document.createElement('span');
+    ticker.className = 'sugerencia-ticker';
+    ticker.textContent = bono.ticker;
+
+    const nombre = document.createElement('span');
+    nombre.className = 'sugerencia-nombre';
+    nombre.textContent = bono.emisor || '';
+
+    item.appendChild(ticker);
+    item.appendChild(nombre);
+
+    if (Number.isFinite(bono.tir)) {
+      const tir = document.createElement('span');
+      tir.className = 'sugerencia-tir';
+      tir.textContent = formatPorcentaje(bono.tir);
+      item.appendChild(tir);
+    }
+
+    const calificacion = document.createElement('span');
+    calificacion.className = 'sugerencia-categoria';
+    calificacion.textContent = bono.calificacion || '—';
+    item.appendChild(calificacion);
+
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      elegirTicker(bono);
+    });
+
+    listaSugerenciasTicker.appendChild(item);
+  });
+
+  listaSugerenciasTicker.classList.remove('oculto');
+}
+
+inputTicker.addEventListener('focus', () => renderListaTickers(inputTicker.value));
+inputTicker.addEventListener('click', () => renderListaTickers(inputTicker.value));
+inputTicker.addEventListener('input', () => renderListaTickers(inputTicker.value));
+
+inputTicker.addEventListener('keydown', (e) => {
+  if (listaSugerenciasTicker.classList.contains('oculto') || sugerenciasTickerRenderizadas.length === 0) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    marcarTickerActivo(Math.min(sugerenciaTickerActivaIndice + 1, sugerenciasTickerRenderizadas.length - 1));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    marcarTickerActivo(Math.max(sugerenciaTickerActivaIndice - 1, 0));
+  } else if (e.key === 'Enter' && sugerenciaTickerActivaIndice >= 0) {
+    e.preventDefault();
+    elegirTicker(sugerenciasTickerRenderizadas[sugerenciaTickerActivaIndice]);
+  } else if (e.key === 'Escape') {
+    ocultarListaTickers();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.campo-ticker')) ocultarListaTickers();
+});
 
 function renderReferencia(bono) {
   const aviso = bono.motivoExclusion

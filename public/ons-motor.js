@@ -186,6 +186,61 @@ function indiceCalificacion(calificacion) {
   return i === -1 ? ESCALA_CALIFICACION.length : i;
 }
 
+/**
+ * "Score de peor promedio": un único número (0 a 1, más alto = peor) que
+ * combina calificación, duration y TIR, para poder ordenar ONs de peor a
+ * mejor sin tener que elegir un solo criterio.
+ *
+ * No existe un índice estándar de la industria que mezcle estos tres datos
+ * puntuales (los modelos de riesgo de crédito "de verdad" usan probabilidad
+ * de default y severidad de pérdida, que no están en este archivo), así que
+ * se arma un promedio simple de tres señales de riesgo normalizadas de 0 a
+ * 1 contra el resto de las ONs cargadas, las tres apuntando en el mismo
+ * sentido (más = más riesgo = peor):
+ *  - Calificación: qué tan lejos está de la mejor calificación cargada.
+ *  - Duration: qué tan larga es comparada con la más larga cargada (más
+ *    tiempo expuesto a la tasa = más riesgo).
+ *  - TIR: qué tan alta es comparada con la más alta cargada. No es al
+ *    revés: la TIR de una ON no es sólo "cuánto rinde", es también lo que
+ *    el mercado le exige para prestarle — un "high yield bond" se llama
+ *    así justamente porque paga más porque es más riesgoso, no porque sea
+ *    mejor opción. Por eso una TIR alta suma al score de riesgo en vez de
+ *    restar (usar la TIR cruda "a más TIR, mejor" sólo tiene sentido para
+ *    comparar ONs de calificación parecida, que es lo que ya hace el modo
+ *    "Aumentar TIR" de esta herramienta — acá se están comparando ONs de
+ *    cualquier calificación entre sí).
+ * Los tres pesan lo mismo (es un promedio, no un ranking con pesos
+ * arbitrarios); a la ON que le falte un dato se le pone 0.5 en ese término
+ * (ni mejor ni peor) para no distorsionar el promedio de las demás. Para el
+ * máximo de TIR (contra el que se normaliza) sólo se usan ONs con TIR
+ * confiable (mismo criterio que calcularMotivoExclusion): una sola oferta
+ * vieja o sin liquidez puede mostrar una TIR absurda y, si entrara en el
+ * máximo, aplastaría el término de todas las demás. A esas ONs con TIR no
+ * confiable también se les pone 0.5 en ese término, por la misma razón que
+ * a las que no tienen dato.
+ */
+function ordenarPorPeorPromedio(bonos) {
+  const tirEsConfiable = (b) => b.liquido && Math.abs(b.brechaBid) <= UMBRAL_BRECHA_BID_DEFECTO;
+
+  const indices = bonos.map((b) => indiceCalificacion(b.calificacion));
+  const maxIndice = Math.max(...indices, 1);
+  const durations = bonos.map((b) => b.duration).filter(Number.isFinite);
+  const maxDuration = Math.max(...durations, 0.01);
+  const tiresConfiables = bonos.filter((b) => tirEsConfiable(b) && Number.isFinite(b.tir)).map((b) => b.tir);
+  const maxTirConfiable = Math.max(...tiresConfiables, 0.0001);
+
+  const conScore = bonos.map((bono) => {
+    const peorCalificacion = indiceCalificacion(bono.calificacion) / maxIndice;
+    const peorDuration = Number.isFinite(bono.duration) ? bono.duration / maxDuration : 0.5;
+    const peorTir = tirEsConfiable(bono) && Number.isFinite(bono.tir) ? bono.tir / maxTirConfiable : 0.5;
+    const scorePeor = (peorCalificacion + peorDuration + peorTir) / 3;
+    return { ...bono, scorePeor };
+  });
+
+  conScore.sort((a, b) => b.scorePeor - a.scorePeor);
+  return conScore;
+}
+
 function valorCelda(celda) {
   const v = celda.value;
   if (v && typeof v === 'object' && !(v instanceof Date) && 'result' in v) return v.result;
