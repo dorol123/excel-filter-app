@@ -26,9 +26,11 @@ function valorCeldaCambios(celda) {
 const UNIDAD_ORIGEN_INTERES = 'Individuos';
 
 /**
- * Columnas de la hoja "Cambio de asesor" de Aperturas, en orden. Las que no
- * tienen "origen" (FECHA, MONTO, MAIL, TELEFONO, REFERENCIAS) quedan vacías:
- * el reporte de gestiones no trae esos datos.
+ * Columnas de la hoja "Cambio de asesor" de Aperturas, en orden. De las que
+ * no tienen "origen" (el reporte de gestiones no trae esos datos), MONTO,
+ * MAIL, TELEFONO y REFERENCIAS quedan vacías; FECHA es la excepción: se
+ * completa con la fecha de hoy (ver procesarGestiones), no con un dato del
+ * reporte.
  */
 const COLUMNAS_DESTINO = [
   { destino: 'FECHA', origen: null },
@@ -52,6 +54,13 @@ const COLUMNAS_DESTINO = [
 function soloFecha(valor) {
   if (!(valor instanceof Date)) return valor;
   return new Date(valor.getFullYear(), valor.getMonth(), valor.getDate());
+}
+
+/** DD/MM/AAAA: formato pedido puntualmente para la columna FECHA. */
+function formatFechaDDMMYYYY(fecha) {
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  return `${dia}/${mes}/${fecha.getFullYear()}`;
 }
 
 /**
@@ -78,6 +87,13 @@ async function procesarGestiones(arrayBuffer) {
     throw new Error('No se encontró la columna "UnidadDeNegocioOrigen" en el archivo.');
   }
 
+  // FECHA no viene en el reporte: en la hoja de destino es la fecha en la
+  // que se carga la gestión (hoy), no un dato de la gestión en sí — se pone
+  // una sola vez acá para que todas las filas de esta tanda queden con el
+  // mismo "hoy", sin importar cuánto tarde en tocar "Copiar". Va como texto
+  // DD/MM/AAAA (pedido puntual), no como el resto de las fechas.
+  const hoy = formatFechaDDMMYYYY(new Date());
+
   const filas = [];
   for (let numeroFila = 2; numeroFila <= hoja.rowCount; numeroFila++) {
     const filaExcel = hoja.getRow(numeroFila);
@@ -86,6 +102,10 @@ async function procesarGestiones(arrayBuffer) {
 
     const fila = {};
     COLUMNAS_DESTINO.forEach(({ destino, origen }) => {
+      if (destino === 'FECHA') {
+        fila[destino] = hoy;
+        return;
+      }
       if (!origen) {
         fila[destino] = null;
         return;
