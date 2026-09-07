@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cambios de Asesores</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script src="beta-gate.js" data-clave="000" data-id="cambios-asesores"></script>
+  <div class="pagina-herramienta">
+  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="contenedor" id="contenedor">
+  <main class="card">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Cambios de Asesores<span class="badge-beta">Beta</span></h1>
+        <p class="subtitulo">
+          Subí el reporte de "Gestiones de cambios de asesor en curso" y copiá las gestiones a
+          Individuos, listas para pegar en la hoja "Cambio de asesor".
+        </p>
+        <p class="nota-privacidad">
+          Todo el procesamiento ocurre en tu navegador: el archivo nunca se sube a ningún
+          servidor.
+        </p>
+      </div>
+    </div>
+
+    <label class="dropzone" id="dropzone" for="archivo">
+      <span id="texto-dropzone">Arrastrá el reporte (.xlsx) acá o hacé click para elegirlo</span>
+    </label>
+    <input type="file" id="archivo" name="archivo" accept=".xlsx" hidden />
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+  </main>
+
+  <section id="resultado" class="preview-card preview-card-ancho oculto">
+    <div class="preview-header">
+      <h2>Gestiones a Individuos</h2>
+      <p class="nota-atajo" id="info-resultado"></p>
+    </div>
+
+    <div class="toolbar-derecha">
+      <button type="button" id="btn-copiar" class="btn-primario">Copiar</button>
+    </div>
+    <p id="mensaje-copiar" class="mensaje"></p>
+    <p class="nota-atajo">
+      Pegá directo en la primera fila vacía de la hoja "Cambio de asesor": las columnas sin
+      dato en el reporte (FECHA, MONTO, MAIL, TELEFONO, REFERENCIAS) quedan vacías.
+    </p>
+
+    <div class="tabla-wrap" id="tabla-wrap"></div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="cambios-asesores-motor.js"></script>
+  <script src="cambios-asesores.js"></script>
+</body>
+</html>
