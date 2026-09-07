@@ -989,6 +989,7 @@ btnDescargar.addEventListener('click', async () => {
 
   const anchoVisor = visor.offsetWidth;
   const envoltorio = document.createElement('div');
+  envoltorio.className = 'presentacion-exportar';
   envoltorio.style.cssText = `position:fixed; left:-10000px; top:0; width:${anchoVisor}px; padding:24px; background:#ffffff;`;
   const visorClon = visor.cloneNode(true);
   visorClon.style.width = anchoVisor + 'px';

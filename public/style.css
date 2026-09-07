@@ -1160,6 +1160,30 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * La presentación de la cartera (Presentador de Carteras) se descarga como
+ * PNG sobre fondo BLANCO (html2canvas), sin importar el tema oscuro de la
+ * página. Como el resto del CSS usa colores pensados para fondo oscuro
+ * (--text/--muted/--navy-dark claros), sobre blanco quedan grises y poco
+ * legibles. Esta clase, aplicada sólo al clon que se captura para
+ * descargar (ver btnDescargar en carteras.js), pisa esas variables con la
+ * paleta clara original para que el texto quede oscuro y legible.
+ */
+.presentacion-exportar {
+  --bg: #ffffff;
+  --card-bg: #ffffff;
+  --text: #1b1f2b;
+  --muted: #6b7086;
+  --border: #dde1f0;
+  --navy: #171b6b;
+  --navy-dark: #101253;
+  --navy-tint: #eef0fb;
+  --error: #dc2626;
+  --success: #147d4b;
+  --copper-tint: rgba(23, 27, 107, 0.08);
+  color: var(--text);
+}
+
 /* Gate de acceso para funciones en beta */
 
 body.beta-bloqueado {
