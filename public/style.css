@@ -845,6 +845,29 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Botón de acción principal de una pantalla (p.ej. "Copiar" en Cambios de
+   Asesores): en cobre en vez de navy, más grande, para que se note que es
+   el paso clave del flujo entre el resto de los botones navy de la app. */
+.btn-copiar-destacado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font-size: 0.95rem;
+  background: var(--copper);
+  color: #1b1200;
+  box-shadow: 0 8px 18px -8px rgba(227, 168, 62, 0.55);
+}
+
+.btn-copiar-destacado svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-copiar-destacado:hover:not(:disabled) {
+  background: #f0b756;
+}
+
 .cartera-visor {
   min-height: 220px;
 }

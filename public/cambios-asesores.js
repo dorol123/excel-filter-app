@@ -10,7 +10,7 @@ const inputArchivo = document.getElementById('archivo');
 const mensaje = document.getElementById('mensaje');
 const resultado = document.getElementById('resultado');
 const infoResultado = document.getElementById('info-resultado');
-const tablaWrap = document.getElementById('tabla-wrap');
+const tablaWrap = document.getElementById('tabla-wrap-cambios');
 const btnCopiar = document.getElementById('btn-copiar');
 const mensajeCopiar = document.getElementById('mensaje-copiar');
 

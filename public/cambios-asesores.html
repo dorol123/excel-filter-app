@@ -47,7 +47,13 @@
     </div>
 
     <div class="toolbar-derecha">
-      <button type="button" id="btn-copiar" class="btn-primario">Copiar</button>
+      <button type="button" id="btn-copiar" class="btn-primario btn-copiar-destacado">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="8" y="4" width="10" height="14" rx="1.5" stroke="currentColor" stroke-width="1.7" />
+          <path d="M6 8H5a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 5 20h9a1.5 1.5 0 0 0 1.5-1.5V18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        Copiar
+      </button>
     </div>
     <p id="mensaje-copiar" class="mensaje"></p>
     <p class="nota-atajo">
@@ -56,7 +62,7 @@
       REFERENCIAS) quedan vacías.
     </p>
 
-    <div class="tabla-wrap" id="tabla-wrap"></div>
+    <div class="tabla-wrap" id="tabla-wrap-cambios"></div>
   </section>
   </div>
   </div>
