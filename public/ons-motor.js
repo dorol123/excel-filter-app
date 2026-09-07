@@ -186,6 +186,11 @@ function indiceCalificacion(calificacion) {
   return i === -1 ? ESCALA_CALIFICACION.length : i;
 }
 
+// Calificaciones que no se sugieren como alternativa en "Sugerencias por
+// ticker" (ver sugerirAlternativas), sin importar qué tan bien den los
+// demás números.
+const CALIFICACIONES_EXCLUIDAS_RECOMENDACION = ['D', 'A-'];
+
 /**
  * "Score de peor promedio": un único número (0 a 1, más alto = peor) que
  * combina calificación, duration y TIR, para poder ordenar ONs de peor a
@@ -488,6 +493,8 @@ function sugerirAlternativas(bonos, tickerReferencia, modo, opciones = {}) {
   } else {
     throw new Error(`Modo desconocido: ${modo}`);
   }
+
+  candidatos = candidatos.filter((b) => !CALIFICACIONES_EXCLUIDAS_RECOMENDACION.includes(b.calificacion));
 
   return { referencia, candidatos };
 }

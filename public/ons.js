@@ -491,24 +491,50 @@ function renderReferencia(bono) {
     TIR ${formatPorcentaje(bono.tir)} · Duration ${formatDuration(bono.duration)}${aviso}`;
 }
 
+// Verde/rojo según mejora o empeora contra la ON de referencia (mismos
+// colores --success/--error que el resto de la app), con más intensidad
+// cuanto más grande es la diferencia dentro de esta lista de candidatos
+// (misma idea de degradé por magnitud que colorCalor en analisis-carteras.js).
+const COLOR_MEJORA_RGB = [87, 178, 116];
+const COLOR_PEOR_RGB = [239, 122, 92];
+
+function colorMejora(valor, maxAbs) {
+  if (!Number.isFinite(valor) || valor === 0 || maxAbs <= 0) return '';
+  const intensidad = Math.min(1, Math.sqrt(Math.abs(valor) / maxAbs));
+  const alpha = (0.1 + intensidad * 0.55).toFixed(3);
+  const [r, g, b] = valor > 0 ? COLOR_MEJORA_RGB : COLOR_PEOR_RGB;
+  return ` style="background: rgba(${r}, ${g}, ${b}, ${alpha});"`;
+}
+
 function renderTablaSugerencias(referencia, candidatos) {
   if (candidatos.length === 0) {
     tablaSugerencias.innerHTML = '<p class="tabla-vacia">No se encontraron alternativas con estos criterios.</p>';
     return;
   }
+
+  const indiceRef = indiceCalificacion(referencia.calificacion);
+  // Mejora = TIR más alta, duration más baja, calificación mejor (índice más bajo).
+  const mejorasTir = candidatos.map((b) => b.tir - referencia.tir);
+  const mejorasDuration = candidatos.map((b) => referencia.duration - b.duration);
+  const mejorasCalificacion = candidatos.map((b) => indiceRef - indiceCalificacion(b.calificacion));
+
+  const maxAbsTir = Math.max(...mejorasTir.map(Math.abs), 0.0001);
+  const maxAbsDuration = Math.max(...mejorasDuration.map(Math.abs), 0.0001);
+  const maxAbsCalificacion = Math.max(...mejorasCalificacion.map(Math.abs), 1);
+
   const filas = candidatos
-    .map((b) => {
+    .map((b, i) => {
       const deltaTir = b.tir - referencia.tir;
       const deltaDuration = b.duration - referencia.duration;
       return `
       <tr>
         <td>${b.ticker}</td>
         <td>${b.emisor ?? ''}</td>
-        <td>${b.calificacion ?? ''}</td>
         <td class="columna-importe">${formatPorcentaje(b.tir)}</td>
-        <td class="columna-importe">${deltaTir >= 0 ? '+' : ''}${formatPorcentaje(deltaTir)}</td>
         <td class="columna-importe">${formatDuration(b.duration)}</td>
-        <td class="columna-importe">${deltaDuration >= 0 ? '+' : ''}${formatDuration(deltaDuration)}</td>
+        <td${colorMejora(mejorasCalificacion[i], maxAbsCalificacion)}>${b.calificacion ?? '—'}</td>
+        <td class="columna-importe"${colorMejora(mejorasDuration[i], maxAbsDuration)}>${deltaDuration >= 0 ? '+' : ''}${formatDuration(deltaDuration)}</td>
+        <td class="columna-importe"${colorMejora(mejorasTir[i], maxAbsTir)}>${deltaTir >= 0 ? '+' : ''}${formatPorcentaje(deltaTir)}</td>
       </tr>`;
     })
     .join('');
@@ -516,8 +542,8 @@ function renderTablaSugerencias(referencia, candidatos) {
     <table class="tabla-excel">
       <thead>
         <tr>
-          <th>Ticker</th><th>Emisor</th><th>Calif.</th>
-          <th>TIR</th><th>Δ TIR</th><th>Duration</th><th>Δ Duration</th>
+          <th>Ticker</th><th>Emisor</th><th>TIR</th><th>Duration</th><th>Calificación</th>
+          <th>Δ Duration</th><th>Δ TIR</th>
         </tr>
       </thead>
       <tbody>${filas}</tbody>
