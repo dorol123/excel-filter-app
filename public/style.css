@@ -868,6 +868,15 @@ button:disabled {
   background: #f0b756;
 }
 
+/* Cambios de Asesores: MONTO por encima del umbral (ver MONTO_UMBRAL_DESTACADO
+   en cambios-asesores-motor.js) se resalta en naranja, igual en pantalla que
+   en lo que se copia a Excel. */
+.tabla-excel td.celda-monto-destacado {
+  background: var(--copper);
+  color: #1b1200;
+  font-weight: 700;
+}
+
 .cartera-visor {
   min-height: 220px;
 }

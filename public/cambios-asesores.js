@@ -58,7 +58,15 @@ function renderTabla(filas) {
 
   const encabezados = COLUMNAS_DESTINO.map((c) => c.destino);
   const filasHtml = filas
-    .map((fila) => `<tr>${encabezados.map((destino) => `<td>${formatValorParaMostrar(fila[destino])}</td>`).join('')}</tr>`)
+    .map((fila) => {
+      const celdas = encabezados
+        .map((destino) => {
+          const clase = destino === 'MONTO' && montoEsDestacado(fila[destino]) ? ' class="celda-monto-destacado"' : '';
+          return `<td${clase}>${formatValorParaMostrar(fila[destino])}</td>`;
+        })
+        .join('');
+      return `<tr>${celdas}</tr>`;
+    })
     .join('');
 
   tablaWrap.innerHTML = `

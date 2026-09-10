@@ -259,6 +259,14 @@ function aplicarAUM(filas, mapaAUM) {
 
 // ---------- Preparar filas para copiar (TSV + HTML) ----------
 
+/** A partir de este MONTO, la celda se resalta en naranja (vista previa y copia a Excel). */
+const MONTO_UMBRAL_DESTACADO = 5000;
+const COLOR_MONTO_DESTACADO = '#e3a83e';
+
+function montoEsDestacado(valor) {
+  return typeof valor === 'number' && valor > MONTO_UMBRAL_DESTACADO;
+}
+
 /** yyyy-mm-dd: formato de fecha que Excel reconoce sin ambigüedad al pegar, sea cual sea la configuración regional. */
 function formatValorParaCopiar(valor) {
   if (valor === null || valor === undefined || valor === '') return '';
@@ -281,10 +289,14 @@ function escapeHtmlCambios(texto) {
 
 function filasAHtml(filas) {
   const filasHtml = filas
-    .map(
-      (fila) =>
-        `<tr>${COLUMNAS_DESTINO.map(({ destino }) => `<td>${escapeHtmlCambios(formatValorParaCopiar(fila[destino]))}</td>`).join('')}</tr>`
-    )
+    .map((fila) => {
+      const celdas = COLUMNAS_DESTINO.map(({ destino }) => {
+        const texto = escapeHtmlCambios(formatValorParaCopiar(fila[destino]));
+        const estilo = destino === 'MONTO' && montoEsDestacado(fila[destino]) ? ` style="background:${COLOR_MONTO_DESTACADO};"` : '';
+        return `<td${estilo}>${texto}</td>`;
+      }).join('');
+      return `<tr>${celdas}</tr>`;
+    })
     .join('');
   return `<table>${filasHtml}</table>`;
 }
