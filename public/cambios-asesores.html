@@ -28,11 +28,21 @@
     </div>
 
     <label class="dropzone" id="dropzone" for="archivo">
-      <span id="texto-dropzone">Arrastrá el reporte (.xlsx) acá o hacé click para elegirlo</span>
+      <span id="texto-dropzone">Arrastrá el reporte de gestiones (.xlsx) acá o hacé click para elegirlo</span>
     </label>
     <input type="file" id="archivo" name="archivo" accept=".xlsx" hidden />
 
     <p id="mensaje" class="mensaje" role="status"></p>
+
+    <label class="dropzone" id="dropzone-aum" for="archivo-aum" style="margin-top:14px;">
+      <span id="texto-dropzone-aum">
+        Opcional: arrastrá el archivo de cuentas (AUM) para completar MONTO, cruzando por
+        Comitente
+      </span>
+    </label>
+    <input type="file" id="archivo-aum" name="archivo-aum" accept=".xlsx" hidden />
+
+    <p id="mensaje-aum" class="mensaje" role="status"></p>
   </main>
 
   <section id="resultado" class="preview-card preview-card-ancho oculto">
@@ -53,8 +63,8 @@
     <p id="mensaje-copiar" class="mensaje"></p>
     <p class="nota-atajo">
       Pegá directo en la primera fila vacía de la hoja "Cambio de asesor". FECHA se completa
-      con la fecha de hoy; las demás columnas sin dato en el reporte (MONTO, MAIL, TELEFONO,
-      REFERENCIAS) quedan vacías.
+      con la fecha de hoy; MONTO se completa cruzando por Comitente si subiste el archivo de
+      cuentas; MAIL, TELEFONO y REFERENCIAS quedan vacías (el reporte no trae esos datos).
     </p>
 
     <div class="tabla-wrap" id="tabla-wrap-cambios"></div>

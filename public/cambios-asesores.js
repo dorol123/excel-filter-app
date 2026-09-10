@@ -8,17 +8,28 @@ const dropzone = document.getElementById('dropzone');
 const textoDropzone = document.getElementById('texto-dropzone');
 const inputArchivo = document.getElementById('archivo');
 const mensaje = document.getElementById('mensaje');
+const dropzoneAum = document.getElementById('dropzone-aum');
+const textoDropzoneAum = document.getElementById('texto-dropzone-aum');
+const inputArchivoAum = document.getElementById('archivo-aum');
+const mensajeAum = document.getElementById('mensaje-aum');
 const resultado = document.getElementById('resultado');
 const infoResultado = document.getElementById('info-resultado');
 const tablaWrap = document.getElementById('tabla-wrap-cambios');
 const btnCopiar = document.getElementById('btn-copiar');
 const mensajeCopiar = document.getElementById('mensaje-copiar');
 
+let filasBase = [];
+let mapaAUM = null;
 let filasActuales = [];
 
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
   mensaje.className = 'mensaje' + (tipo ? ` ${tipo}` : '');
+}
+
+function mostrarMensajeAum(texto, tipo) {
+  mensajeAum.textContent = texto;
+  mensajeAum.className = 'mensaje' + (tipo ? ` ${tipo}` : '');
 }
 
 function mostrarMensajeCopiar(texto, tipo) {
@@ -32,6 +43,9 @@ function formatValorParaMostrar(valor) {
     const dia = String(valor.getDate()).padStart(2, '0');
     const mes = String(valor.getMonth() + 1).padStart(2, '0');
     return `${dia}/${mes}/${valor.getFullYear()}`;
+  }
+  if (typeof valor === 'number') {
+    return valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   return String(valor);
 }
@@ -56,6 +70,17 @@ function renderTabla(filas) {
     </table>`;
 }
 
+function recalcularYRenderizar() {
+  if (filasBase.length === 0) return;
+  filasActuales = mapaAUM ? aplicarAUM(filasBase, mapaAUM) : filasBase;
+  renderTabla(filasActuales);
+  const cantidadConMonto = mapaAUM ? filasActuales.filter((f) => f.MONTO !== null).length : 0;
+  infoResultado.textContent = mapaAUM
+    ? `${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} con origen Individuos, ${cantidadConMonto} con MONTO encontrado, listas para copiar.`
+    : `${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} con origen Individuos, lista${filasActuales.length === 1 ? '' : 's'} para copiar.`;
+  resultado.classList.remove('oculto');
+}
+
 async function manejarArchivo(archivo) {
   if (!archivo) return;
   textoDropzone.textContent = archivo.name;
@@ -66,14 +91,30 @@ async function manejarArchivo(archivo) {
 
   try {
     const arrayBuffer = await archivo.arrayBuffer();
-    filasActuales = await procesarGestiones(arrayBuffer);
-    renderTabla(filasActuales);
-    infoResultado.textContent = `${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} con origen Individuos, lista${filasActuales.length === 1 ? '' : 's'} para copiar.`;
-    resultado.classList.remove('oculto');
-    mostrarMensaje(`${filasActuales.length} gestión${filasActuales.length === 1 ? '' : 'es'} con origen Individuos encontrada${filasActuales.length === 1 ? '' : 's'}.`, 'exito');
+    filasBase = await procesarGestiones(arrayBuffer);
+    recalcularYRenderizar();
+    mostrarMensaje(`${filasBase.length} gestión${filasBase.length === 1 ? '' : 'es'} con origen Individuos encontrada${filasBase.length === 1 ? '' : 's'}.`, 'exito');
   } catch (error) {
     console.error(error);
     mostrarMensaje(error.message || 'No se pudo procesar el archivo.', 'error');
+  }
+}
+
+async function manejarArchivoAum(archivo) {
+  if (!archivo) return;
+  textoDropzoneAum.textContent = archivo.name;
+  dropzoneAum.classList.add('con-archivo');
+  mostrarMensajeAum('Procesando…');
+
+  try {
+    const arrayBuffer = await archivo.arrayBuffer();
+    mapaAUM = await procesarCuentasAUM(arrayBuffer);
+    mostrarMensajeAum(`${mapaAUM.size} cuentas cargadas para cruzar por Comitente.`, 'exito');
+    recalcularYRenderizar();
+  } catch (error) {
+    console.error(error);
+    mapaAUM = null;
+    mostrarMensajeAum(error.message || 'No se pudo procesar el archivo de cuentas.', 'error');
   }
 }
 
@@ -93,6 +134,23 @@ dropzone.addEventListener('drop', (e) => {
   }
 });
 inputArchivo.addEventListener('change', () => manejarArchivo(inputArchivo.files[0]));
+
+dropzoneAum.addEventListener('click', () => inputArchivoAum.click());
+dropzoneAum.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropzoneAum.classList.add('dragover');
+});
+dropzoneAum.addEventListener('dragleave', () => dropzoneAum.classList.remove('dragover'));
+dropzoneAum.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzoneAum.classList.remove('dragover');
+  const archivo = e.dataTransfer.files[0];
+  if (archivo) {
+    inputArchivoAum.files = e.dataTransfer.files;
+    manejarArchivoAum(archivo);
+  }
+});
+inputArchivoAum.addEventListener('change', () => manejarArchivoAum(inputArchivoAum.files[0]));
 
 btnCopiar.addEventListener('click', async () => {
   if (filasActuales.length === 0) return;
