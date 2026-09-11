@@ -13,10 +13,11 @@
     <a href="index.html" class="link-volver">← Menú</a>
     <div id="barra-actualizacion" class="barra-actualizacion oculto">
       <span id="badge-actualizado" class="badge-actualizado"></span>
-      <label class="btn-secundario" for="archivo-actualizar">Cambiar archivo</label>
+      <label class="btn-secundario" for="archivo-actualizar">Actualizar Monitor</label>
       <input type="file" id="archivo-actualizar" accept=".xlsm,.xlsx" hidden />
     </div>
   </div>
+  <p id="mensaje-actualizar" class="mensaje oculto"></p>
   <div class="contenedor contenedor-monitor" id="contenedor">
   <main class="card" id="tarjeta-carga">
     <div class="encabezado">
@@ -34,7 +35,9 @@
         </p>
         <p class="nota-privacidad">
           El archivo se procesa en tu navegador y nunca se sube a ningún servidor. Las
-          cotizaciones se piden desde tu navegador.
+          cotizaciones se piden desde tu navegador. El Monitor que subas queda guardado en
+          este navegador para no tener que volver a subirlo cada vez; con "Actualizar
+          Monitor" se suma o se da de baja lo que haya cambiado en el listado de ONs.
         </p>
       </div>
     </div>

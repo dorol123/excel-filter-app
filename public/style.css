@@ -65,6 +65,17 @@ body {
   max-width: 100%;
 }
 
+/* En esta página el gutter de 24px del body y el padding de la tarjeta
+   restan ancho útil sin aportar nada (no hay una segunda tarjeta al lado):
+   se recortan para que la tabla gane ese espacio. */
+body:has(.pagina-herramienta-ancha) {
+  padding: 12px;
+}
+
+.contenedor-monitor .preview-card-ancho {
+  padding: 16px 20px;
+}
+
 .link-volver {
   display: inline-flex;
   align-items: center;
@@ -579,6 +590,12 @@ button:disabled {
 .tabs-monitor .tab-cantidad {
   opacity: 0.7;
   font-weight: 500;
+}
+
+/* Deja que la tabla use el alto de pantalla disponible en vez del máximo
+   angosto (560px) que comparten las tablas más chicas del resto del sitio. */
+#tabla-wrap-monitor {
+  max-height: calc(100vh - 300px);
 }
 
 /*
