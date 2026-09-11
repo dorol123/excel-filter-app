@@ -9,7 +9,14 @@
 <body>
   <script src="beta-gate.js" data-clave="000" data-id="monitor-individuos"></script>
   <div class="pagina-herramienta">
-  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="barra-superior">
+    <a href="index.html" class="link-volver">← Menú</a>
+    <div id="barra-actualizacion" class="barra-actualizacion oculto">
+      <span id="badge-actualizado" class="badge-actualizado"></span>
+      <label class="btn-secundario" for="archivo-actualizar">Cambiar archivo</label>
+      <input type="file" id="archivo-actualizar" accept=".xlsm,.xlsx" hidden />
+    </div>
+  </div>
   <div class="contenedor" id="contenedor">
   <main class="card" id="tarjeta-carga">
     <div class="encabezado">
@@ -23,7 +30,7 @@
         <p class="subtitulo">
           Subí el Monitor de ONs y armá la hoja "Corporativos" con precio, TIR, duration y
           paridad recalculados con cotizaciones en vivo (en vez de los datos cacheados del
-          Excel).
+          Excel), actualizadas automáticamente cada 20 segundos.
         </p>
         <p class="nota-privacidad">
           El archivo se procesa en tu navegador y nunca se sube a ningún servidor. Las

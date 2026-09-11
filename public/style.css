@@ -529,6 +529,17 @@ button:disabled {
   font-style: italic;
 }
 
+.tabla-excel tr.fila-seccion td {
+  background: var(--copper);
+  color: #1b1200;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
 /*
  * .tabla-acreditaciones: la tabla de Acreditaciones. Se clona tal cual para
  * las imágenes que se copian/comparten (ver generarImagenDeTabla en

@@ -135,49 +135,72 @@ const COL_CORP = {
   paridad: 16,
 };
 
-function encontrarBloqueConsolidadoCorp(hojaCorp) {
-  let filaEncabezado = null;
-  for (let r = 1; r <= hojaCorp.rowCount; r++) {
-    if (valorCeldaMonitor(hojaCorp.getRow(r).getCell(COL_CORP.ticker)) === 'Ticker') {
-      filaEncabezado = r;
+/**
+ * "Corporativos" trae varios bloques con título propio (p.ej. "Bonos AAA
+ * Cable", "Bonos AAA MEP", "Bonos AA", "Bonos A", "Bonos <A"), cada uno con
+ * su propio encabezado "Ticker" repetido, y al final un bloque sin título
+ * con todas las ONs juntas (el mismo que usa el Comparador de ONs). Acá
+ * interesa reproducir la hoja tal cual se ve al abrirla: se buscan todos
+ * los bloques CON título (una fila con texto en la columna B y la
+ * siguiente fila con encabezado "Ticker") y se ignora el bloque final sin
+ * título, que sólo repite las mismas ONs ya agrupadas por bloque.
+ *
+ * El título de cada bloque está en una celda combinada (p.ej. B5:O5): no
+ * sirve para distinguirlo de una fila de datos mirar si la columna
+ * siguiente (Emisor) está vacía, porque ExcelJS devuelve el mismo valor de
+ * la celda combinada en TODAS las columnas que abarca, no sólo en B. Por
+ * eso alcanza con que la fila siguiente sea exactamente el encabezado
+ * "Ticker": una fila de datos real nunca tiene esa fila justo debajo.
+ */
+function encontrarBloquesConTitulo(hojaCorp) {
+  const bloques = [];
+  for (let r = 1; r < hojaCorp.rowCount; r++) {
+    const titulo = valorCeldaMonitor(hojaCorp.getRow(r).getCell(COL_CORP.ticker));
+    const siguienteEsEncabezado = valorCeldaMonitor(hojaCorp.getRow(r + 1).getCell(COL_CORP.ticker)) === 'Ticker';
+    if (!titulo || titulo === 'Ticker' || !siguienteEsEncabezado) continue;
+
+    const filaEncabezado = r + 1;
+    let filaFin = filaEncabezado;
+    while (valorCeldaMonitor(hojaCorp.getRow(filaFin + 1).getCell(COL_CORP.ticker))) {
+      filaFin += 1;
     }
-  }
-  if (filaEncabezado === null) {
-    throw new Error('No se encontró el listado de ONs en la hoja "Corporativos".');
+    bloques.push({ titulo: String(titulo), inicio: filaEncabezado + 1, fin: filaFin });
   }
 
-  let filaFin = filaEncabezado;
-  while (valorCeldaMonitor(hojaCorp.getRow(filaFin + 1).getCell(COL_CORP.ticker))) {
-    filaFin += 1;
+  if (bloques.length === 0) {
+    throw new Error('No se encontraron bloques de ONs en la hoja "Corporativos".');
   }
-  return { inicio: filaEncabezado + 1, fin: filaFin };
+  return bloques;
 }
 
-/** Lee el listado fijo de "Corporativos" (sin precio/TIR/duration/paridad: eso se recalcula). */
+/** Lee el listado fijo de "Corporativos", agrupado por sección (sin precio/TIR/duration/paridad: eso se recalcula). */
 async function leerCorporativosEstatico(arrayBuffer) {
   const workbook = await cargarHojasMonitor(arrayBuffer, ['Corporativos']);
   const hojaCorp = workbook.getWorksheet('Corporativos');
   if (!hojaCorp) throw new Error('Falta la hoja "Corporativos" en el archivo.');
 
-  const { inicio, fin } = encontrarBloqueConsolidadoCorp(hojaCorp);
+  const bloques = encontrarBloquesConTitulo(hojaCorp);
   const bonos = [];
-  for (let r = inicio; r <= fin; r++) {
-    const fila = hojaCorp.getRow(r);
-    const ticker = valorCeldaMonitor(fila.getCell(COL_CORP.ticker));
-    if (!ticker) continue;
-    bonos.push({
-      ticker: String(ticker),
-      emisor: valorCeldaMonitor(fila.getCell(COL_CORP.emisor)),
-      vencimiento: valorCeldaMonitor(fila.getCell(COL_CORP.vencimiento)),
-      amortizacion: valorCeldaMonitor(fila.getCell(COL_CORP.amortizacion)),
-      cupon: valorCeldaMonitor(fila.getCell(COL_CORP.cupon)),
-      mesCupon: valorCeldaMonitor(fila.getCell(COL_CORP.mesCupon)),
-      moneda: valorCeldaMonitor(fila.getCell(COL_CORP.moneda)),
-      ley: valorCeldaMonitor(fila.getCell(COL_CORP.ley)),
-      calificacion: valorCeldaMonitor(fila.getCell(COL_CORP.calificacion)),
-      laminaMinima: valorCeldaMonitor(fila.getCell(COL_CORP.laminaMinima)),
-      sector: valorCeldaMonitor(fila.getCell(COL_CORP.sector)),
-    });
+  for (const bloque of bloques) {
+    for (let r = bloque.inicio; r <= bloque.fin; r++) {
+      const fila = hojaCorp.getRow(r);
+      const ticker = valorCeldaMonitor(fila.getCell(COL_CORP.ticker));
+      if (!ticker) continue;
+      bonos.push({
+        ticker: String(ticker),
+        seccion: bloque.titulo,
+        emisor: valorCeldaMonitor(fila.getCell(COL_CORP.emisor)),
+        vencimiento: valorCeldaMonitor(fila.getCell(COL_CORP.vencimiento)),
+        amortizacion: valorCeldaMonitor(fila.getCell(COL_CORP.amortizacion)),
+        cupon: valorCeldaMonitor(fila.getCell(COL_CORP.cupon)),
+        mesCupon: valorCeldaMonitor(fila.getCell(COL_CORP.mesCupon)),
+        moneda: valorCeldaMonitor(fila.getCell(COL_CORP.moneda)),
+        ley: valorCeldaMonitor(fila.getCell(COL_CORP.ley)),
+        calificacion: valorCeldaMonitor(fila.getCell(COL_CORP.calificacion)),
+        laminaMinima: valorCeldaMonitor(fila.getCell(COL_CORP.laminaMinima)),
+        sector: valorCeldaMonitor(fila.getCell(COL_CORP.sector)),
+      });
+    }
   }
   return bonos;
 }
@@ -382,49 +405,61 @@ function recalcularConPrecio(datos, precio) {
 }
 
 // ---------- Orquestación ----------
+//
+// Separado en dos pasos para poder refrescar sólo la cotización (cada 20
+// segundos, ver monitor-individuos.js) sin volver a recortar/parsear el
+// .zip del Excel en cada vuelta: prepararMonitorCorporativos lee el
+// listado fijo y deja el workbook de las hojas por ticker ya cargado en
+// memoria; recalcularConVivo se puede llamar tantas veces como haga falta
+// sobre ese mismo resultado.
 
 /**
- * Procesa el Monitor: lee el listado fijo de "Corporativos", trae las
- * cotizaciones en vivo de data912 y recalcula precio/TIR/duration/paridad
- * de cada ON con cotización disponible. Las ONs sin cotización en vivo, o
- * cuya hoja no se puede leer, quedan marcadas con error y sin esos datos
- * (se muestran igual, con el resto de los campos fijos).
+ * Lee el listado fijo de "Corporativos" y deja cargadas en memoria las
+ * hojas por ticker + "Detalles" (necesarias para recalcular), sin todavía
+ * pedir ninguna cotización.
  */
-async function procesarMonitorCorporativos(arrayBuffer, onProgreso) {
+async function prepararMonitorCorporativos(arrayBuffer) {
   const bonosEstaticos = await leerCorporativosEstatico(arrayBuffer);
-  const cotizaciones = await obtenerCotizacionesVivo();
 
   const tickers = bonosEstaticos.map((b) => b.ticker);
   const workbook = await cargarHojasMonitor(arrayBuffer, ['Detalles', ...tickers], new Set(tickers));
   const hojaDetalles = workbook.getWorksheet('Detalles');
   if (!hojaDetalles) throw new Error('Falta la hoja "Detalles" en el archivo.');
 
-  const resultado = [];
-  for (let i = 0; i < bonosEstaticos.length; i++) {
-    const base = bonosEstaticos[i];
-    if (onProgreso) onProgreso(i + 1, bonosEstaticos.length, base.ticker);
+  return { bonosEstaticos, workbook, hojaDetalles };
+}
 
+/**
+ * Trae la cotización en vivo y recalcula precio/TIR/duration/paridad de
+ * cada ON con cotización disponible, a partir de lo que dejó cargado
+ * prepararMonitorCorporativos. Las ONs sin cotización en vivo, o cuya hoja
+ * no se pudo leer, quedan marcadas con error y sin esos datos (se muestran
+ * igual, con el resto de los campos fijos).
+ */
+async function recalcularConVivo({ bonosEstaticos, workbook, hojaDetalles }) {
+  const cotizaciones = await obtenerCotizacionesVivo();
+
+  const resultado = bonosEstaticos.map((base) => {
     const precioLimpio = precioLimpioDesdeVivo(base.ticker, cotizaciones);
     if (precioLimpio === null) {
-      resultado.push({ ...base, error: 'sin_cotizacion' });
-      continue;
+      return { ...base, error: 'sin_cotizacion' };
     }
 
     try {
       const datos = leerDatosTickerDesdeWorkbook(workbook, hojaDetalles, base.ticker);
       const calc = recalcularConPrecio(datos, precioLimpio);
-      resultado.push({
+      return {
         ...base,
         precio: calc.precio,
         tir: calc.tir,
         duration: calc.duration,
         paridad: calc.paridad,
         error: null,
-      });
+      };
     } catch (error) {
-      resultado.push({ ...base, error: error.message || 'error_calculo' });
+      return { ...base, error: error.message || 'error_calculo' };
     }
-  }
+  });
 
   return { bonos: resultado, mep: cotizaciones.mep, actualizadoA: cotizaciones.actualizadoA };
 }
