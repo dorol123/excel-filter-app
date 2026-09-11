@@ -8,7 +8,7 @@
 </head>
 <body>
   <script src="beta-gate.js" data-clave="000" data-id="monitor-individuos"></script>
-  <div class="pagina-herramienta">
+  <div class="pagina-herramienta pagina-herramienta-ancha">
   <div class="barra-superior">
     <a href="index.html" class="link-volver">← Menú</a>
     <div id="barra-actualizacion" class="barra-actualizacion oculto">
@@ -17,7 +17,7 @@
       <input type="file" id="archivo-actualizar" accept=".xlsm,.xlsx" hidden />
     </div>
   </div>
-  <div class="contenedor" id="contenedor">
+  <div class="contenedor contenedor-monitor" id="contenedor">
   <main class="card" id="tarjeta-carga">
     <div class="encabezado">
       <span class="icono" aria-hidden="true">
@@ -60,6 +60,7 @@
       Monitor subido. Las ONs sin cotización en vivo quedan marcadas sin esos datos.
     </p>
 
+    <div class="tabs-monitor" id="tabs-monitor" role="tablist"></div>
     <div class="tabla-wrap" id="tabla-wrap-monitor"></div>
   </section>
   </div>

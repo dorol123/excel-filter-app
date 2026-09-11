@@ -15,6 +15,7 @@ const mensaje = document.getElementById('mensaje');
 const resultado = document.getElementById('resultado');
 const infoResultado = document.getElementById('info-resultado');
 const tablaWrap = document.getElementById('tabla-wrap-monitor');
+const tabsMonitor = document.getElementById('tabs-monitor');
 const tarjetaCarga = document.getElementById('tarjeta-carga');
 const barraActualizacion = document.getElementById('barra-actualizacion');
 const badgeActualizado = document.getElementById('badge-actualizado');
@@ -40,6 +41,8 @@ const COLUMNAS = [
 let preparado = null; // { bonosEstaticos, workbook, hojaDetalles }, de prepararMonitorCorporativos
 let intervaloActualizacion = null;
 let actualizandoAhora = false;
+let bonosActuales = [];
+let seccionActiva = null;
 
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
@@ -71,37 +74,44 @@ function escapeHtml(texto) {
     .replace(/>/g, '&gt;');
 }
 
-/** Agrupa manteniendo el orden en que vienen (ya vienen agrupados por bloque de la hoja). */
-function agruparPorSeccion(bonos) {
-  const grupos = [];
+/** Secciones únicas, en el orden en que aparecen (vienen agrupadas por bloque de la hoja). */
+function seccionesDe(bonos) {
+  const vistas = new Set();
+  const orden = [];
   for (const bono of bonos) {
-    const ultimo = grupos[grupos.length - 1];
-    if (ultimo && ultimo.seccion === bono.seccion) {
-      ultimo.bonos.push(bono);
-    } else {
-      grupos.push({ seccion: bono.seccion, bonos: [bono] });
+    if (!vistas.has(bono.seccion)) {
+      vistas.add(bono.seccion);
+      orden.push(bono.seccion);
     }
   }
-  return grupos;
+  return orden;
+}
+
+function renderTabs(bonos) {
+  const secciones = seccionesDe(bonos);
+  if (!secciones.includes(seccionActiva)) seccionActiva = secciones[0] || null;
+
+  tabsMonitor.innerHTML = secciones
+    .map((seccion) => {
+      const cantidad = bonos.filter((b) => b.seccion === seccion).length;
+      const activa = seccion === seccionActiva ? ' aria-selected="true" class="tab-activa"' : ' aria-selected="false"';
+      return `<button type="button" role="tab" data-seccion="${escapeHtml(seccion)}"${activa}>${escapeHtml(seccion)} <span class="tab-cantidad">${cantidad}</span></button>`;
+    })
+    .join('');
 }
 
 function renderTabla(bonos) {
-  if (bonos.length === 0) {
-    tablaWrap.innerHTML = '<p class="tabla-vacia">No se encontraron ONs en "Corporativos".</p>';
+  const bonosSeccion = bonos.filter((b) => b.seccion === seccionActiva);
+  if (bonosSeccion.length === 0) {
+    tablaWrap.innerHTML = '<p class="tabla-vacia">No se encontraron ONs en esta sección.</p>';
     return;
   }
 
-  const filasHtml = agruparPorSeccion(bonos)
-    .map((grupo) => {
-      const filaSeccion = `<tr class="fila-seccion"><td colspan="${COLUMNAS.length}">${escapeHtml(grupo.seccion)}</td></tr>`;
-      const filasBonos = grupo.bonos
-        .map((bono) => {
-          const celdas = COLUMNAS.map((col) => `<td>${escapeHtml(formatValor(col.clave, bono[col.clave]))}</td>`).join('');
-          const filaSinCotizacion = bono.error ? ' class="fila-sin-cotizacion"' : '';
-          return `<tr${filaSinCotizacion}>${celdas}</tr>`;
-        })
-        .join('');
-      return filaSeccion + filasBonos;
+  const filasHtml = bonosSeccion
+    .map((bono) => {
+      const celdas = COLUMNAS.map((col) => `<td tabindex="0">${escapeHtml(formatValor(col.clave, bono[col.clave]))}</td>`).join('');
+      const filaSinCotizacion = bono.error ? ' class="fila-sin-cotizacion"' : '';
+      return `<tr${filaSinCotizacion}>${celdas}</tr>`;
     })
     .join('');
 
@@ -113,6 +123,20 @@ function renderTabla(bonos) {
       <tbody>${filasHtml}</tbody>
     </table>`;
 }
+
+function renderResultado(bonos) {
+  bonosActuales = bonos;
+  renderTabs(bonos);
+  renderTabla(bonos);
+}
+
+tabsMonitor.addEventListener('click', (e) => {
+  const boton = e.target.closest('button[data-seccion]');
+  if (!boton) return;
+  seccionActiva = boton.dataset.seccion;
+  renderTabs(bonosActuales);
+  renderTabla(bonosActuales);
+});
 
 function actualizarBadge(actualizadoA) {
   const hora = actualizadoA.toLocaleTimeString('es-AR');
@@ -127,7 +151,7 @@ async function refrescarCotizaciones({ silencioso = false } = {}) {
 
   try {
     const { bonos, mep, actualizadoA } = await recalcularConVivo(preparado);
-    renderTabla(bonos);
+    renderResultado(bonos);
     const conCotizacion = bonos.filter((b) => !b.error).length;
     infoResultado.textContent =
       `${conCotizacion} de ${bonos.length} ONs con cotización en vivo · ` +
@@ -161,6 +185,7 @@ async function manejarArchivo(archivo) {
   resultado.classList.add('oculto');
   if (intervaloActualizacion) clearInterval(intervaloActualizacion);
   preparado = null;
+  seccionActiva = null;
 
   try {
     const arrayBuffer = await archivo.arrayBuffer();

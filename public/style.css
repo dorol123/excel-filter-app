@@ -58,6 +58,13 @@ body {
   max-width: 1400px;
 }
 
+/* Monitor Individuos necesita mucho más ancho (15 columnas): usa casi todo
+   el viewport en vez del máximo angosto que comparten el resto de las
+   herramientas. */
+.pagina-herramienta-ancha {
+  max-width: 100%;
+}
+
 .link-volver {
   display: inline-flex;
   align-items: center;
@@ -529,15 +536,172 @@ button:disabled {
   font-style: italic;
 }
 
-.tabla-excel tr.fila-seccion td {
+/* Monitor Individuos: usa todo el ancho de pantalla y no comparte la fila
+   con la tarjeta de carga (que se oculta apenas termina de procesar). */
+.contenedor-monitor {
+  max-width: 100%;
+  padding: 0 16px;
+}
+
+.contenedor-monitor .preview-card-ancho {
+  max-width: none;
+  flex: 1 1 100%;
+}
+
+.tabs-monitor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.tabs-monitor button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabs-monitor button:hover {
+  border-color: var(--copper);
+}
+
+.tabs-monitor button.tab-activa {
   background: var(--copper);
+  border-color: var(--copper);
   color: #1b1200;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-  padding-top: 8px;
-  padding-bottom: 8px;
+}
+
+.tabs-monitor .tab-cantidad {
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+/*
+ * La tabla de Monitor Individuos imita la hoja de Excel de la que sale
+ * (fondo blanco, bandas verticales suaves para seguir una fila entre
+ * tantas columnas, y foco por celda como el de Excel) en vez del tema
+ * oscuro del resto del sitio: son datos que se leen en modo planilla.
+ */
+#tabla-wrap-monitor .tabla-excel {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+#tabla-wrap-monitor .tabla-excel th,
+#tabla-wrap-monitor .tabla-excel td {
+  border: 1px solid #d7dee5;
+}
+
+#tabla-wrap-monitor .tabla-excel thead th {
+  background: #eef2f6;
+  color: #1a1a1a;
+}
+
+#tabla-wrap-monitor .tabla-excel tbody tr:nth-child(even) {
+  background: transparent;
+}
+
+#tabla-wrap-monitor .tabla-excel td:nth-child(even) {
+  background: #eaf5fb;
+}
+
+#tabla-wrap-monitor .tabla-excel tr.fila-sin-cotizacion td {
+  color: #8a8f96;
+}
+
+#tabla-wrap-monitor .tabla-excel tbody tr:hover td {
+  background: #fff3cd;
+}
+
+/* Foco de celda al estilo Excel: cada <td> es enfocable (tabindex="0") y
+   queda con un borde marcado mientras tiene el foco, como la celda activa
+   de una planilla, hasta que se hace click/tab a otra. */
+#tabla-wrap-monitor .tabla-excel td:focus {
+  outline: 2px solid #107c41;
+  outline-offset: -2px;
+  background: #e6f4ea;
+}
+
+/* Resalta en cruz (fila + columna) la celda bajo el cursor, como al pasar
+   el mouse sobre una planilla de Excel con referencias de celda. */
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(1):hover) tbody td:nth-child(1),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(1):hover) thead th:nth-child(1) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(2):hover) tbody td:nth-child(2),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(2):hover) thead th:nth-child(2) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(3):hover) tbody td:nth-child(3),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(3):hover) thead th:nth-child(3) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(4):hover) tbody td:nth-child(4),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(4):hover) thead th:nth-child(4) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(5):hover) tbody td:nth-child(5),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(5):hover) thead th:nth-child(5) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(6):hover) tbody td:nth-child(6),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(6):hover) thead th:nth-child(6) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(7):hover) tbody td:nth-child(7),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(7):hover) thead th:nth-child(7) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(8):hover) tbody td:nth-child(8),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(8):hover) thead th:nth-child(8) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(9):hover) tbody td:nth-child(9),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(9):hover) thead th:nth-child(9) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(10):hover) tbody td:nth-child(10),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(10):hover) thead th:nth-child(10) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(11):hover) tbody td:nth-child(11),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(11):hover) thead th:nth-child(11) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(12):hover) tbody td:nth-child(12),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(12):hover) thead th:nth-child(12) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(13):hover) tbody td:nth-child(13),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(13):hover) thead th:nth-child(13) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(14):hover) tbody td:nth-child(14),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(14):hover) thead th:nth-child(14) {
+  background: #cfe8f7;
+}
+
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(15):hover) tbody td:nth-child(15),
+#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(15):hover) thead th:nth-child(15) {
+  background: #cfe8f7;
 }
 
 /*
