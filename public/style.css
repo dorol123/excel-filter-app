@@ -524,6 +524,11 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.tabla-excel tr.fila-sin-cotizacion {
+  opacity: 0.5;
+  font-style: italic;
+}
+
 /*
  * .tabla-acreditaciones: la tabla de Acreditaciones. Se clona tal cual para
  * las imágenes que se copian/comparten (ver generarImagenDeTabla en
