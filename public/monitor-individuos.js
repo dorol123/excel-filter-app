@@ -1,7 +1,8 @@
 /*
- * UI de Monitor Individuos. La lectura del archivo, la consulta a data912 y
- * el recálculo de TIR/duration/paridad pasan por monitor-individuos-motor.js
- * (100% en el navegador); acá sólo se muestra la tabla.
+ * UI de Monitor Individuos. La lectura del archivo, la consulta de
+ * cotizaciones en vivo y el recálculo de TIR/duration/paridad pasan por
+ * monitor-individuos-motor.js (100% en el navegador); acá sólo se muestra
+ * la tabla.
  */
 
 const dropzone = document.getElementById('dropzone');
