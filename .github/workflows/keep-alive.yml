@@ -1,0 +1,18 @@
+name: Keep-alive
+
+# Render (plan free) duerme el servicio después de ~15 minutos sin tráfico,
+# lo que hace que la primera visita después de eso tarde 30-60s en cargar
+# (arranque en frío). Este workflow pide la página cada 10 minutos para que
+# Render nunca vea esos 15 minutos de inactividad.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pedir la página para mantener el servicio despierto
+        run: curl -fsS --max-time 55 -o /dev/null -w 'HTTP %{http_code} en %{time_total}s\n' https://acreditacionesviale.onrender.com/
