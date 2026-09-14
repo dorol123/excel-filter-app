@@ -1,9 +1,10 @@
 name: Keep-alive
 
-# Render (plan free) duerme el servicio después de ~15 minutos sin tráfico,
-# lo que hace que la primera visita después de eso tarde 30-60s en cargar
-# (arranque en frío). Este workflow pide la página cada 10 minutos para que
-# Render nunca vea esos 15 minutos de inactividad.
+# Respaldo secundario: el que realmente evita que Render duerma el servicio
+# es el self-ping del propio server.js (ver ahí el comentario). GitHub
+# demora los schedule de repos con poca actividad varias horas, así que
+# este cron cada 10 minutos NO es confiable solo — pero no está de más
+# dejarlo por si el proceso se cae por otro motivo.
 
 on:
   schedule:
@@ -14,5 +15,10 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Pedir la página para mantener el servicio despierto
-        run: curl -fsS --max-time 55 -o /dev/null -w 'HTTP %{http_code} en %{time_total}s\n' https://acreditacionesviale.onrender.com/
+      - name: Pedir /healthz para mantener el servicio despierto
+        run: |
+          code=$(curl -sS --max-time 60 -o /dev/null -w "%{http_code}" https://acreditacionesviale.onrender.com/healthz)
+          echo "healthz respondió $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::/healthz no respondió 200 (respondió $code) — el servicio puede estar arrancando en frío, no falla el job por esto."
+          fi
