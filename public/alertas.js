@@ -3,12 +3,12 @@
  * y el recálculo de TIR/duration/paridad pasan por monitor-individuos-motor.js
  * (se comparte tal cual con Monitor Individuos: es el mismo cálculo de
  * bonos, no tiene sentido duplicar esa matemática acá). Este archivo sólo
- * guarda el historial de precios de los últimos 60 minutos, detecta
+ * guarda el historial de precios de las últimas 3 horas, detecta
  * variaciones grandes y muestra las alertas.
  */
 
-const INTERVALO_ACTUALIZACION_MS = 20000;
-const VENTANA_HISTORIAL_MS = 60 * 60 * 1000; // 60 minutos
+const INTERVALO_ACTUALIZACION_MS = 20000; // cada cuánto se pide cotización y se guarda un punto nuevo
+const VENTANA_HISTORIAL_MS = 3 * 60 * 60 * 1000; // 3 horas
 const UMBRAL_ALERTA = 0.04; // 4%
 
 const dropzone = document.getElementById('dropzone');
@@ -31,13 +31,22 @@ const badgeActualizado = document.getElementById('badge-actualizado');
 // herramientas sin tener que subirlo dos veces.
 
 const DB_NOMBRE = 'monitor-individuos-db';
+const DB_VERSION = 2; // v2 agrega el object store "historial" (ver más abajo)
 const OBJECT_STORE = 'archivo';
 const CLAVE_ARCHIVO = 'actual';
+const HISTORIAL_STORE = 'historial';
 
+// Crea los object stores que falten sin importar si la base ya existía (v1,
+// sólo con "archivo") o es nueva: así da lo mismo qué herramienta —Monitor
+// Individuos o Alertas— abra la base primero.
 function abrirDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NOMBRE, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(OBJECT_STORE);
+    const req = indexedDB.open(DB_NOMBRE, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(OBJECT_STORE)) db.createObjectStore(OBJECT_STORE);
+      if (!db.objectStoreNames.contains(HISTORIAL_STORE)) db.createObjectStore(HISTORIAL_STORE);
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -72,38 +81,57 @@ async function leerArchivoGuardado() {
   }
 }
 
-// ---------- Historial de precios (últimos 60 minutos, en localStorage) ----------
+// ---------- Historial de precios (últimas 3 horas, en IndexedDB) ----------
 //
 // Sólo se acumula mientras esta página está abierta (no hay nada corriendo
-// en segundo plano): cada vuelta de refresco agrega un punto por ticker y
-// se descartan los más viejos que la ventana. Se persiste en localStorage
-// para no perder el historial si se recarga la página, pero un hueco
-// grande (la pestaña cerrada un rato largo) simplemente deja menos puntos
-// dentro de la ventana, no rompe nada.
+// en segundo plano): cada vuelta de refresco (cada 20 s) agrega un punto
+// por ticker y se descartan los más viejos que la ventana. A 20 s por
+// punto, 3 horas son ~540 puntos por ticker — con ~200 ONs no entra cómodo
+// en localStorage (arriesga el límite de 5 MB del navegador), así que se
+// guarda en IndexedDB (un registro por ticker) igual que el archivo del
+// Monitor. Un hueco grande (la pestaña cerrada un rato largo) simplemente
+// deja menos puntos dentro de la ventana, no rompe nada.
 
-const HISTORIAL_KEY = 'alertas-historial-v1';
-
-function cargarHistorial() {
+async function cargarHistorial() {
   try {
-    const crudo = localStorage.getItem(HISTORIAL_KEY);
-    if (!crudo) return new Map();
-    const entradas = JSON.parse(crudo);
-    return new Map(entradas);
+    const db = await abrirDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORIAL_STORE, 'readonly');
+      const mapa = new Map();
+      const req = tx.objectStore(HISTORIAL_STORE).openCursor();
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (!cursor) {
+          resolve(mapa);
+          return;
+        }
+        mapa.set(cursor.key, cursor.value);
+        cursor.continue();
+      };
+      req.onerror = () => reject(req.error);
+    });
   } catch (error) {
     console.error('No se pudo leer el historial de precios:', error);
     return new Map();
   }
 }
 
-function guardarHistorial(historial) {
+async function guardarHistorial(mapaHistorial) {
   try {
-    localStorage.setItem(HISTORIAL_KEY, JSON.stringify([...historial.entries()]));
+    const db = await abrirDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORIAL_STORE, 'readwrite');
+      const store = tx.objectStore(HISTORIAL_STORE);
+      for (const [ticker, puntos] of mapaHistorial) store.put(puntos, ticker);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
   } catch (error) {
     console.error('No se pudo guardar el historial de precios:', error);
   }
 }
 
-let historial = cargarHistorial();
+let historial = new Map(); // se carga de IndexedDB en el arranque, ver restaurarGuardado()
 
 /** Agrega el precio actual de cada bono al historial y descarta lo que quedó fuera de la ventana. */
 function registrarPrecios(bonos, ahora) {
@@ -117,7 +145,6 @@ function registrarPrecios(bonos, ahora) {
       puntos.filter((p) => p.ts >= desde)
     );
   }
-  guardarHistorial(historial);
 }
 
 /**
@@ -327,6 +354,7 @@ async function refrescarCotizaciones({ silencioso = false } = {}) {
     const { bonos, actualizadoA } = await recalcularConVivo(preparado);
     const ahora = actualizadoA.getTime();
     registrarPrecios(bonos, ahora);
+    await guardarHistorial(historial);
     const alertas = detectarAlertas(bonos);
     renderAlertas(alertas, estadisticasTirPorSeccion(bonos));
 
@@ -402,9 +430,10 @@ dropzone.addEventListener('drop', (e) => {
 inputArchivo.addEventListener('change', () => cargarArchivo(inputArchivo.files[0]));
 inputArchivoActualizar.addEventListener('change', () => cargarArchivo(inputArchivoActualizar.files[0]));
 
-// Recupera el Monitor guardado (por esta página o por Monitor Individuos),
-// si hay uno, sin esperar a que el usuario lo suba.
+// Recupera el historial de precios y el Monitor guardado (por esta página o
+// por Monitor Individuos), si hay, sin esperar a que el usuario suba nada.
 (async function restaurarGuardado() {
+  historial = await cargarHistorial();
   const guardado = await leerArchivoGuardado();
   if (guardado && guardado.arrayBuffer) {
     await procesarBuffer(guardado.arrayBuffer, guardado.nombre || 'Monitor guardado');

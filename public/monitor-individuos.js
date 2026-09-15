@@ -26,16 +26,25 @@ const badgeActualizado = document.getElementById('badge-actualizado');
 // El Monitor pesa varios MB: no entra cómodo en localStorage (el mecanismo
 // que usa el resto del sitio para "recordar" datos entre visitas), así que
 // acá se guarda el archivo tal cual en IndexedDB y se recarga solo la
-// próxima vez que se abre la página.
+// próxima vez que se abre la página. Misma base que usa Alertas (comparten
+// el Monitor subido): "historial" es el object store que arma esa
+// herramienta para sus precios; esta página no lo usa, pero lo crea igual
+// si es la primera en abrir la base, para que da lo mismo el orden.
 
 const DB_NOMBRE = 'monitor-individuos-db';
+const DB_VERSION = 2;
 const OBJECT_STORE = 'archivo';
 const CLAVE_ARCHIVO = 'actual';
+const HISTORIAL_STORE = 'historial';
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NOMBRE, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(OBJECT_STORE);
+    const req = indexedDB.open(DB_NOMBRE, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(OBJECT_STORE)) db.createObjectStore(OBJECT_STORE);
+      if (!db.objectStoreNames.contains(HISTORIAL_STORE)) db.createObjectStore(HISTORIAL_STORE);
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
