@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alertas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <script src="beta-gate.js" data-clave="000" data-id="alertas"></script>
+  <div class="pagina-herramienta pagina-herramienta-ancha">
+  <div class="barra-superior">
+    <a href="index.html" class="link-volver">← Menú</a>
+    <div id="barra-actualizacion" class="barra-actualizacion oculto">
+      <span id="badge-actualizado" class="badge-actualizado"></span>
+      <label class="btn-secundario" for="archivo-actualizar">Cambiar Monitor</label>
+      <input type="file" id="archivo-actualizar" accept=".xlsm,.xlsx" hidden />
+    </div>
+  </div>
+  <div class="contenedor contenedor-monitor" id="contenedor">
+  <main class="card" id="tarjeta-carga">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3l7 4v6c0 4.5-3 7.5-7 8-4-.5-7-3.5-7-8V7l7-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M12 8v5M12 16.2v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Alertas<span class="badge-beta">Beta</span></h1>
+        <p class="subtitulo">
+          Vigila el precio en vivo de cada ON del Monitor y avisa acá mismo cuando alguna
+          sube o baja más de 4% en los últimos 60 minutos, con sus datos tal cual se ven en
+          Monitor Individuos.
+        </p>
+        <p class="nota-privacidad">
+          Usa el mismo Monitor que tengas cargado en "Monitor Individuos" (queda guardado en
+          este navegador, no hace falta subirlo de nuevo acá). El seguimiento sólo corre
+          mientras esta página está abierta: si la cerrás, se corta el registro de precios.
+        </p>
+      </div>
+    </div>
+
+    <label class="dropzone" id="dropzone" for="archivo">
+      <span id="texto-dropzone">Arrastrá el Monitor Individuos (.xlsm) acá o hacé click para elegirlo</span>
+    </label>
+    <input type="file" id="archivo" name="archivo" accept=".xlsm,.xlsx" hidden />
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+  </main>
+
+  <section id="resultado" class="preview-card preview-card-ancho oculto">
+    <div class="preview-header">
+      <h2>Alertas de precio</h2>
+      <p id="info-resultado" class="mensaje"></p>
+    </div>
+
+    <p class="nota-atajo">
+      Compara el precio actual de cada ON contra el precio más viejo que todavía tiene
+      guardado (hasta 60 minutos atrás) y avisa acá cuando la variación supera el 4%, para
+      arriba o para abajo. La fila de cada alerta es la misma que verías en Monitor
+      Individuos para esa ON.
+    </p>
+
+    <div id="alertas-vacio" class="tabla-vacia oculto">Sin alertas activas por ahora.</div>
+    <div id="alertas-lista" class="alertas-lista"></div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="monitor-individuos-motor.js"></script>
+  <script src="alertas.js"></script>
+</body>
+</html>

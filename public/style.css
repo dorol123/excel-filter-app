@@ -606,41 +606,41 @@ button:disabled {
  * tantas columnas, y foco por celda como el de Excel) en vez del tema
  * oscuro del resto del sitio: son datos que se leen en modo planilla.
  */
-#tabla-wrap-monitor .tabla-excel {
+.tabla-excel-monitor {
   background: #ffffff;
   color: #1a1a1a;
 }
 
-#tabla-wrap-monitor .tabla-excel th,
-#tabla-wrap-monitor .tabla-excel td {
+.tabla-excel-monitor th,
+.tabla-excel-monitor td {
   border: 1px solid #d7dee5;
 }
 
-#tabla-wrap-monitor .tabla-excel thead th {
+.tabla-excel-monitor thead th {
   background: #eef2f6;
   color: #1a1a1a;
 }
 
-#tabla-wrap-monitor .tabla-excel tbody tr:nth-child(even) {
+.tabla-excel-monitor tbody tr:nth-child(even) {
   background: transparent;
 }
 
-#tabla-wrap-monitor .tabla-excel td:nth-child(even) {
+.tabla-excel-monitor td:nth-child(even) {
   background: #eaf5fb;
 }
 
-#tabla-wrap-monitor .tabla-excel tr.fila-sin-cotizacion td {
+.tabla-excel-monitor tr.fila-sin-cotizacion td {
   color: #8a8f96;
 }
 
-#tabla-wrap-monitor .tabla-excel tbody tr:hover td {
+.tabla-excel-monitor tbody tr:hover td {
   background: #fff3cd;
 }
 
 /* Foco de celda al estilo Excel: cada <td> es enfocable (tabindex="0") y
    queda con un borde marcado mientras tiene el foco, como la celda activa
    de una planilla, hasta que se hace click/tab a otra. */
-#tabla-wrap-monitor .tabla-excel td:focus {
+.tabla-excel-monitor td:focus {
   outline: 2px solid #107c41;
   outline-offset: -2px;
   background: #e6f4ea;
@@ -648,79 +648,150 @@ button:disabled {
 
 /* Resalta en cruz (fila + columna) la celda bajo el cursor, como al pasar
    el mouse sobre una planilla de Excel con referencias de celda. */
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(1):hover) tbody td:nth-child(1),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(1):hover) thead th:nth-child(1) {
+.tabla-excel-monitor:has(tbody td:nth-child(1):hover) tbody td:nth-child(1),
+.tabla-excel-monitor:has(tbody td:nth-child(1):hover) thead th:nth-child(1) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(2):hover) tbody td:nth-child(2),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(2):hover) thead th:nth-child(2) {
+.tabla-excel-monitor:has(tbody td:nth-child(2):hover) tbody td:nth-child(2),
+.tabla-excel-monitor:has(tbody td:nth-child(2):hover) thead th:nth-child(2) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(3):hover) tbody td:nth-child(3),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(3):hover) thead th:nth-child(3) {
+.tabla-excel-monitor:has(tbody td:nth-child(3):hover) tbody td:nth-child(3),
+.tabla-excel-monitor:has(tbody td:nth-child(3):hover) thead th:nth-child(3) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(4):hover) tbody td:nth-child(4),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(4):hover) thead th:nth-child(4) {
+.tabla-excel-monitor:has(tbody td:nth-child(4):hover) tbody td:nth-child(4),
+.tabla-excel-monitor:has(tbody td:nth-child(4):hover) thead th:nth-child(4) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(5):hover) tbody td:nth-child(5),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(5):hover) thead th:nth-child(5) {
+.tabla-excel-monitor:has(tbody td:nth-child(5):hover) tbody td:nth-child(5),
+.tabla-excel-monitor:has(tbody td:nth-child(5):hover) thead th:nth-child(5) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(6):hover) tbody td:nth-child(6),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(6):hover) thead th:nth-child(6) {
+.tabla-excel-monitor:has(tbody td:nth-child(6):hover) tbody td:nth-child(6),
+.tabla-excel-monitor:has(tbody td:nth-child(6):hover) thead th:nth-child(6) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(7):hover) tbody td:nth-child(7),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(7):hover) thead th:nth-child(7) {
+.tabla-excel-monitor:has(tbody td:nth-child(7):hover) tbody td:nth-child(7),
+.tabla-excel-monitor:has(tbody td:nth-child(7):hover) thead th:nth-child(7) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(8):hover) tbody td:nth-child(8),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(8):hover) thead th:nth-child(8) {
+.tabla-excel-monitor:has(tbody td:nth-child(8):hover) tbody td:nth-child(8),
+.tabla-excel-monitor:has(tbody td:nth-child(8):hover) thead th:nth-child(8) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(9):hover) tbody td:nth-child(9),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(9):hover) thead th:nth-child(9) {
+.tabla-excel-monitor:has(tbody td:nth-child(9):hover) tbody td:nth-child(9),
+.tabla-excel-monitor:has(tbody td:nth-child(9):hover) thead th:nth-child(9) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(10):hover) tbody td:nth-child(10),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(10):hover) thead th:nth-child(10) {
+.tabla-excel-monitor:has(tbody td:nth-child(10):hover) tbody td:nth-child(10),
+.tabla-excel-monitor:has(tbody td:nth-child(10):hover) thead th:nth-child(10) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(11):hover) tbody td:nth-child(11),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(11):hover) thead th:nth-child(11) {
+.tabla-excel-monitor:has(tbody td:nth-child(11):hover) tbody td:nth-child(11),
+.tabla-excel-monitor:has(tbody td:nth-child(11):hover) thead th:nth-child(11) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(12):hover) tbody td:nth-child(12),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(12):hover) thead th:nth-child(12) {
+.tabla-excel-monitor:has(tbody td:nth-child(12):hover) tbody td:nth-child(12),
+.tabla-excel-monitor:has(tbody td:nth-child(12):hover) thead th:nth-child(12) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(13):hover) tbody td:nth-child(13),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(13):hover) thead th:nth-child(13) {
+.tabla-excel-monitor:has(tbody td:nth-child(13):hover) tbody td:nth-child(13),
+.tabla-excel-monitor:has(tbody td:nth-child(13):hover) thead th:nth-child(13) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(14):hover) tbody td:nth-child(14),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(14):hover) thead th:nth-child(14) {
+.tabla-excel-monitor:has(tbody td:nth-child(14):hover) tbody td:nth-child(14),
+.tabla-excel-monitor:has(tbody td:nth-child(14):hover) thead th:nth-child(14) {
   background: #cfe8f7;
 }
 
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(15):hover) tbody td:nth-child(15),
-#tabla-wrap-monitor .tabla-excel:has(tbody td:nth-child(15):hover) thead th:nth-child(15) {
+.tabla-excel-monitor:has(tbody td:nth-child(15):hover) tbody td:nth-child(15),
+.tabla-excel-monitor:has(tbody td:nth-child(15):hover) thead th:nth-child(15) {
   background: #cfe8f7;
+}
+
+/* Alertas: una tarjeta por ON que superó el umbral, con una franja de color
+   (verde si sube, roja si baja) y adentro la misma mini-tabla de Monitor
+   Individuos para esa fila. */
+.alertas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.alerta-card {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--navy-tint);
+}
+
+.alerta-card.alerta-sube {
+  border-left-color: var(--success);
+}
+
+.alerta-card.alerta-baja {
+  border-left-color: var(--error);
+}
+
+.alerta-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.alerta-flecha {
+  font-size: 1.1rem;
+}
+
+.alerta-sube .alerta-flecha,
+.alerta-sube .alerta-variacion {
+  color: var(--success);
+}
+
+.alerta-baja .alerta-flecha,
+.alerta-baja .alerta-variacion {
+  color: var(--error);
+}
+
+.alerta-ticker {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--navy-dark);
+}
+
+.alerta-variacion {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.alerta-detalle {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.alerta-card .tabla-wrap {
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: visible;
+  border: none;
 }
 
 /*

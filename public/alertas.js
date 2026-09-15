@@ -1,32 +1,34 @@
 /*
- * UI de Monitor Individuos. La lectura del archivo, la consulta de
- * cotizaciones en vivo y el recálculo de TIR/duration/paridad pasan por
- * monitor-individuos-motor.js (100% en el navegador); acá sólo se muestra
- * la tabla y se dispara el refresco automático.
+ * UI de Alertas. La lectura del Excel, la consulta de cotizaciones en vivo
+ * y el recálculo de TIR/duration/paridad pasan por monitor-individuos-motor.js
+ * (se comparte tal cual con Monitor Individuos: es el mismo cálculo de
+ * bonos, no tiene sentido duplicar esa matemática acá). Este archivo sólo
+ * guarda el historial de precios de los últimos 60 minutos, detecta
+ * variaciones grandes y muestra las alertas.
  */
 
 const INTERVALO_ACTUALIZACION_MS = 20000;
+const VENTANA_HISTORIAL_MS = 60 * 60 * 1000; // 60 minutos
+const UMBRAL_ALERTA = 0.04; // 4%
 
 const dropzone = document.getElementById('dropzone');
 const textoDropzone = document.getElementById('texto-dropzone');
 const inputArchivo = document.getElementById('archivo');
 const inputArchivoActualizar = document.getElementById('archivo-actualizar');
 const mensaje = document.getElementById('mensaje');
-const mensajeActualizar = document.getElementById('mensaje-actualizar');
 const resultado = document.getElementById('resultado');
 const infoResultado = document.getElementById('info-resultado');
-const tablaWrap = document.getElementById('tabla-wrap-monitor');
-const tabsMonitor = document.getElementById('tabs-monitor');
+const alertasVacio = document.getElementById('alertas-vacio');
+const alertasLista = document.getElementById('alertas-lista');
 const tarjetaCarga = document.getElementById('tarjeta-carga');
 const barraActualizacion = document.getElementById('barra-actualizacion');
 const badgeActualizado = document.getElementById('badge-actualizado');
 
-// ---------- Persistencia local (IndexedDB) ----------
+// ---------- Persistencia del archivo (IndexedDB, compartida con Monitor Individuos) ----------
 //
-// El Monitor pesa varios MB: no entra cómodo en localStorage (el mecanismo
-// que usa el resto del sitio para "recordar" datos entre visitas), así que
-// acá se guarda el archivo tal cual en IndexedDB y se recarga solo la
-// próxima vez que se abre la página.
+// Mismo nombre de base/store/clave que monitor-individuos.js a propósito:
+// así el Monitor que se subió ahí (o acá) queda disponible para las dos
+// herramientas sin tener que subirlo dos veces.
 
 const DB_NOMBRE = 'monitor-individuos-db';
 const OBJECT_STORE = 'archivo';
@@ -70,6 +72,82 @@ async function leerArchivoGuardado() {
   }
 }
 
+// ---------- Historial de precios (últimos 60 minutos, en localStorage) ----------
+//
+// Sólo se acumula mientras esta página está abierta (no hay nada corriendo
+// en segundo plano): cada vuelta de refresco agrega un punto por ticker y
+// se descartan los más viejos que la ventana. Se persiste en localStorage
+// para no perder el historial si se recarga la página, pero un hueco
+// grande (la pestaña cerrada un rato largo) simplemente deja menos puntos
+// dentro de la ventana, no rompe nada.
+
+const HISTORIAL_KEY = 'alertas-historial-v1';
+
+function cargarHistorial() {
+  try {
+    const crudo = localStorage.getItem(HISTORIAL_KEY);
+    if (!crudo) return new Map();
+    const entradas = JSON.parse(crudo);
+    return new Map(entradas);
+  } catch (error) {
+    console.error('No se pudo leer el historial de precios:', error);
+    return new Map();
+  }
+}
+
+function guardarHistorial(historial) {
+  try {
+    localStorage.setItem(HISTORIAL_KEY, JSON.stringify([...historial.entries()]));
+  } catch (error) {
+    console.error('No se pudo guardar el historial de precios:', error);
+  }
+}
+
+let historial = cargarHistorial();
+
+/** Agrega el precio actual de cada bono al historial y descarta lo que quedó fuera de la ventana. */
+function registrarPrecios(bonos, ahora) {
+  for (const bono of bonos) {
+    if (!Number.isFinite(bono.precio)) continue;
+    const puntos = historial.get(bono.ticker) || [];
+    puntos.push({ ts: ahora, precio: bono.precio });
+    const desde = ahora - VENTANA_HISTORIAL_MS;
+    historial.set(
+      bono.ticker,
+      puntos.filter((p) => p.ts >= desde)
+    );
+  }
+  guardarHistorial(historial);
+}
+
+/**
+ * Para cada bono, compara el precio actual contra el punto más viejo que
+ * todavía queda en la ventana de 60 minutos. Si la variación supera el
+ * umbral, es una alerta.
+ */
+function detectarAlertas(bonos) {
+  const alertas = [];
+  for (const bono of bonos) {
+    if (!Number.isFinite(bono.precio)) continue;
+    const puntos = historial.get(bono.ticker);
+    if (!puntos || puntos.length < 2) continue;
+
+    const masViejo = puntos[0];
+    const variacion = (bono.precio - masViejo.precio) / masViejo.precio;
+    if (Math.abs(variacion) <= UMBRAL_ALERTA) continue;
+
+    alertas.push({
+      bono,
+      variacion,
+      minutos: Math.round((puntos[puntos.length - 1].ts - masViejo.ts) / 60000),
+    });
+  }
+  alertas.sort((a, b) => Math.abs(b.variacion) - Math.abs(a.variacion));
+  return alertas;
+}
+
+// ---------- Formato y render (mismas columnas que Monitor Individuos) ----------
+
 const COLUMNAS = [
   { clave: 'ticker', titulo: 'Ticker' },
   { clave: 'emisor', titulo: 'Emisor' },
@@ -88,15 +166,16 @@ const COLUMNAS = [
   { clave: 'paridad', titulo: 'Paridad' },
 ];
 
-let preparado = null; // { bonosEstaticos, workbook, hojaDetalles }, de prepararMonitorCorporativos
-let intervaloActualizacion = null;
-let actualizandoAhora = false;
-let bonosActuales = [];
-let seccionActiva = null;
-
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
   mensaje.className = 'mensaje' + (tipo ? ` ${tipo}` : '');
+}
+
+function escapeHtml(texto) {
+  return String(texto)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function formatValor(clave, valor) {
@@ -117,20 +196,12 @@ function formatValor(clave, valor) {
   return String(valor);
 }
 
-function escapeHtml(texto) {
-  return String(texto)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+function formatVariacion(variacion) {
+  const signo = variacion > 0 ? '+' : '';
+  return `${signo}${(variacion * 100).toFixed(2)}%`;
 }
 
-// ---------- Escala de color de TIR (igual a la del Excel original) ----------
-//
-// El Monitor trae, columna por columna de calificación, una escala de color
-// de 3 puntos (mínimo/mediana/máximo) sobre la TIR — la misma que usa Excel
-// para "Escalas de color": rojo en el mínimo, amarillo en la mediana y
-// verde en el máximo. Se calcula por sección (cada pestaña/calificación),
-// igual que en el archivo original (cada bloque tiene su propia escala).
+// ---------- Escala de color de TIR (igual a Monitor Individuos y al Excel original) ----------
 
 const COLOR_TIR_MIN = [0xf8, 0x69, 0x6b]; // #F8696B
 const COLOR_TIR_MEDIANA = [0xff, 0xeb, 0x84]; // #FFEB84
@@ -165,83 +236,62 @@ function colorEscalaTir(valor, min, med, max) {
   return mezclarColor(COLOR_TIR_MEDIANA, COLOR_TIR_MAX, t);
 }
 
-/** Secciones únicas, en el orden en que aparecen (vienen agrupadas por bloque de la hoja). */
-function seccionesDe(bonos) {
-  const vistas = new Set();
-  const orden = [];
+/** Estadísticas de TIR por sección, para pintar cada alerta con la misma escala que su pestaña en Monitor Individuos. */
+function estadisticasTirPorSeccion(bonos) {
+  const porSeccion = new Map();
   for (const bono of bonos) {
-    if (!vistas.has(bono.seccion)) {
-      vistas.add(bono.seccion);
-      orden.push(bono.seccion);
-    }
+    if (!Number.isFinite(bono.tir)) continue;
+    if (!porSeccion.has(bono.seccion)) porSeccion.set(bono.seccion, []);
+    porSeccion.get(bono.seccion).push(bono.tir);
   }
-  return orden;
+  const stats = new Map();
+  for (const [seccion, tires] of porSeccion) {
+    stats.set(seccion, { min: Math.min(...tires), med: mediana(tires), max: Math.max(...tires) });
+  }
+  return stats;
 }
 
-function renderTabs(bonos) {
-  const secciones = seccionesDe(bonos);
-  if (!secciones.includes(seccionActiva)) seccionActiva = secciones[0] || null;
-
-  tabsMonitor.innerHTML = secciones
-    .map((seccion) => {
-      const cantidad = bonos.filter((b) => b.seccion === seccion).length;
-      const activa = seccion === seccionActiva ? ' aria-selected="true" class="tab-activa"' : ' aria-selected="false"';
-      return `<button type="button" role="tab" data-seccion="${escapeHtml(seccion)}"${activa}>${escapeHtml(seccion)} <span class="tab-cantidad">${cantidad}</span></button>`;
-    })
-    .join('');
-}
-
-function renderTabla(bonos) {
-  const bonosSeccion = bonos.filter((b) => b.seccion === seccionActiva);
-  if (bonosSeccion.length === 0) {
-    tablaWrap.innerHTML = '<p class="tabla-vacia">No se encontraron ONs en esta sección.</p>';
+function renderAlertas(alertas, statsTirPorSeccion) {
+  if (alertas.length === 0) {
+    alertasVacio.classList.remove('oculto');
+    alertasLista.innerHTML = '';
     return;
   }
+  alertasVacio.classList.add('oculto');
 
-  const tires = bonosSeccion.map((b) => b.tir).filter(Number.isFinite);
-  const tirMin = tires.length ? Math.min(...tires) : NaN;
-  const tirMax = tires.length ? Math.max(...tires) : NaN;
-  const tirMediana = mediana(tires);
-
-  const filasHtml = bonosSeccion
-    .map((bono) => {
+  alertasLista.innerHTML = alertas
+    .map(({ bono, variacion, minutos }) => {
+      const sube = variacion > 0;
+      const flecha = sube ? '▲' : '▼';
+      const stats = statsTirPorSeccion.get(bono.seccion);
       const celdas = COLUMNAS.map((col) => {
         const texto = escapeHtml(formatValor(col.clave, bono[col.clave]));
-        if (col.clave === 'tir') {
-          const color = colorEscalaTir(bono.tir, tirMin, tirMediana, tirMax);
+        if (col.clave === 'tir' && stats) {
+          const color = colorEscalaTir(bono.tir, stats.min, stats.med, stats.max);
           return `<td tabindex="0"${color ? ` style="background:${color};"` : ''}>${texto}</td>`;
         }
         return `<td tabindex="0">${texto}</td>`;
       }).join('');
-      const filaSinCotizacion = bono.error ? ' class="fila-sin-cotizacion"' : '';
-      return `<tr${filaSinCotizacion}>${celdas}</tr>`;
+      return `
+        <article class="alerta-card ${sube ? 'alerta-sube' : 'alerta-baja'}">
+          <header class="alerta-header">
+            <span class="alerta-flecha">${flecha}</span>
+            <span class="alerta-ticker">${escapeHtml(bono.ticker)}</span>
+            <span class="alerta-variacion">${formatVariacion(variacion)}</span>
+            <span class="alerta-detalle">en los últimos ${minutos} min · ${escapeHtml(bono.seccion)}</span>
+          </header>
+          <div class="tabla-wrap">
+            <table class="tabla-excel tabla-excel-monitor">
+              <thead><tr>${COLUMNAS.map((col) => `<th>${col.titulo}</th>`).join('')}</tr></thead>
+              <tbody><tr>${celdas}</tr></tbody>
+            </table>
+          </div>
+        </article>`;
     })
     .join('');
-
-  tablaWrap.innerHTML = `
-    <table class="tabla-excel tabla-excel-monitor">
-      <thead>
-        <tr>${COLUMNAS.map((col) => `<th>${col.titulo}</th>`).join('')}</tr>
-      </thead>
-      <tbody>${filasHtml}</tbody>
-    </table>`;
 }
 
-function renderResultado(bonos) {
-  bonosActuales = bonos;
-  renderTabs(bonos);
-  renderTabla(bonos);
-}
-
-tabsMonitor.addEventListener('click', (e) => {
-  const boton = e.target.closest('button[data-seccion]');
-  if (!boton) return;
-  seccionActiva = boton.dataset.seccion;
-  renderTabs(bonosActuales);
-  renderTabla(bonosActuales);
-});
-
-// ---------- "Última actualización" (de la cotización en vivo) ----------
+// ---------- "Última actualización" ----------
 
 let ultimaActualizacionTs = null;
 
@@ -260,13 +310,13 @@ function refrescarTextoBadge() {
   badgeActualizado.textContent = `Última actualización: ${formatHaceTiempo(segundos)}`;
 }
 
-function actualizarBadge(actualizadoA) {
-  ultimaActualizacionTs = actualizadoA.getTime();
-  badgeActualizado.title = actualizadoA.toLocaleString('es-AR');
-  refrescarTextoBadge();
-}
-
 setInterval(refrescarTextoBadge, 1000);
+
+// ---------- Ciclo de refresco ----------
+
+let preparado = null; // { bonosEstaticos, workbook, hojaDetalles }, de prepararMonitorCorporativos
+let intervaloActualizacion = null;
+let actualizandoAhora = false;
 
 async function refrescarCotizaciones({ silencioso = false } = {}) {
   if (!preparado || actualizandoAhora) return;
@@ -274,13 +324,20 @@ async function refrescarCotizaciones({ silencioso = false } = {}) {
   if (!silencioso) mostrarMensaje('Actualizando cotizaciones…');
 
   try {
-    const { bonos, mep, actualizadoA } = await recalcularConVivo(preparado);
-    renderResultado(bonos);
+    const { bonos, actualizadoA } = await recalcularConVivo(preparado);
+    const ahora = actualizadoA.getTime();
+    registrarPrecios(bonos, ahora);
+    const alertas = detectarAlertas(bonos);
+    renderAlertas(alertas, estadisticasTirPorSeccion(bonos));
+
     const conCotizacion = bonos.filter((b) => !b.error).length;
     infoResultado.textContent =
-      `${conCotizacion} de ${bonos.length} ONs con cotización en vivo · ` +
-      `MEP (AL30): ${mep.toLocaleString('es-AR', { maximumFractionDigits: 2 })}`;
-    actualizarBadge(actualizadoA);
+      `Vigilando ${conCotizacion} de ${bonos.length} ONs con cotización en vivo · ` +
+      `${alertas.length} alerta${alertas.length === 1 ? '' : 's'} activa${alertas.length === 1 ? '' : 's'} (>${(UMBRAL_ALERTA * 100).toFixed(0)}%)`;
+
+    ultimaActualizacionTs = ahora;
+    badgeActualizado.title = actualizadoA.toLocaleString('es-AR');
+    refrescarTextoBadge();
     if (!silencioso) mostrarMensaje('', '');
   } catch (error) {
     console.error(error);
@@ -301,49 +358,8 @@ function mostrarVistaCargada() {
   resultado.classList.remove('oculto');
 }
 
-// ---------- "Actualizar Monitor": agrega/quita ONs contra el listado actual ----------
-
-function formatListaTickers(tickers) {
-  if (tickers.length <= 6) return tickers.join(', ');
-  return `${tickers.slice(0, 6).join(', ')} y ${tickers.length - 6} más`;
-}
-
-function mostrarMensajeActualizar(texto, tipo) {
-  mensajeActualizar.textContent = texto;
-  mensajeActualizar.className = 'mensaje' + (tipo ? ` ${tipo}` : '');
-  mensajeActualizar.classList.toggle('oculto', !texto);
-}
-
-function informarDiferenciaListado(agregados, quitados) {
-  if (agregados.length === 0 && quitados.length === 0) {
-    mostrarMensajeActualizar('Monitor actualizado: sin cambios en el listado de ONs.', '');
-    return;
-  }
-  const partes = [];
-  if (agregados.length > 0) {
-    partes.push(`+${agregados.length} nueva${agregados.length === 1 ? '' : 's'} (${formatListaTickers(agregados)})`);
-  }
-  if (quitados.length > 0) {
-    partes.push(`−${quitados.length} dada${quitados.length === 1 ? '' : 's'} de baja (${formatListaTickers(quitados)})`);
-  }
-  mostrarMensajeActualizar(`Monitor actualizado: ${partes.join(' · ')}`, 'exito');
-}
-
-/**
- * Procesa un Monitor (recién subido o recuperado de IndexedDB) y lo deja
- * como el listado activo. Con esActualizacion=true (botón "Actualizar
- * Monitor") compara el listado de tickers contra el que había antes y
- * avisa qué ONs se agregaron o se dieron de baja, en vez de reemplazar todo
- * en silencio.
- */
-async function procesarBuffer(arrayBuffer, nombreArchivo, { esActualizacion = false } = {}) {
-  const tickersAnteriores = esActualizacion && preparado ? new Set(preparado.bonosEstaticos.map((b) => b.ticker)) : null;
-
-  mostrarMensaje(esActualizacion ? 'Actualizando el listado de ONs…' : 'Leyendo "Corporativos"…');
-  if (!esActualizacion) {
-    resultado.classList.add('oculto');
-    seccionActiva = null;
-  }
+async function procesarBuffer(arrayBuffer, nombreArchivo) {
+  mostrarMensaje('Leyendo "Corporativos"…');
   if (intervaloActualizacion) clearInterval(intervaloActualizacion);
 
   try {
@@ -355,28 +371,17 @@ async function procesarBuffer(arrayBuffer, nombreArchivo, { esActualizacion = fa
     iniciarActualizacionAutomatica();
     mostrarMensaje('', '');
     await guardarArchivoGuardado(arrayBuffer, nombreArchivo);
-
-    if (esActualizacion) {
-      const tickersNuevos = new Set(preparado.bonosEstaticos.map((b) => b.ticker));
-      const agregados = tickersAnteriores ? [...tickersNuevos].filter((t) => !tickersAnteriores.has(t)) : [];
-      const quitados = tickersAnteriores ? [...tickersAnteriores].filter((t) => !tickersNuevos.has(t)) : [];
-      informarDiferenciaListado(agregados, quitados);
-    }
   } catch (error) {
     console.error(error);
-    if (esActualizacion) {
-      mostrarMensajeActualizar(error.message || 'No se pudo actualizar el Monitor.', 'error');
-    } else {
-      preparado = null;
-      mostrarMensaje(error.message || 'No se pudo procesar el archivo.', 'error');
-    }
+    preparado = null;
+    mostrarMensaje(error.message || 'No se pudo procesar el archivo.', 'error');
   }
 }
 
-async function cargarArchivo(archivo, opciones) {
+async function cargarArchivo(archivo) {
   if (!archivo) return;
   const arrayBuffer = await archivo.arrayBuffer();
-  await procesarBuffer(arrayBuffer, archivo.name, opciones);
+  await procesarBuffer(arrayBuffer, archivo.name);
 }
 
 dropzone.addEventListener('click', () => inputArchivo.click());
@@ -395,15 +400,10 @@ dropzone.addEventListener('drop', (e) => {
   }
 });
 inputArchivo.addEventListener('change', () => cargarArchivo(inputArchivo.files[0]));
+inputArchivoActualizar.addEventListener('change', () => cargarArchivo(inputArchivoActualizar.files[0]));
 
-inputArchivoActualizar.addEventListener('change', () => {
-  const archivo = inputArchivoActualizar.files[0];
-  if (!archivo) return;
-  cargarArchivo(archivo, { esActualizacion: true });
-});
-
-// Recupera el Monitor guardado en este navegador, si hay uno, sin esperar
-// a que el usuario lo vuelva a subir.
+// Recupera el Monitor guardado (por esta página o por Monitor Individuos),
+// si hay uno, sin esperar a que el usuario lo suba.
 (async function restaurarGuardado() {
   const guardado = await leerArchivoGuardado();
   if (guardado && guardado.arrayBuffer) {
