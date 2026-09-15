@@ -65,15 +65,11 @@ body {
   max-width: 100%;
 }
 
-/* En esta página el gutter de 24px del body y el padding de la tarjeta
-   restan ancho útil sin aportar nada (no hay una segunda tarjeta al lado):
-   se recortan para que la tabla gane ese espacio. */
+/* En esta página el gutter del body y el padding de la tarjeta restan
+   ancho/alto útil sin aportar nada (no hay una segunda tarjeta al lado):
+   se recortan al mínimo para que la tabla gane ese espacio. */
 body:has(.pagina-herramienta-ancha) {
-  padding: 12px;
-}
-
-.contenedor-monitor .preview-card-ancho {
-  padding: 16px 20px;
+  padding: 6px;
 }
 
 .link-volver {
@@ -547,16 +543,18 @@ button:disabled {
   font-style: italic;
 }
 
-/* Monitor Individuos: usa todo el ancho de pantalla y no comparte la fila
-   con la tarjeta de carga (que se oculta apenas termina de procesar). */
+/* Monitor Individuos: usa todo el ancho/alto de pantalla y no comparte la
+   fila con la tarjeta de carga (que se oculta apenas termina de procesar). */
 .contenedor-monitor {
   max-width: 100%;
-  padding: 0 16px;
+  padding: 0 6px;
+  margin: 6px 0;
 }
 
 .contenedor-monitor .preview-card-ancho {
   max-width: none;
   flex: 1 1 100%;
+  padding: 10px 14px;
 }
 
 .tabs-monitor {
@@ -592,10 +590,14 @@ button:disabled {
   font-weight: 500;
 }
 
-/* Deja que la tabla use el alto de pantalla disponible en vez del máximo
-   angosto (560px) que comparten las tablas más chicas del resto del sitio. */
+/* Cada pestaña (calificación) se muestra completa, sin scroll propio: nada
+   de máximo de alto ni de "overflow" interno (a diferencia del resto de
+   las tablas del sitio, que sí lo tienen) — si hace falta scroll, es el de
+   la página entera. */
 #tabla-wrap-monitor {
-  max-height: calc(100vh - 300px);
+  max-height: none;
+  overflow: visible;
+  border: none;
 }
 
 /*

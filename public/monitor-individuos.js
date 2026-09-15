@@ -124,6 +124,47 @@ function escapeHtml(texto) {
     .replace(/>/g, '&gt;');
 }
 
+// ---------- Escala de color de TIR (igual a la del Excel original) ----------
+//
+// El Monitor trae, columna por columna de calificación, una escala de color
+// de 3 puntos (mínimo/mediana/máximo) sobre la TIR — la misma que usa Excel
+// para "Escalas de color": rojo en el mínimo, amarillo en la mediana y
+// verde en el máximo. Se calcula por sección (cada pestaña/calificación),
+// igual que en el archivo original (cada bloque tiene su propia escala).
+
+const COLOR_TIR_MIN = [0xf8, 0x69, 0x6b]; // #F8696B
+const COLOR_TIR_MEDIANA = [0xff, 0xeb, 0x84]; // #FFEB84
+const COLOR_TIR_MAX = [0x63, 0xbe, 0x7b]; // #63BE7B
+
+function mezclarColor(colorA, colorB, t) {
+  const r = Math.round(colorA[0] + (colorB[0] - colorA[0]) * t);
+  const g = Math.round(colorA[1] + (colorB[1] - colorA[1]) * t);
+  const b = Math.round(colorA[2] + (colorB[2] - colorA[2]) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+/** Mediana (percentil 50, igual a PERCENTILE.INC de Excel con k=0.5). */
+function mediana(valores) {
+  const ordenados = [...valores].sort((a, b) => a - b);
+  const n = ordenados.length;
+  if (n === 0) return NaN;
+  const medio = (n - 1) / 2;
+  return (ordenados[Math.floor(medio)] + ordenados[Math.ceil(medio)]) / 2;
+}
+
+function colorEscalaTir(valor, min, med, max) {
+  if (![valor, min, med, max].every(Number.isFinite)) return null;
+  if (max === min) return mezclarColor(COLOR_TIR_MEDIANA, COLOR_TIR_MEDIANA, 0);
+  if (valor <= med) {
+    const rango = med - min;
+    const t = rango === 0 ? 0 : Math.min(1, Math.max(0, (valor - min) / rango));
+    return mezclarColor(COLOR_TIR_MIN, COLOR_TIR_MEDIANA, t);
+  }
+  const rango = max - med;
+  const t = rango === 0 ? 1 : Math.min(1, Math.max(0, (valor - med) / rango));
+  return mezclarColor(COLOR_TIR_MEDIANA, COLOR_TIR_MAX, t);
+}
+
 /** Secciones únicas, en el orden en que aparecen (vienen agrupadas por bloque de la hoja). */
 function seccionesDe(bonos) {
   const vistas = new Set();
@@ -157,9 +198,21 @@ function renderTabla(bonos) {
     return;
   }
 
+  const tires = bonosSeccion.map((b) => b.tir).filter(Number.isFinite);
+  const tirMin = tires.length ? Math.min(...tires) : NaN;
+  const tirMax = tires.length ? Math.max(...tires) : NaN;
+  const tirMediana = mediana(tires);
+
   const filasHtml = bonosSeccion
     .map((bono) => {
-      const celdas = COLUMNAS.map((col) => `<td tabindex="0">${escapeHtml(formatValor(col.clave, bono[col.clave]))}</td>`).join('');
+      const celdas = COLUMNAS.map((col) => {
+        const texto = escapeHtml(formatValor(col.clave, bono[col.clave]));
+        if (col.clave === 'tir') {
+          const color = colorEscalaTir(bono.tir, tirMin, tirMediana, tirMax);
+          return `<td tabindex="0"${color ? ` style="background:${color};"` : ''}>${texto}</td>`;
+        }
+        return `<td tabindex="0">${texto}</td>`;
+      }).join('');
       const filaSinCotizacion = bono.error ? ' class="fila-sin-cotizacion"' : '';
       return `<tr${filaSinCotizacion}>${celdas}</tr>`;
     })
