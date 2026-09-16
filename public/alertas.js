@@ -9,7 +9,7 @@
 
 const INTERVALO_ACTUALIZACION_MS = 20000; // cada cuánto se pide cotización y se guarda un punto nuevo
 const VENTANA_HISTORIAL_MS = 3 * 60 * 60 * 1000; // 3 horas
-const UMBRAL_ALERTA = 0.02; // 2%, sólo caídas (ver detectarAlertas)
+const UMBRAL_ALERTA = 0.02; // 2%, subas y caídas
 
 // "Corporativos" agrupa las ONs en bloques por calificación: "Bonos AAA
 // Cable", "Bonos AAA MEP", "Bonos AA", "Bonos A", "Bonos <A" (ver
@@ -187,7 +187,7 @@ function registrarPrecios(bonos, ahora) {
 
 /**
  * Para cada bono, compara el precio actual contra el punto más viejo que
- * todavía queda en la ventana de 3 horas. Sólo avisa caídas (no subas) de
+ * todavía queda en la ventana de 3 horas. Avisa tanto subas como caídas de
  * al menos UMBRAL_ALERTA.
  */
 function detectarAlertas(bonos) {
@@ -199,7 +199,7 @@ function detectarAlertas(bonos) {
 
     const masViejo = puntos[0];
     const variacion = (bono.precio - masViejo.precio) / masViejo.precio;
-    if (variacion > -UMBRAL_ALERTA) continue;
+    if (Math.abs(variacion) < UMBRAL_ALERTA) continue;
 
     alertas.push({
       bono,
@@ -207,7 +207,7 @@ function detectarAlertas(bonos) {
       minutos: Math.round((puntos[puntos.length - 1].ts - masViejo.ts) / 60000),
     });
   }
-  alertas.sort((a, b) => a.variacion - b.variacion);
+  alertas.sort((a, b) => Math.abs(b.variacion) - Math.abs(a.variacion));
   return alertas;
 }
 
@@ -399,7 +399,7 @@ async function refrescarCotizaciones({ silencioso = false } = {}) {
     const conCotizacion = bonos.filter((b) => !b.error).length;
     infoResultado.textContent =
       `Vigilando ${conCotizacion} de ${bonos.length} ONs con cotización en vivo · ` +
-      `${alertas.length} alerta${alertas.length === 1 ? '' : 's'} activa${alertas.length === 1 ? '' : 's'} (caídas de ${(UMBRAL_ALERTA * 100).toFixed(0)}% o más)`;
+      `${alertas.length} alerta${alertas.length === 1 ? '' : 's'} activa${alertas.length === 1 ? '' : 's'} (>${(UMBRAL_ALERTA * 100).toFixed(0)}%)`;
 
     ultimaActualizacionTs = ahora;
     badgeActualizado.title = actualizadoA.toLocaleString('es-AR');
