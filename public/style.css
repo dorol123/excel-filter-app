@@ -919,6 +919,40 @@ button:disabled {
   }
 }
 
+/* Conformidad: una vez cargado el archivo, el recuadro de carga se achica
+   y el visor gana el ancho que le sobraba (antes había que scrollear para
+   ver la tabla entera; ver conformidad.js, que agrega "con-resultado"). */
+
+.contenedor-conformidad .card {
+  flex: 1 1 380px;
+  max-width: 420px;
+}
+
+.contenedor-conformidad .preview-card {
+  flex: 2 1 640px;
+  max-width: 960px;
+}
+
+.contenedor-conformidad.con-resultado .card {
+  flex: 0 1 260px;
+  max-width: 260px;
+  padding: 18px;
+}
+
+.contenedor-conformidad.con-resultado .card h1 {
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.contenedor-conformidad.con-resultado .card .oculto-tras-carga {
+  display: none;
+}
+
+.contenedor-conformidad.con-resultado .preview-card {
+  flex: 3 1 760px;
+  max-width: 1140px;
+}
+
 /* Presentador de Carteras */
 
 .contenedor-carteras .card {

@@ -19,6 +19,7 @@ const selectAsesor = document.getElementById('filtro-asesor');
 const tablaWrap = document.getElementById('tabla-wrap-conformidad');
 const btnSeleccionarTodo = document.getElementById('btn-seleccionar-todo');
 const zonaCopiarImagen = document.getElementById('zona-copiar-imagen');
+const contenedor = document.getElementById('contenedor');
 
 const COLUMNAS = [
   { clave: 'descripcion', titulo: 'Descripcion' },
@@ -189,6 +190,10 @@ function renderVistaPrevia() {
 
   actualizarTabla();
   resultado.classList.remove('oculto');
+  // Compacta el recuadro de carga de la izquierda para darle más ancho al
+  // visor (si no, con la tarjeta a tamaño completo hay que scrollear para
+  // ver la tabla entera).
+  contenedor.classList.add('con-resultado');
 }
 
 selectAsesor.addEventListener('change', actualizarTabla);
