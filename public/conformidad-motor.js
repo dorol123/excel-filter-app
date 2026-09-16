@@ -130,6 +130,8 @@ async function procesarConformidad(arrayBuffer) {
     });
   });
 
+  filas.sort((a, b) => String(a.asesor).localeCompare(String(b.asesor), 'es'));
+
   return {
     filas,
     textoHasta: maximoFechaHora ? formatFechaHoraLimite(maximoFechaHora) : null,

@@ -19,7 +19,10 @@ const selectAsesor = document.getElementById('filtro-asesor');
 const tablaWrap = document.getElementById('tabla-wrap-conformidad');
 const btnSeleccionarTodo = document.getElementById('btn-seleccionar-todo');
 const zonaCopiarImagen = document.getElementById('zona-copiar-imagen');
+const notaCopiarImagen = document.getElementById('nota-copiar-imagen');
 const contenedor = document.getElementById('contenedor');
+
+const UMBRAL_DIVIDIR_IMAGEN = 40; // mismo mecanismo que Acreditaciones (ver app.js), con un umbral más bajo
 
 const COLUMNAS = [
   { clave: 'descripcion', titulo: 'Descripcion' },
@@ -143,17 +146,45 @@ async function manejarClickCopiarImagen(boton, tabla, titulo) {
   }
 }
 
-function actualizarBotonCopiarImagen(filas) {
-  zonaCopiarImagen.innerHTML = '';
-  if (filas.length === 0) return;
-  const tabla = construirTabla(filas);
+function crearBotonCopiarImagen(etiqueta, tabla, titulo) {
   const boton = document.createElement('button');
   boton.type = 'button';
   boton.className = 'btn-secundario';
-  boton.textContent = 'Copiar imagen';
-  const titulo = textoHastaActual ? `Órdenes sin conformidad hasta ${textoHastaActual}` : 'Órdenes sin conformidad';
+  boton.textContent = etiqueta;
   boton.addEventListener('click', () => manejarClickCopiarImagen(boton, tabla, titulo));
-  zonaCopiarImagen.appendChild(boton);
+  return boton;
+}
+
+/**
+ * Con más de 40 órdenes la tabla queda muy alta; igual que en Acreditaciones
+ * (ver actualizarBotonesCopiarImagen en app.js), pasado el umbral se arman
+ * dos imágenes más cortas en vez de una sola larga.
+ */
+function actualizarBotonCopiarImagen(filas) {
+  zonaCopiarImagen.innerHTML = '';
+  if (filas.length === 0) {
+    notaCopiarImagen.classList.add('oculto');
+    return;
+  }
+
+  const titulo = textoHastaActual ? `Órdenes sin conformidad hasta ${textoHastaActual}` : 'Órdenes sin conformidad';
+
+  if (filas.length > UMBRAL_DIVIDIR_IMAGEN) {
+    const mitad = Math.ceil(filas.length / 2);
+    const tablaParte1 = construirTabla(filas.slice(0, mitad));
+    const tablaParte2 = construirTabla(filas.slice(mitad));
+
+    zonaCopiarImagen.appendChild(crearBotonCopiarImagen('Copiar imagen 1', tablaParte1, titulo));
+    zonaCopiarImagen.appendChild(crearBotonCopiarImagen('Copiar imagen 2', tablaParte2, titulo));
+
+    notaCopiarImagen.textContent =
+      `Son ${filas.length} órdenes: se armaron 2 imágenes porque en una sola la calidad bajaría mucho.`;
+    notaCopiarImagen.classList.remove('oculto');
+  } else {
+    const tabla = construirTabla(filas);
+    zonaCopiarImagen.appendChild(crearBotonCopiarImagen('Copiar imagen', tabla, titulo));
+    notaCopiarImagen.classList.add('oculto');
+  }
 }
 
 // ---------- Filtro por asesor + render ----------
