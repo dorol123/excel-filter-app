@@ -878,6 +878,30 @@ button:disabled {
   font-size: 0.88rem;
 }
 
+/* Banner de aviso dentro de una preview-card (p.ej. Conformidad: "Órdenes
+   sin conformidad hasta HH:MM"). Usa --error porque señala algo que
+   necesita atención, igual que .tabla-acreditaciones td.destacado. */
+.banner-alerta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(239, 122, 92, 0.14);
+  border: 1px solid rgba(239, 122, 92, 0.4);
+  color: #ffb4a0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.banner-alerta svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--error);
+}
+
 @media (max-width: 640px) {
   .rango-fila {
     flex-direction: column;

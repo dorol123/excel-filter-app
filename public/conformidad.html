@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conformidad</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="pagina-herramienta">
+  <a href="index.html" class="link-volver">← Menú</a>
+  <div class="contenedor" id="contenedor">
+  <main class="card">
+    <div class="encabezado">
+      <span class="icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3l7 4v5c0 5-3 8.5-7 9-4-.5-7-4-7-9V7l7-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M8.5 12.5l2.3 2.3L16 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Conformidad</h1>
+        <p class="subtitulo">
+          Subí el reporte de Órdenes y mostrá sólo las que todavía requieren conformidad, con
+          lo justo para resolverlas: descripción, comitente, operación, ticker y asesor.
+        </p>
+        <p class="nota-privacidad">
+          Todo el procesamiento ocurre en tu navegador: el archivo nunca se sube a ningún
+          servidor.
+        </p>
+      </div>
+    </div>
+
+    <label class="dropzone" id="dropzone" for="archivo">
+      <span id="texto-dropzone">Arrastrá el reporte de Órdenes (.xlsx) acá o hacé click para elegirlo</span>
+    </label>
+    <input type="file" id="archivo" name="archivo" accept=".xlsx" hidden />
+
+    <p id="mensaje" class="mensaje" role="status"></p>
+  </main>
+
+  <section id="resultado" class="preview-card oculto">
+    <p id="banner-hasta" class="banner-alerta oculto">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 8v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+      </svg>
+      <span id="banner-hasta-texto"></span>
+    </p>
+
+    <div class="preview-header">
+      <h2>Órdenes sin conformidad</h2>
+      <p id="info-resultado" class="nota-atajo"></p>
+    </div>
+
+    <div class="tabla-toolbar">
+      <label class="filtro-asesor">
+        Asesor
+        <select id="filtro-asesor"></select>
+      </label>
+      <div class="toolbar-botones">
+        <span id="zona-copiar-imagen"></span>
+        <button type="button" id="btn-seleccionar-todo" class="btn-secundario">
+          Seleccionar todas las celdas
+        </button>
+      </div>
+    </div>
+
+    <div class="tabla-wrap" id="tabla-wrap-conformidad"></div>
+  </section>
+  </div>
+  </div>
+
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script src="conformidad-motor.js"></script>
+  <script src="conformidad.js"></script>
+</body>
+</html>
