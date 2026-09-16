@@ -11,6 +11,20 @@ const INTERVALO_ACTUALIZACION_MS = 20000; // cada cuánto se pide cotización y 
 const VENTANA_HISTORIAL_MS = 3 * 60 * 60 * 1000; // 3 horas
 const UMBRAL_ALERTA = 0.04; // 4%
 
+// "Corporativos" agrupa las ONs en bloques por calificación: "Bonos AAA
+// Cable", "Bonos AAA MEP", "Bonos AA", "Bonos A", "Bonos <A" (ver
+// encontrarBloquesConTitulo en monitor-individuos-motor.js). Alertas no
+// vigila los bonos A o peores: el prefijo "Bonos AA" alcanza para quedarse
+// con los dos bloques AAA (ambos empiezan con "Bonos AAA...") y el de AA,
+// y descarta "Bonos A" y "Bonos <A".
+const PREFIJO_CALIFICACION_A_VIGILAR = 'Bonos AA';
+
+function filtrarPorCalificacion(bonosEstaticos) {
+  return bonosEstaticos.filter(
+    (bono) => typeof bono.seccion === 'string' && bono.seccion.startsWith(PREFIJO_CALIFICACION_A_VIGILAR)
+  );
+}
+
 const dropzone = document.getElementById('dropzone');
 const textoDropzone = document.getElementById('texto-dropzone');
 const inputArchivo = document.getElementById('archivo');
@@ -416,6 +430,7 @@ async function procesarBuffer(arrayBuffer, nombreArchivo) {
 
   try {
     preparado = await prepararMonitorCorporativos(arrayBuffer);
+    preparado.bonosEstaticos = filtrarPorCalificacion(preparado.bonosEstaticos);
     textoDropzone.textContent = nombreArchivo;
     dropzone.classList.add('con-archivo');
     mostrarVistaCargada();
