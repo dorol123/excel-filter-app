@@ -15,12 +15,20 @@ const COLUMNAS_ORIGEN = {
   fecha: 'Fecha',
   hora: 'Hora',
   requiereConformidad: 'RequiereConformidad',
+  fechaConformidad: 'FechaConformidad',
 };
 
 const COLUMNAS_OBLIGATORIAS = ['descripcion', 'comitente', 'operacion', 'ticker', 'asesor', 'requiereConformidad'];
 
 function normalizar(valor) {
   return typeof valor === 'string' ? valor.trim() : valor;
+}
+
+/** true si la celda tiene algo cargado (una fecha, un texto no vacío, etc.). */
+function tieneValor(valor) {
+  if (valor === null || valor === undefined) return false;
+  if (typeof valor === 'string') return valor.trim() !== '';
+  return true;
 }
 
 /**
@@ -120,6 +128,10 @@ async function procesarConformidad(arrayBuffer) {
 
     const requiere = fila.getCell(idx.requiereConformidad).value;
     if (Number(requiere) !== 1) return;
+
+    // Una fecha en FechaConformidad significa que esa orden ya se confirmó,
+    // aunque RequiereConformidad haya quedado en 1: no hace falta atenderla.
+    if (idx.fechaConformidad !== -1 && tieneValor(fila.getCell(idx.fechaConformidad).value)) return;
 
     filas.push({
       descripcion: normalizar(fila.getCell(idx.descripcion).value),
