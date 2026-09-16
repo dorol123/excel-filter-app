@@ -148,7 +148,7 @@ const CATALOGO = [
     icono: '<path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /><path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />',
   },
   {
-    id: 'conformidad', titulo: 'Conformidad', beta: true, seed: 37,
+    id: 'conformidad', titulo: 'Conformidad', beta: false, seed: 37,
     href: '../conformidad.html',
     desc: 'Subís el reporte de Órdenes y muestra sólo las que todavía requieren conformidad, con descripción, comitente, operación, ticker y asesor.',
     icono: '<path d="M12 3l7 4v5c0 5-3 8.5-7 9-4-.5-7-4-7-9V7l7-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M8.5 12.5l2.3 2.3L16 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />',
