@@ -211,6 +211,26 @@ function detectarAlertas(bonos) {
   return alertas;
 }
 
+// Desde cuándo está activa cada alerta, sin cortes: no es la ventana de 3h
+// que usa detectarAlertas para calcular la variación (esa se recorta cuando
+// el punto más viejo se sale de la ventana), sino la primera vez que ese
+// ticker apareció como alerta y no dejó de estarlo en ningún refresco desde
+// entonces. Se resetea solo si la alerta deja de cumplirse (aunque sea en
+// un único refresco) y vuelve a aparecer más tarde.
+let activasDesde = new Map(); // ticker -> timestamp (ms) de cuando empezó
+
+function actualizarActivasDesde(alertas, ahora) {
+  const tickersActivos = new Set(alertas.map((a) => a.bono.ticker));
+  for (const ticker of activasDesde.keys()) {
+    if (!tickersActivos.has(ticker)) activasDesde.delete(ticker);
+  }
+  for (const alerta of alertas) {
+    const ticker = alerta.bono.ticker;
+    if (!activasDesde.has(ticker)) activasDesde.set(ticker, ahora);
+    alerta.activaDesdeTs = activasDesde.get(ticker);
+  }
+}
+
 // ---------- Formato y render (mismas columnas que Monitor Individuos) ----------
 
 const COLUMNAS = [
@@ -316,7 +336,7 @@ function estadisticasTirPorSeccion(bonos) {
   return stats;
 }
 
-function renderAlertas(alertas, statsTirPorSeccion) {
+function renderAlertas(alertas, statsTirPorSeccion, ahora) {
   if (alertas.length === 0) {
     alertasVacio.classList.remove('oculto');
     alertasLista.innerHTML = '';
@@ -325,9 +345,10 @@ function renderAlertas(alertas, statsTirPorSeccion) {
   alertasVacio.classList.add('oculto');
 
   alertasLista.innerHTML = alertas
-    .map(({ bono, variacion, minutos }) => {
+    .map(({ bono, variacion, activaDesdeTs }) => {
       const sube = variacion > 0;
       const flecha = sube ? '▲' : '▼';
+      const activaDesdeTexto = formatHaceTiempo(Math.floor((ahora - activaDesdeTs) / 1000));
       const stats = statsTirPorSeccion.get(bono.seccion);
       const celdas = COLUMNAS.map((col) => {
         const texto = escapeHtml(formatValor(col.clave, bono[col.clave]));
@@ -343,7 +364,7 @@ function renderAlertas(alertas, statsTirPorSeccion) {
             <span class="alerta-flecha">${flecha}</span>
             <span class="alerta-ticker">${escapeHtml(bono.ticker)}</span>
             <span class="alerta-variacion">${formatVariacion(variacion)}</span>
-            <span class="alerta-detalle">en los últimos ${minutos} min · ${escapeHtml(bono.seccion)}</span>
+            <span class="alerta-detalle">activa ${activaDesdeTexto} · ${escapeHtml(bono.seccion)}</span>
           </header>
           <div class="tabla-wrap">
             <table class="tabla-excel tabla-excel-monitor">
@@ -394,7 +415,8 @@ async function refrescarCotizaciones({ silencioso = false } = {}) {
     registrarPrecios(bonos, ahora);
     await guardarHistorial(historial);
     const alertas = detectarAlertas(bonos);
-    renderAlertas(alertas, estadisticasTirPorSeccion(bonos));
+    actualizarActivasDesde(alertas, ahora);
+    renderAlertas(alertas, estadisticasTirPorSeccion(bonos), ahora);
 
     const conCotizacion = bonos.filter((b) => !b.error).length;
     infoResultado.textContent =
