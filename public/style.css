@@ -795,13 +795,15 @@ button:disabled {
 }
 
 /*
- * .tabla-acreditaciones: la tabla de Acreditaciones. Se clona tal cual para
- * las imágenes que se copian/comparten (ver generarImagenDeTabla en
- * app.js), así que a pedido queda con sus colores y tipografía originales,
- * fijos (no var()), sin importar el retema de PaneWEB del resto de la
- * página — ni la tabla en pantalla ni las imágenes copiadas cambian.
+ * .tabla-acreditaciones: tabla de texto oscuro fijo (no var()) pensada para
+ * clonarse tal cual en las imágenes que se copian/comparten (ver
+ * generarImagenDeTabla en app.js y conformidad.js), sin importar el retema
+ * oscuro de PaneWEB del resto de la página. Por eso su contenedor necesita
+ * fondo blanco fijo también — si no, el texto oscuro queda sobre el fondo
+ * oscuro de la página y se hace ilegible.
  */
-#tabla-wrap {
+#tabla-wrap,
+#tabla-wrap-conformidad {
   background: #ffffff;
 }
 
