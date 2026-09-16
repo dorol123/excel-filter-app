@@ -377,10 +377,18 @@ function leerDatosTickerDesdeWorkbook(workbook, hojaDetalles, ticker) {
   return { ticker, estatico, mercado, nominalesOriginal, cambioYield, fechaLiquidacion, comision, flujos };
 }
 
-/** Igual a recalcularCalculadora de ons-motor.js: TIR/duration/paridad a un precio dado. */
-function recalcularConPrecio(datos, precio) {
+/**
+ * Igual a recalcularCalculadora de ons-motor.js: TIR/duration/paridad a un
+ * precio dado, con la comisión de compra (Detalles!F3, p.ej. 0,5% en
+ * Balanz) ya incluida en el flujo que se usa para la TIR. El "precio"
+ * devuelto también lleva esa comisión sumada: no es la cotización limpia
+ * de mercado, sino lo que realmente sale comprar la ON — que es lo que
+ * tiene sentido mostrar en el Monitor (y, por lo tanto, la TIR ya sale
+ * calculada sobre ese precio con costo).
+ */
+function recalcularConPrecio(datos, precioLimpio) {
   const nominales = datos.nominalesOriginal;
-  const precioTotal = -(precio / 100) * nominales * (1 + datos.comision);
+  const precioTotal = -(precioLimpio / 100) * nominales * (1 + datos.comision);
 
   const fechas = [datos.fechaLiquidacion, ...datos.flujos.map((f) => f.fecha)];
   const montosFuturos = datos.flujos.map((f) => f.amortizacionUsd + f.interesUsd);
@@ -401,6 +409,7 @@ function recalcularConPrecio(datos, precio) {
   const valorTecnico = datos.mercado.valorResidual + datos.mercado.interesesCorridos;
   const paridad = -precioTotal / valorTecnico;
 
+  const precio = precioLimpio * (1 + datos.comision);
   return { precio, tir, duration, paridad };
 }
 
