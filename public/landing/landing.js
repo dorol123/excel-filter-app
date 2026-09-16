@@ -180,7 +180,7 @@ const CATALOGO = [
   {
     id: 'alertas', titulo: 'Alertas', beta: true, seed: 29,
     href: '../alertas.html',
-    desc: 'Vigila el precio en vivo de las ONs del Monitor y avisa cuando alguna se mueve más de 4% en las últimas 3 horas.',
+    desc: 'Vigila el precio en vivo de las ONs del Monitor y avisa cuando alguna cae 2% o más en las últimas 3 horas.',
     icono: '<path d="M12 4a5 5 0 0 0-5 5v3l-2 3h14l-2-3V9a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />',
   },
 ];
