@@ -22,7 +22,7 @@ const zonaCopiarImagen = document.getElementById('zona-copiar-imagen');
 const notaCopiarImagen = document.getElementById('nota-copiar-imagen');
 const contenedor = document.getElementById('contenedor');
 
-const UMBRAL_DIVIDIR_IMAGEN = 40; // mismo mecanismo que Acreditaciones (ver app.js), con un umbral más bajo
+const UMBRAL_DIVIDIR_IMAGEN = 60; // mismo mecanismo y umbral que Acreditaciones (ver app.js)
 
 const COLUMNAS = [
   { clave: 'descripcion', titulo: 'Descripcion' },
@@ -46,7 +46,7 @@ function formatValor(valor) {
 
 function construirTabla(filas) {
   const tabla = document.createElement('table');
-  tabla.className = 'tabla-acreditaciones';
+  tabla.className = 'tabla-acreditaciones tabla-conformidad';
   tabla.id = 'tabla-activa';
 
   const thead = document.createElement('thead');

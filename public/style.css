@@ -953,6 +953,16 @@ button:disabled {
   max-width: 1140px;
 }
 
+/* Menos aire entre filas que en Acreditaciones (clase aparte, no toca
+   .tabla-acreditaciones: la comparte con Acreditaciones y la imagen
+   copiada). Va por clase, no por #tabla-wrap-conformidad, para que la
+   tabla clonada para "Copiar imagen" (fuera de ese wrapper) también la
+   herede. */
+.tabla-conformidad th,
+.tabla-conformidad td {
+  padding: 3px 10px;
+}
+
 /* Presentador de Carteras */
 
 .contenedor-carteras .card {
