@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Herramientas</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="nocturne.css" />
+  <link rel="stylesheet" href="index.css" />
 </head>
 <body>
-  <main class="card menu-card">
-    <div class="encabezado">
-      <span class="icono" aria-hidden="true">
+  <div class="pagina-inicio">
+    <aside class="aside">
+      <span class="aside-marca" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.85" />
           <rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.4" />
@@ -17,148 +18,217 @@
           <rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.85" />
         </svg>
       </span>
-      <div>
-        <h1>Herramientas</h1>
-        <p class="subtitulo">Elegí qué querés usar.</p>
+      <h1>Herramientas</h1>
+      <p class="subtitulo">Elegí qué querés usar.</p>
+
+      <div class="aside-regla"></div>
+
+      <div class="aside-conteos">
+        <span><span class="aside-conteo-numero libre" id="conteo-libre">0</span> de acceso libre</span>
+        <span><span class="aside-conteo-numero beta" id="conteo-beta">0</span> en beta</span>
       </div>
+
+      <p class="aside-pie">Uso interno</p>
+    </aside>
+
+    <main class="main-herramientas">
+      <section class="grupo">
+        <p class="grupo-rotulo">Acceso libre</p>
+        <div class="grupo-regla"></div>
+
+        <a class="fila" href="acreditaciones.html">
+          <span class="fila-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor" fill-opacity="0.14" />
+              <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              <path d="M12 3v18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-titulo">Procesador de Acreditaciones</span>
+            <p class="fila-desc">Subís el Excel, lo separa en Pesos y Dólares, filtra, ordena y lo deja listo para descargar o compartir.</p>
+          </span>
+          <svg class="fila-flecha" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+
+        <a class="fila" href="analisis-carteras.html">
+          <span class="fila-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 12V3.5a8.5 8.5 0 1 1-8.5 8.5H12z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+              <path d="M12 12L4.5 16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-titulo">Análisis de Carteras</span>
+            <p class="fila-desc">Subís el resumen de cuenta en PDF y armás la distribución por tipo de activos, lista para revisar o exportar a Excel.</p>
+          </span>
+          <svg class="fila-flecha" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+
+        <a class="fila" href="cambios-asesores.html">
+          <span class="fila-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-titulo">Cambios de Asesores</span>
+            <p class="fila-desc" style="display: none"></p>
+          </span>
+          <svg class="fila-flecha" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </section>
+
+      <section class="panel-beta">
+        <div class="panel-beta-header">
+          <div class="panel-beta-izq">
+            <svg id="panel-beta-candado" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.7" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <span class="panel-beta-titulo">Beta — acceso con clave</span>
+          </div>
+          <span class="panel-beta-der" id="panel-beta-nota">5 herramientas en pruebas</span>
+        </div>
+        <div class="panel-beta-regla"></div>
+
+        <a class="fila-beta" href="carteras.html" data-tool-id="carteras" data-titulo="Presentador de Carteras">
+          <span class="fila-beta-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 17l5-6 4 4 5-7 4 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M3 20h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-beta-titulo-linea">
+              <span class="fila-beta-titulo">Presentador de Carteras</span>
+              <span class="chip-beta">Beta</span>
+            </span>
+            <p class="fila-beta-desc">Cargás instrumentos con su valor y moneda, y armás una presentación de la cartera lista para descargar.</p>
+          </span>
+          <svg class="fila-beta-candado candado" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.7" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </a>
+
+        <a class="fila-beta" href="ons.html" data-tool-id="ons" data-titulo="Comparador de ONs">
+          <span class="fila-beta-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 19V9M10 19V5M16 19v-7M22 19V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-beta-titulo-linea">
+              <span class="fila-beta-titulo">Comparador de ONs</span>
+              <span class="chip-beta">Beta</span>
+            </span>
+            <p class="fila-beta-desc">Subís el Monitor de ONs y comparás por TIR, duration y calificación, o pedís alternativas a partir de una ON puntual.</p>
+          </span>
+          <svg class="fila-beta-candado candado" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.7" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </a>
+
+        <a class="fila-beta" href="calculadora-ons.html" data-tool-id="calculadora-ons" data-titulo="Calculadora de ONs">
+          <span class="fila-beta-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6" />
+              <path d="M8 8h8M8 12h3M13 12h3M8 16h3M13 16h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-beta-titulo-linea">
+              <span class="fila-beta-titulo">Calculadora de ONs</span>
+              <span class="chip-beta">Beta</span>
+            </span>
+            <p class="fila-beta-desc">Elegís una ON del Monitor y probás a qué TIR y duration queda a cualquier precio o cantidad de nominales.</p>
+          </span>
+          <svg class="fila-beta-candado candado" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.7" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </a>
+
+        <a class="fila-beta" href="monitor-individuos.html" data-tool-id="monitor-individuos" data-titulo="Monitor Individuos">
+          <span class="fila-beta-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12h4l2-7 4 14 2-7h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-beta-titulo-linea">
+              <span class="fila-beta-titulo">Monitor Individuos</span>
+              <span class="chip-beta">Beta</span>
+            </span>
+            <p class="fila-beta-desc">Subís el Monitor de ONs y lo recalculás con cotizaciones en vivo (por ahora, sólo la hoja Corporativos).</p>
+          </span>
+          <svg class="fila-beta-candado candado" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.7" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </a>
+
+        <a class="fila-beta" href="alertas.html" data-tool-id="alertas" data-titulo="Alertas">
+          <span class="fila-beta-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4a5 5 0 0 0-5 5v3l-2 3h14l-2-3V9a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+              <path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="fila-beta-titulo-linea">
+              <span class="fila-beta-titulo">Alertas</span>
+              <span class="chip-beta">Beta</span>
+            </span>
+            <p class="fila-beta-desc">Vigila el precio en vivo de las ONs del Monitor y avisa cuando alguna se mueve más de 4% en las últimas 3 horas.</p>
+          </span>
+          <svg class="fila-beta-candado candado" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.7" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </a>
+      </section>
+
+      <footer class="footer-herramientas">
+        <div class="footer-regla"></div>
+        <p class="footer-texto" id="footer-copyright"></p>
+      </footer>
+    </main>
+  </div>
+
+  <div class="dialog-backdrop" id="dialog-backdrop" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-titulo">
+      <span class="dialog-chip-beta">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        Función en beta
+      </span>
+      <h2 class="dialog-titulo-herramienta" id="dialog-titulo">Herramienta</h2>
+      <p class="dialog-cuerpo">Todavía está en pruebas. Ingresá la clave para continuar.</p>
+      <form id="dialog-form">
+        <label class="field">
+          <input class="input" type="password" id="dialog-clave" placeholder="Clave" autocomplete="off" />
+        </label>
+        <p class="dialog-error" id="dialog-error"></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-ghost" id="dialog-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Ingresar</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <nav class="lista-herramientas">
-      <p class="lista-herramientas-titulo">Herramientas</p>
-
-      <a class="tarjeta-herramienta" href="acreditaciones.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor" fill-opacity="0.14" />
-            <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-            <path d="M12 3v18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.35" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Procesador de Acreditaciones</span>
-          <span class="tarjeta-desc">
-            Subís el Excel, lo separa en Pesos y Dólares, filtra, ordena y lo deja listo para
-            descargar o compartir.
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <a class="tarjeta-herramienta" href="analisis-carteras.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 12V3.5a8.5 8.5 0 1 1-8.5 8.5H12z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-            <path d="M12 12L4.5 16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Análisis de Carteras</span>
-          <span class="tarjeta-desc">
-            Subís el resumen de cuenta en PDF y armás la distribución por tipo de activos,
-            lista para revisar o exportar a Excel.
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <a class="tarjeta-herramienta" href="cambios-asesores.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Cambios de Asesores</span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <p class="lista-herramientas-titulo">Beta — acceso con clave</p>
-
-      <a class="tarjeta-herramienta" href="carteras.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 17l5-6 4 4 5-7 4 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M3 20h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Presentador de Carteras<span class="badge-beta">Beta</span></span>
-          <span class="tarjeta-desc">
-            Cargás instrumentos con su valor y moneda, y armás una presentación de la cartera
-            lista para descargar.
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <a class="tarjeta-herramienta" href="ons.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 19V9M10 19V5M16 19v-7M22 19V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Comparador de ONs<span class="badge-beta">Beta</span></span>
-          <span class="tarjeta-desc">
-            Subís el Monitor de ONs y compará por TIR, duration y calificación, o pedís
-            alternativas a partir de una ON puntual.
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <a class="tarjeta-herramienta" href="calculadora-ons.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.6" />
-            <path d="M8 8h8M8 12h3M13 12h3M8 16h3M13 16h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Calculadora de ONs<span class="badge-beta">Beta</span></span>
-          <span class="tarjeta-desc">
-            Elegís una ON del Monitor y probás a qué TIR y duration queda a cualquier
-            precio o cantidad de nominales.
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <a class="tarjeta-herramienta" href="monitor-individuos.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 12h4l2-7 4 14 2-7h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Monitor Individuos<span class="badge-beta">Beta</span></span>
-          <span class="tarjeta-desc">
-            Subís el Monitor de ONs y lo recalculás con cotizaciones en vivo
-            (por ahora, sólo la hoja Corporativos).
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-
-      <a class="tarjeta-herramienta" href="alertas.html">
-        <span class="tarjeta-icono" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 3l7 4v6c0 4.5-3 7.5-7 8-4-.5-7-3.5-7-8V7l7-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-            <path d="M12 8v5M12 16.2v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-        </span>
-        <span class="tarjeta-texto">
-          <span class="tarjeta-titulo">Alertas<span class="badge-beta">Beta</span></span>
-          <span class="tarjeta-desc">
-            Vigila el precio en vivo de las ONs del Monitor y avisa cuando alguna se mueve
-            más de 4% en las últimas 3 horas.
-          </span>
-        </span>
-        <span class="tarjeta-flecha" aria-hidden="true">→</span>
-      </a>
-    </nav>
-  </main>
+  <script src="index.js"></script>
 </body>
 </html>

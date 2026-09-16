@@ -1,0 +1,377 @@
+/*
+ * Composición específica de la página de inicio ("Herramientas"), sobre el
+ * design system Nocturne (nocturne.css). Sólo esta página usa Nocturne: el
+ * resto del sitio sigue con style.css (paleta PaneWEB navy/copper) — por
+ * eso van en hojas separadas en vez de mezclarlos.
+ */
+
+.pagina-inicio {
+  display: grid;
+  grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+/* ---------- Panel lateral ---------- */
+
+.aside {
+  position: relative;
+  padding: 52px 30px 36px 40px;
+  border-right: 1px solid var(--color-neutral-900);
+  background: radial-gradient(130% 70% at 0% 0%, var(--color-accent-900) 0%, var(--color-bg) 62%);
+}
+
+.aside-marca {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--color-accent-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-400);
+  margin-bottom: 22px;
+}
+
+.aside-marca svg { width: 20px; height: 20px; }
+
+.aside h1 {
+  font-size: 28px;
+  line-height: 1.06;
+  font-weight: 500;
+  letter-spacing: -0.024em;
+  color: var(--color-text);
+}
+
+.aside .subtitulo {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-neutral-400);
+  margin-top: 10px;
+}
+
+.aside-regla {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-accent-700), transparent);
+  margin: 24px 0 18px;
+}
+
+.aside-conteos {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  font-size: 12.5px;
+  color: var(--color-neutral-400);
+}
+
+.aside-conteo-numero {
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.aside-conteo-numero.libre { color: var(--color-text); }
+.aside-conteo-numero.beta { color: var(--color-accent-400); }
+
+.aside-pie {
+  position: absolute;
+  left: 40px;
+  bottom: 30px;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+
+/* ---------- Columna principal ---------- */
+
+.main-herramientas {
+  padding: 46px 44px 0;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.grupo { margin-bottom: 8px; }
+
+.grupo-rotulo {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  margin-bottom: 4px;
+}
+
+.grupo-regla {
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-neutral-800), transparent 70%);
+  margin-bottom: 8px;
+}
+
+/* ---------- Fila de acceso libre ---------- */
+
+.fila {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 20px;
+  align-items: start;
+  gap: 16px;
+  padding: 16px 14px 16px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.fila:hover { background: var(--color-surface); }
+
+.fila-icono {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--color-accent-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-400);
+}
+
+.fila-icono svg { width: 21px; height: 21px; }
+
+.fila-titulo {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.fila-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-neutral-400);
+  max-width: 60ch;
+  text-wrap: pretty;
+  margin-top: 6px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease, opacity 0.18s ease;
+}
+
+.fila:hover .fila-desc { max-height: 90px; opacity: 1; }
+
+.fila-flecha {
+  width: 16px;
+  height: 16px;
+  color: var(--color-neutral-600);
+  justify-self: end;
+  margin-top: 13px;
+  transition: color 0.2s ease;
+}
+
+.fila:hover .fila-flecha { color: var(--color-accent-400); }
+
+/* ---------- Panel "Beta — acceso con clave" ---------- */
+
+.panel-beta {
+  margin-top: 26px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--color-accent-900);
+  background: linear-gradient(180deg, var(--color-accent-900), var(--color-bg) 70%);
+  overflow: hidden;
+}
+
+.panel-beta-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+}
+
+.panel-beta-izq {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-beta-izq svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent-400);
+  flex-shrink: 0;
+}
+
+.panel-beta-titulo {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--color-text);
+}
+
+.panel-beta-der {
+  font-size: 12px;
+  color: var(--color-neutral-500);
+}
+
+.panel-beta-regla {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-accent-800) 40px, var(--color-accent-800) calc(100% - 40px), transparent);
+}
+
+.fila-beta {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 15px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--color-neutral-900);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.fila-beta:last-child { border-bottom: none; }
+.fila-beta:hover { background: var(--color-surface); }
+
+.fila-beta-icono {
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+  border: 1px solid var(--color-accent-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-2-600);
+}
+
+.fila-beta-icono svg { width: 17px; height: 17px; }
+
+.fila-beta-titulo-linea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fila-beta-titulo {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.chip-beta {
+  display: inline-block;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  padding: 3px 5px;
+  border: 1px solid var(--color-accent-800);
+  border-radius: 4px;
+  color: var(--color-accent-400);
+}
+
+.fila-beta-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-neutral-400);
+  max-width: 60ch;
+  text-wrap: pretty;
+  margin-top: 6px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease, opacity 0.18s ease;
+}
+
+.fila-beta:hover .fila-beta-desc { max-height: 90px; opacity: 1; }
+
+.fila-beta-candado {
+  width: 15px;
+  height: 15px;
+  color: var(--color-accent-700);
+}
+
+/* ---------- Footer ---------- */
+
+.footer-herramientas {
+  margin-top: auto;
+  padding: 30px 0 34px;
+}
+
+.footer-regla {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-neutral-800) 48px, var(--color-neutral-800) calc(100% - 48px), transparent);
+  margin-bottom: 22px;
+}
+
+.footer-texto {
+  font-size: 11.5px;
+  color: var(--color-neutral-500);
+}
+
+/* ---------- Diálogo de clave ---------- */
+
+/* .dialog-backdrop de Nocturne fuerza display:grid; sin esto, el atributo
+   hidden queda tapado por esa regla y el backdrop sigue interceptando
+   clicks aunque esté "oculto". */
+#dialog-backdrop[hidden] { display: none; }
+
+.dialog-chip-beta {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 7px;
+  border: 1px solid var(--color-accent-800);
+  border-radius: 4px;
+  color: var(--color-accent-400);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dialog-chip-beta svg { width: 12px; height: 12px; }
+
+.dialog-titulo-herramienta {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 14px 0 6px;
+  color: var(--color-text);
+}
+
+.dialog-cuerpo {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-neutral-400);
+}
+
+.dialog-error {
+  font-size: 12px;
+  color: var(--color-accent-400);
+  min-height: 1em;
+}
+
+.dialog-error:empty { display: none; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 760px) {
+  .pagina-inicio { grid-template-columns: 1fr; }
+
+  .aside {
+    border-right: none;
+    border-bottom: 1px solid var(--color-neutral-900);
+    padding: 32px 24px 24px;
+  }
+
+  .aside-pie { position: static; margin-top: 24px; }
+
+  .main-herramientas { padding: 32px 24px 0; max-width: none; }
+}
