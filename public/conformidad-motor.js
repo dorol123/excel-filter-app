@@ -16,7 +16,10 @@ const COLUMNAS_ORIGEN = {
   hora: 'Hora',
   requiereConformidad: 'RequiereConformidad',
   fechaConformidad: 'FechaConformidad',
+  estado: 'Estado',
 };
+
+const ESTADO_A_EXCLUIR = 'en ejecucion';
 
 const COLUMNAS_OBLIGATORIAS = ['descripcion', 'comitente', 'operacion', 'ticker', 'asesor', 'requiereConformidad'];
 
@@ -29,6 +32,15 @@ function tieneValor(valor) {
   if (valor === null || valor === undefined) return false;
   if (typeof valor === 'string') return valor.trim() !== '';
   return true;
+}
+
+/** Minúsculas y sin tildes, para comparar textos como "Estado" sin depender de mayúsculas/acentos. */
+function normalizarComparacion(valor) {
+  return String(valor ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
 }
 
 /**
@@ -132,6 +144,10 @@ async function procesarConformidad(arrayBuffer) {
     // Una fecha en FechaConformidad significa que esa orden ya se confirmó,
     // aunque RequiereConformidad haya quedado en 1: no hace falta atenderla.
     if (idx.fechaConformidad !== -1 && tieneValor(fila.getCell(idx.fechaConformidad).value)) return;
+
+    // Las órdenes "En Ejecución" todavía se están procesando: no hace falta
+    // pedirles conformidad todavía.
+    if (idx.estado !== -1 && normalizarComparacion(fila.getCell(idx.estado).value) === ESTADO_A_EXCLUIR) return;
 
     filas.push({
       descripcion: normalizar(fila.getCell(idx.descripcion).value),
