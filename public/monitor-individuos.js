@@ -45,14 +45,26 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(OBJECT_STORE)) db.createObjectStore(OBJECT_STORE);
       if (!db.objectStoreNames.contains(HISTORIAL_STORE)) db.createObjectStore(HISTORIAL_STORE);
     };
-    req.onsuccess = () => resolve(req.result);
+    // Sin esto, una conexión vieja dejada abierta en otra pestaña (Alertas o
+    // esta misma herramienta, de antes de un cambio de versión) bloquea el
+    // upgrade acá para siempre: el archivo "carga" en la UI pero la
+    // escritura a IndexedDB nunca llega a completarse, así que en la
+    // próxima visita parece que no quedó guardado. Al cerrar la conexión
+    // vieja apenas otra pestaña la necesita, el upgrade puede seguir.
+    req.onblocked = () => console.warn('Apertura de IndexedDB bloqueada por otra pestaña con el Monitor abierto.');
+    req.onsuccess = () => {
+      const db = req.result;
+      db.onversionchange = () => db.close();
+      resolve(db);
+    };
     req.onerror = () => reject(req.error);
   });
 }
 
 async function guardarArchivoGuardado(arrayBuffer, nombre) {
+  let db;
   try {
-    const db = await abrirDB();
+    db = await abrirDB();
     await new Promise((resolve, reject) => {
       const tx = db.transaction(OBJECT_STORE, 'readwrite');
       tx.objectStore(OBJECT_STORE).put({ arrayBuffer, nombre, guardadoEn: Date.now() }, CLAVE_ARCHIVO);
@@ -61,12 +73,15 @@ async function guardarArchivoGuardado(arrayBuffer, nombre) {
     });
   } catch (error) {
     console.error('No se pudo guardar el Monitor en este navegador:', error);
+  } finally {
+    if (db) db.close();
   }
 }
 
 async function leerArchivoGuardado() {
+  let db;
   try {
-    const db = await abrirDB();
+    db = await abrirDB();
     return await new Promise((resolve, reject) => {
       const tx = db.transaction(OBJECT_STORE, 'readonly');
       const req = tx.objectStore(OBJECT_STORE).get(CLAVE_ARCHIVO);
@@ -76,6 +91,8 @@ async function leerArchivoGuardado() {
   } catch (error) {
     console.error('No se pudo leer el Monitor guardado:', error);
     return null;
+  } finally {
+    if (db) db.close();
   }
 }
 
