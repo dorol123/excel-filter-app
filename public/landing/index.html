@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Herramientas — Portada</title>
+  <link rel="stylesheet" href="../nocturne.css" />
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body>
+  <nav class="nav nav-landing">
+    <span class="nav-marca">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.85" />
+        <rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.4" />
+        <rect x="3" y="14" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.4" />
+        <rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.85" />
+      </svg>
+      Herramientas
+    </span>
+    <span class="nav-der">
+      <span class="nav-reloj-wrap">
+        <span class="punto-vivo" aria-hidden="true"></span>
+        <span id="nav-reloj">00:00:00</span>
+      </span>
+      <a class="btn btn-primary" href="#herramientas">Entrar</a>
+    </span>
+  </nav>
+
+  <div class="ticker-wrap">
+    <div class="marquee-pista" id="marquee-pista"></div>
+  </div>
+
+  <header class="hero">
+    <div class="hero-aura" id="hero-aura" aria-hidden="true"></div>
+    <div class="hero-grilla" id="hero-grilla" aria-hidden="true"></div>
+
+    <div class="contenido hero-grid">
+      <div class="hero-col-izq">
+        <span class="tag tag-outline">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+          Ocho herramientas, un solo lugar
+        </span>
+        <h1>El trabajo pesado<br />lo hace la máquina.</h1>
+        <p class="hero-bajada">
+          Subís el Excel, el PDF o el Monitor de ONs y sale procesado, comparado y listo para
+          mandar. Sin planillas a mano, sin copiar y pegar.
+        </p>
+        <div class="hero-botones">
+          <a class="btn btn-primary" href="#herramientas">Entrar a las herramientas</a>
+          <a class="btn btn-ghost" href="#como">Cómo funciona</a>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-valor">8</div>
+            <div class="hero-stat-etiqueta">herramientas</div>
+          </div>
+          <div>
+            <div class="hero-stat-valor">3</div>
+            <div class="hero-stat-etiqueta">formatos de entrada</div>
+          </div>
+          <div>
+            <div class="hero-stat-valor">~0</div>
+            <div class="hero-stat-etiqueta">planillas a mano</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-col-der">
+        <div class="curva-panel" id="curva-panel">
+          <div class="curva-header">
+            <span class="curva-header-izq">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M3 12h4l2-7 4 14 2-7h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Curva de ONs
+            </span>
+            <span class="curva-en-vivo">
+              <span class="punto-vivo" aria-hidden="true"></span>
+              En vivo
+            </span>
+          </div>
+
+          <div class="curva-cifra">
+            <div class="curva-cifra-valor" id="curva-tir">7,20%</div>
+            <div class="curva-cifra-leyenda">TIR promedio corporativos</div>
+          </div>
+
+          <div class="curva-grafico">
+            <svg viewBox="0 0 320 96" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="omFade" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--color-accent)" stop-opacity="0.28" />
+                  <stop offset="100%" stop-color="var(--color-accent)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path id="curva-area" class="curva-area" fill="url(#omFade)" d="" />
+              <path id="curva-linea" class="curva-linea" fill="none" stroke="var(--color-accent)" stroke-width="1.6" stroke-linecap="round" d="" />
+              <circle id="curva-punto" class="curva-punto" r="3" fill="var(--color-accent-300)" cx="320" cy="48" />
+            </svg>
+          </div>
+
+          <div class="curva-eje">
+            <span>-3h</span><span>-2h</span><span>-1h</span><span>ahora</span>
+          </div>
+
+          <div class="curva-mini">
+            <div class="curva-mini-celda">
+              <div class="curva-mini-etiqueta">Duration</div>
+              <div class="curva-mini-valor">2,4 a</div>
+            </div>
+            <div class="curva-mini-celda">
+              <div class="curva-mini-etiqueta">ONs</div>
+              <div class="curva-mini-valor">148</div>
+            </div>
+            <div class="curva-mini-celda">
+              <div class="curva-mini-etiqueta">Alertas</div>
+              <div class="curva-mini-valor">3</div>
+            </div>
+          </div>
+        </div>
+        <p class="curva-nota">Datos de ejemplo para la demo.</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="seccion" id="herramientas">
+    <div class="contenido">
+      <div class="seccion-header">
+        <div>
+          <p class="seccion-kicker">Las herramientas</p>
+          <h2>Elegí qué querés usar.</h2>
+        </div>
+        <span class="seccion-meta">3 de acceso libre · 5 en beta</span>
+      </div>
+      <div class="seccion-regla"></div>
+
+      <div class="herramientas-layout">
+        <div class="grid-herramientas" id="grid-herramientas">
+          <!-- Las 8 tarjetas se arman en landing.js a partir del catálogo (sparkline y halo necesitan JS igual). -->
+        </div>
+
+        <aside class="panel-noticias" aria-label="Noticias del Wall Street Journal">
+          <div class="panel-noticias-header">
+            <span class="panel-noticias-titulo">Wall Street Journal</span>
+            <span class="punto-vivo" aria-hidden="true"></span>
+          </div>
+          <div class="panel-noticias-lista" id="panel-noticias-lista">
+            <p class="panel-noticias-cargando">Cargando noticias…</p>
+          </div>
+          <p class="panel-noticias-nota" id="panel-noticias-nota"></p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion seccion-como" id="como">
+    <div class="contenido">
+      <p class="seccion-kicker">Cómo funciona</p>
+      <h2>Tres pasos, siempre los mismos.</h2>
+      <div class="seccion-regla"></div>
+
+      <div class="grid-pasos">
+        <div class="tarjeta-paso">
+          <div class="tarjeta-paso-numero">01</div>
+          <div class="tarjeta-paso-titulo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 16V4M7 9l5-5 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            Subís el archivo
+          </div>
+          <p class="tarjeta-paso-cuerpo">El Excel, el PDF o el Monitor de ONs, según la herramienta que elijas.</p>
+        </div>
+
+        <div class="tarjeta-paso">
+          <div class="tarjeta-paso-numero">02</div>
+          <div class="tarjeta-paso-titulo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            </svg>
+            La herramienta hace el trabajo
+          </div>
+          <p class="tarjeta-paso-cuerpo">Separa, compara, recalcula o vigila precios en vivo — según cuál hayas elegido.</p>
+        </div>
+
+        <div class="tarjeta-paso">
+          <div class="tarjeta-paso-numero">03</div>
+          <div class="tarjeta-paso-titulo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+              <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Descargás o seguís desde ahí
+          </div>
+          <p class="tarjeta-paso-cuerpo">El resultado queda listo para bajar, compartir o revisar en la propia herramienta.</p>
+        </div>
+      </div>
+
+      <div class="como-cierre">
+        <a class="btn btn-primary" href="#herramientas">Entrar a las herramientas</a>
+        <p class="como-nota">Las cinco herramientas en beta piden clave al abrirlas.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer-landing contenido">
+    <span class="footer-landing-marca">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.85" />
+        <rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.4" />
+        <rect x="3" y="14" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.4" />
+        <rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor" fill-opacity="0.85" />
+      </svg>
+      Herramientas
+    </span>
+    <span class="footer-landing-copy" id="footer-copyright"></span>
+  </footer>
+
+  <div class="dialog-backdrop" id="dialog-backdrop" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-titulo">
+      <span class="dialog-chip-beta">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+        Función en beta
+      </span>
+      <h2 class="dialog-titulo-herramienta" id="dialog-titulo">Herramienta</h2>
+      <p class="dialog-cuerpo">Todavía está en pruebas. Ingresá la clave para continuar.</p>
+      <form id="dialog-form">
+        <label class="field">
+          <input class="input" type="password" id="dialog-clave" placeholder="Clave" autocomplete="off" />
+        </label>
+        <p class="dialog-error" id="dialog-error"></p>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-ghost" id="dialog-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Ingresar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="landing.js"></script>
+</body>
+</html>
