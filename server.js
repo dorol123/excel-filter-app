@@ -3,6 +3,17 @@ const express = require('express');
 
 const app = express();
 
+// Herramientas de uso interno: no queremos que buscadores las indexen (evita
+// exponer nombres de asesores/clientes en resultados de búsqueda) y sumamos
+// headers básicos de hardening. No reemplaza tener autenticación real.
+app.use((req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 app.get('/healthz', (req, res) => res.status(200).send('ok'));
 
 // ---------- Noticias del Wall Street Journal (landing) ----------
