@@ -629,7 +629,6 @@ function valorEnUsd(item) {
 function construirTarjetaDonaUnica(items) {
   const itemsEnUsd = items.map((item) => ({ ...item, valor: valorEnUsd(item) }));
   const itemsValidos = itemsEnUsd.filter((item) => Number.isFinite(item.valor) && item.valor > 0);
-  const excluidos = itemsEnUsd.length - itemsValidos.length;
   const total = itemsValidos.reduce((acc, it) => acc + it.valor, 0);
 
   const tarjeta = document.createElement('div');
@@ -679,14 +678,6 @@ function construirTarjetaDonaUnica(items) {
   });
 
   tarjeta.appendChild(envoltorio);
-
-  const nota = document.createElement('p');
-  nota.className = 'dona-nota';
-  nota.textContent =
-    excluidos > 0
-      ? `Equivalente en USD (dólar MEP) · ${excluidos} en pesos sin cotización`
-      : 'Equivalente en USD (dólar MEP)';
-  tarjeta.appendChild(nota);
 
   return tarjeta;
 }

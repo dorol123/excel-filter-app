@@ -1259,14 +1259,6 @@ button:disabled {
   pointer-events: none;
 }
 
-.dona-nota {
-  margin: 12px 0 0;
-  font-size: 0.7rem;
-  line-height: 1.4;
-  color: var(--muted);
-  text-align: center;
-}
-
 /* Sólo afecta a la dona del Presentador de Carteras (envuelta en
    .dona-tarjeta): Análisis de Carteras usa .analisis-torta-tarjeta para la
    suya y no hereda esto. */
